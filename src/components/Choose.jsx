@@ -4,7 +4,15 @@ const Choose = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4">
+    <div className="relative flex flex-col items-center justify-center min-h-screen bg-white px-4">
+      {/* Botón Ir al inicio */}
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-4 left-4 bg-purple-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-purple-600 transition"
+      >
+        Ir al inicio
+      </button>
+
       {/* Título */}
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">
         ¿Qué quieres hacer primero?
