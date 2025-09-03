@@ -30,16 +30,18 @@ const Gallery = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6">
+    <div className="min-h-screen bg-white px-4 py-6 bg-cover bg-center"
+     style={{ backgroundImage: "url('/background.png')" }}
+    >
       {/* Botón Volver */}
       <button
         onClick={() => navigate("/choose")}
-        className="mb-4 px-4 py-2 bg-purple-700/70 text-white  rounded-lg shadow-md hover:bg-purple-600 transition"
+        className="mb-4 px-4 py-2 bg-purple-400/70 text-white  rounded-lg shadow-md hover:bg-purple-600 transition"
       >
         regresar
       </button>
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+      <h1 className="text-3xl text-white font-bold  mb-6 text-center">
         Galería
       </h1>
 

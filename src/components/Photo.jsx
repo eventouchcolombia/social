@@ -45,19 +45,26 @@ const Photo = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4 relative">
+    <div className="flex flex-col  items-center justify-center min-h-screen bg-white px-4 relative"
+    style={{ backgroundImage: "url('/background.png')" }}
+    >
       {/* Botón de regresar */}
       <button
-        onClick={() => navigate("/choose")}
-        className="absolute top-2 left-2 px-4 py-2 bg-gray-200/90 text-gray-800 rounded-lg shadow hover:bg-gray-300 transition"
-      >
-        ← Regresar
-      </button>
+  onClick={() => navigate("/choose")}
+  className="absolute top-4 left-2 w-10 h-10 rounded-lg shadow hover:bg-gray-300 transition flex items-center justify-center"
+>
+  <img 
+    src="/back.png" 
+    alt="Regresar" 
+    className="w-6 h-6" 
+  />
+</button>
 
-      <h1 className="text-3xl font-bold text-gray-800 mb-4 text-center">
+
+      <h1 className="text-3xl font-bold text-white mb-4 mt-6 text-center">
         ¡Sonríe!
       </h1>
-      <p className="text-lg text-gray-600 text-center mb-6">
+      <p className="text-lg text-white text-center mb-6">
         Aquí podrás tomarte una foto y compartirla con todos los asistentes al evento.
       </p>
 
