@@ -64,7 +64,9 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6">
+    <div className="min-h-screen px-4 py-6"
+     style={{ backgroundImage: "url('/background.png')" }}
+    >
       {/* Botón Volver */}
       <button
         onClick={() => navigate("/choose")}
@@ -73,7 +75,7 @@ const Admin = () => {
         Regresar
       </button>
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+      <h1 className="text-3xl font-bold text-white mb-6 mt-8 text-center">
         Dashboard Admin
       </h1>
 
