@@ -26,7 +26,7 @@ const Photo = () => {
 
   // Cambiar entre frontal y trasera
   const flipCamera = () => {
-    setLoadingCamera(true); // mostrar pantalla negra
+    setLoadingCamera(true);
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };
 
@@ -94,7 +94,13 @@ const Photo = () => {
       {/* Cámara o foto */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center">
         {!capturedImage ? (
-          !loadingCamera ? (
+          loadingCamera ? (
+            <div className="w-full h-full bg-black flex items-center justify-center">
+              <span className="text-white text-lg animate-pulse">
+                Cambiando cámara...
+              </span>
+            </div>
+          ) : (
             <Webcam
               key={facingMode} // fuerza a recargar la cámara
               ref={webcamRef}
@@ -104,7 +110,7 @@ const Photo = () => {
               videoConstraints={{ facingMode }}
               onUserMedia={() => setLoadingCamera(false)}
               onUserMediaError={(err) => {
-                console.error("Error cámara:", err);
+                console.error("❌ Error cámara:", err);
                 setLoadingCamera(false);
               }}
               style={{
@@ -115,12 +121,6 @@ const Photo = () => {
                 background: "black",
               }}
             />
-          ) : (
-            <div className="w-full h-full bg-black flex items-center justify-center">
-              <span className="text-white text-lg animate-pulse">
-                Cambiando cámara...
-              </span>
-            </div>
           )
         ) : (
           <img
