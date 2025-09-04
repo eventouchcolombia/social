@@ -34,14 +34,19 @@ const Gallery = () => {
      style={{ backgroundImage: "url('/anillos.jpg')" }}
     >
       {/* Botón Volver */}
-      <button
+      <div
         onClick={() => navigate("/choose")}
-        className="mb-4 px-4 py-2 bg-purple-400/70 text-white  rounded-lg shadow-md hover:bg-purple-600 transition"
+        className="absolute top-2 left-4 flex flex-col items-center cursor-pointer"
       >
-        regresar
-      </button>
+        <img
+          src="/back.png"
+          alt="Volver"
+          className="w-10 h-10 rounded-lg"
+        />
+        <span className="text-sm text-black font-semibold">volver</span>
+      </div>
 
-      <h1 className="text-3xl text-white font-bold  mb-6 text-center">
+      <h1 className="text-3xl text-white font-bold  mb-8  mt-14 text-center">
         Galería
       </h1>
 

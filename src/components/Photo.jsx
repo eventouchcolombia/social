@@ -81,12 +81,11 @@ const Photo = () => {
       <div className="absolute top-2 left-4 flex flex-col items-center z-20">
         <button
           onClick={() => navigate("/choose")}
-          className="w-12 h-12 rounded-full shadow flex items-center justify-center"
-          style={{ backdropFilter: "blur(4px)" }}
+          className="w-12 h-12   flex items-center justify-center"
         >
           <img src="/back.png" alt="Regresar" className="w-7 h-7" />
         </button>
-        <span className=" text-black font-bold ">volver</span>
+        <span className=" text-black font-bold mt-[-7px] ">volver</span>
       </div>
 
       {/* Cámara o foto ocupando toda la pantalla con marco superpuesto */}
@@ -133,70 +132,53 @@ const Photo = () => {
       </div>
 
       {/* Botones principales */}
-      <div className="absolute bottom-4 left-0 w-full flex justify-center items-center z-20">
+      <div className="absolute bottom-2 left-0 w-full flex justify-center items-center z-20">
         {!capturedImage ? (
-           <div className="flex flex-col items-center">
-      <div
-        onClick={capturePhoto}
-        className="w-24 h-24 rounded-full border-6 border-yellow-500 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
-      >
-        <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
-      </div>
-      <span className="text-black mt-2 text-xl font-bold">Haz tu foto</span>
-    </div>
+          <div className="flex flex-col items-center">
+            <div
+              onClick={capturePhoto}
+              className="w-24 h-24 rounded-full border-6 border-yellow-500 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
+            >
+              <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
+            </div>
+            <span className="text-black mt-2 text-xl font-bold">
+              Haz tu foto
+            </span>
+          </div>
         ) : (
-          <div className="flex gap-6">
-            <button
+          <div className="flex gap-24 mb-2">
+            <div
+              className="flex flex-col items-center cursor-pointer"
               onClick={retakePhoto}
-              className="bg-gray-300 text-gray-800 px-8 py-4 rounded-full text-xl shadow-lg hover:bg-gray-400 transition backdrop-blur-md bg-opacity-80"
-              style={{ minWidth: "180px" }}
             >
-              Repetir
-            </button>
-            <button
+              <img
+                src="/repetir.png"
+                alt="Repetir"
+                className="w-20 h-18 hover:opacity-80 transition"
+              />
+              <span className="text-black mt-0 text-xl font-semibold">
+                Repetir
+              </span>
+            </div>
+
+            <div
+              className="flex flex-col items-center cursor-pointer"
               onClick={publishPhoto}
-              disabled={uploading}
-              className={`px-8 py-4 rounded-full text-xl shadow-lg transition backdrop-blur-md bg-opacity-80 min-w-[180px] ${
-                uploading
-                  ? "bg-purple-300 text-white cursor-not-allowed"
-                  : "bg-purple-600 text-white hover:bg-purple-700"
-              }`}
             >
-              {uploading ? "Publicando..." : "Publicar"}
-            </button>
+              <img
+                src="/publicar.png"
+                alt="Publicar"
+                className={`w-20 h-18 hover:opacity-80 transition ${
+                  uploading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              />
+              <span className="text-black mt-0 text-xl font-semibold">
+                {uploading ? "Publicando..." : "Publicar"}
+              </span>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Botones */}
-      {!capturedImage ? (
-        <button
-          onClick={capturePhoto}
-          className="bg-purple-500 text-white px-6 py-3 rounded-lg text-lg shadow-md hover:bg-purple-600 transition"
-        >
-          Tomar foto
-        </button>
-      ) : (
-        <div className="flex gap-4">
-          <button
-            onClick={retakePhoto}
-            className="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg text-lg shadow-md hover:bg-gray-400 transition"
-          >
-            Repetir
-          </button>
-          <button
-            onClick={publishPhoto}
-            disabled={uploading}
-            className={`px-6 py-3 rounded-lg text-lg shadow-md transition ${
-              uploading
-                ? "bg-purple-300 text-white cursor-not-allowed"
-                : "bg-purple-500 text-white hover:bg-purple-600"
-            }`}
-          >
-            {uploading ? "Publicando..." : "Publicar"}
-          </button>
-        </div>
-      )}
     </div>
   );
 };
