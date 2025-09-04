@@ -5,7 +5,7 @@ const Choose = () => {
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-cover bg-center  px-4"
-     style={{ backgroundImage: "url('/background.png')" }}>
+     style={{ backgroundImage: "url('/anillos.jpg')" }}>
       {/* Botón Ir al inicio */}
       <button
         onClick={() => navigate("/")}

@@ -31,7 +31,7 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen bg-white px-4 py-6 bg-cover bg-center"
-     style={{ backgroundImage: "url('/background.png')" }}
+     style={{ backgroundImage: "url('/anillos.jpg')" }}
     >
       {/* Botón Volver */}
       <button
@@ -52,14 +52,22 @@ const Gallery = () => {
           {photos.map((url, index) => (
             <div
               key={index}
-              className="w-full aspect-square overflow-hidden rounded-md cursor-pointer"
+              className="w-full overflow-hidden rounded-md cursor-pointer bg-black flex items-center justify-center"
+              style={{ aspectRatio: "1/1" }}
               onClick={() => setSelectedPhoto(url)}
             >
               <img
                 src={url}
                 alt={`Foto ${index + 1}`}
-                className="w-full h-full object-cover"
-                 style={{ transform: "scaleX(-1)" }}
+                className="object-cover"
+                style={{
+                  width: "100vw",
+                  height: "100vw",
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  transform: "scaleX(-1)",
+                  background: "black"
+                }}
               />
             </div>
           ))}
@@ -72,12 +80,36 @@ const Gallery = () => {
           className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
           onClick={() => setSelectedPhoto(null)}
         >
-          <img
-            src={selectedPhoto}
-            alt="Foto ampliada"
-            className="max-w-[90%] max-h-[90%] rounded-lg shadow-lg"
-            style={{ transform: "scaleX(-1)" }}
-          />
+          <div className="relative flex items-center justify-center" style={{ width: "90vw", height: "90vh" }}>
+            <img
+              src={selectedPhoto}
+              alt="Foto ampliada"
+              className="rounded-lg shadow-lg object-cover"
+              style={{
+                width: "100%",
+                height: "100%",
+                transform: "scaleX(-1)",
+                background: "black",
+                position: "absolute",
+                top: 0,
+                left: 0
+              }}
+            />
+            {/* Marco superpuesto */}
+            <img
+              src="/marco.png"
+              alt="Marco decorativo"
+              className="pointer-events-none select-none"
+              style={{
+                width: "100%",
+                height: "100%",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                zIndex: 10
+              }}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -65,7 +65,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen px-4 py-6"
-     style={{ backgroundImage: "url('/background.png')" }}
+     style={{ backgroundImage: "url('/anillos.jpg')" }}
     >
       {/* Botón Volver */}
       <button
