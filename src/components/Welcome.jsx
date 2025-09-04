@@ -8,7 +8,7 @@ const Welcome = () => {
       className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center px-4 "
       style={{ backgroundImage: "url('/anillos.jpg')" }}
     >
-      <h1 className="text-6xl font-bold text-white mb-44 text-center mt-[-160px] ">PhotoLive</h1>
+      <h1 className="text-5xl font-bold text-white mb-44 text-center mt-[-160px] ">WeddingPhoto</h1>
       {/* <p className="text-lg text-white text-center">Captura momentos únicos y compártelos en el evento</p> */}
       <div className="mt-6">
         <button
