@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { storage } from "../firebase/firebase";
-import { ref, listAll, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, listAll, getDownloadURL, deleteObject,getBlob } from "firebase/storage";
 //import { useNavigate } from "react-router-dom";
 
 const Admin = () => {
@@ -49,19 +49,27 @@ const Admin = () => {
   };
 
   // 🔹 Descargar foto
-  const handleDownload = (url, name = "photo.png") => {
-    try {
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", name); // nombre del archivo
-      link.setAttribute("target", "_blank"); // abrir en nueva pestaña si el navegador bloquea
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("❌ Error descargando la foto:", error);
-    }
-  };
+// 🔹 Función corregida
+const handleDownload = async (fileName) => {
+  try {
+    const fileRef = ref(storage, `photos/${fileName}`);
+    const blob = await getBlob(fileRef);
+
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error("❌ Error descargando la foto:", error);
+  }
+};
+
 
   return (
     <div className="min-h-screen px-4 py-6"
@@ -102,7 +110,7 @@ const Admin = () => {
                   src="/descargar.png"
                   alt="Descargar"
                   className="w-8 h-8 cursor-pointer rounded-full p-1 shadow bg-white"
-                  onClick={() => handleDownload(photo.url, photo.name)}
+                  onClick={() => handleDownload(photo.name)}
                 />
                 <img
                   src="/borrar.png"
@@ -133,7 +141,7 @@ const Admin = () => {
                 src="/descargar.png"
                 alt="Descargar"
                 className="w-10 h-10 cursor-pointer rounded-full p-2 bg-white shadow"
-                onClick={() => handleDownload(selectedPhoto.url, selectedPhoto.name)}
+                onClick={() => handleDownload(selectedPhoto.name)}
               />
               <img
                 src="/borrar.png"
