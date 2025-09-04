@@ -70,7 +70,7 @@ const Gallery = () => {
                   height: "100vw",
                   maxWidth: "100%",
                   maxHeight: "100%",
-                  transform: "scaleX(-1)",
+                  transform: "scaleX(1)",
                   background: "black"
                 }}
               />
@@ -93,7 +93,7 @@ const Gallery = () => {
               style={{
                 width: "100%",
                 height: "100%",
-                transform: "scaleX(-1)",
+                transform: "scaleX(1)",
                 background: "black",
                 position: "absolute",
                 top: 0,
