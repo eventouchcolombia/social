@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import Webcam from "react-webcam";
-import { storage } from "../firebase/firebase"; 
+import { storage } from "../firebase/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 
@@ -31,18 +31,22 @@ const Photo = () => {
       // Cargar la imagen capturada
       const baseImg = new window.Image();
       baseImg.src = capturedImage;
-      await new Promise((resolve) => { baseImg.onload = resolve; });
+      await new Promise((resolve) => {
+        baseImg.onload = resolve;
+      });
 
       // Cargar el marco
       const frameImg = new window.Image();
-      frameImg.src = '/marco.png';
-      await new Promise((resolve) => { frameImg.onload = resolve; });
+      frameImg.src = "/marco.png";
+      await new Promise((resolve) => {
+        frameImg.onload = resolve;
+      });
 
       // Crear canvas y dibujar ambas imágenes
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       canvas.width = baseImg.width;
       canvas.height = baseImg.height;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       // Dibuja la foto (espejada)
       ctx.save();
       ctx.translate(canvas.width, 0);
@@ -53,7 +57,7 @@ const Photo = () => {
       ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
 
       // Obtiene la imagen final
-      const finalImage = canvas.toDataURL('image/png');
+      const finalImage = canvas.toDataURL("image/png");
 
       // Sube la imagen combinada
       const photoRef = ref(storage, `photos/${Date.now()}.png`);
@@ -69,19 +73,21 @@ const Photo = () => {
   };
 
   return (
-  <div className="fixed inset-0 flex items-center justify-center bg-black" style={{ zIndex: 1000 }}>
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black"
+      style={{ zIndex: 1000 }}
+    >
       {/* Botón de regresar */}
-      <button
-        onClick={() => navigate("/choose")}
-        className="absolute top-4 left-4 w-12 h-12 rounded-full bg-white bg-opacity-80 shadow flex items-center justify-center z-20 hover:bg-gray-200"
-        style={{ backdropFilter: "blur(4px)" }}
-      >
-        <img 
-          src="/back.png" 
-          alt="Regresar" 
-          className="w-7 h-7" 
-        />
-      </button>
+      <div className="absolute top-2 left-4 flex flex-col items-center z-20">
+        <button
+          onClick={() => navigate("/choose")}
+          className="w-12 h-12 rounded-full shadow flex items-center justify-center"
+          style={{ backdropFilter: "blur(4px)" }}
+        >
+          <img src="/back.png" alt="Regresar" className="w-7 h-7" />
+        </button>
+        <span className=" text-black font-bold ">volver</span>
+      </div>
 
       {/* Cámara o foto ocupando toda la pantalla con marco superpuesto */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center">
@@ -100,7 +106,7 @@ const Photo = () => {
               height: "100vh",
               objectFit: "cover",
               transform: "scaleX(-1)",
-              background: "black"
+              background: "black",
             }}
           />
         ) : (
@@ -113,7 +119,7 @@ const Photo = () => {
               height: "100vh",
               objectFit: "cover",
               transform: "scaleX(-1)",
-              background: "black"
+              background: "black",
             }}
           />
         )}
@@ -127,15 +133,17 @@ const Photo = () => {
       </div>
 
       {/* Botones principales */}
-      <div className="absolute bottom-10 left-0 w-full flex justify-center items-center z-20">
+      <div className="absolute bottom-4 left-0 w-full flex justify-center items-center z-20">
         {!capturedImage ? (
-          <button
-            onClick={capturePhoto}
-            className="bg-purple-600 text-white px-8 py-4 rounded-full text-xl shadow-lg hover:bg-purple-700 transition backdrop-blur-md bg-opacity-80"
-            style={{ minWidth: "180px" }}
-          >
-            Tomar foto
-          </button>
+           <div className="flex flex-col items-center">
+      <div
+        onClick={capturePhoto}
+        className="w-24 h-24 rounded-full border-6 border-yellow-500 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
+      >
+        <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
+      </div>
+      <span className="text-black mt-2 text-xl font-bold">Haz tu foto</span>
+    </div>
         ) : (
           <div className="flex gap-6">
             <button
@@ -174,7 +182,7 @@ const Photo = () => {
             onClick={retakePhoto}
             className="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg text-lg shadow-md hover:bg-gray-400 transition"
           >
-            Repetir 
+            Repetir
           </button>
           <button
             onClick={publishPhoto}
