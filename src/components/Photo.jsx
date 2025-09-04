@@ -97,7 +97,7 @@ const Photo = () => {
               width: "100vw",
               height: "100vh",
               objectFit: "cover",
-              transform: "scaleX(-1)",
+              transform: facingMode === "user" ? "scaleX(-1)" : "none",
               background: "black",
             }}
           />
@@ -110,7 +110,7 @@ const Photo = () => {
               width: "100vw",
               height: "100vh",
               objectFit: "cover",
-              transform: "scaleX(-1)",
+              transform: facingMode === "user" ? "scaleX(-1)" : "none",
               background: "black",
             }}
           />
