@@ -8,7 +8,8 @@ const Photo = () => {
   const webcamRef = useRef(null);
   const [capturedImage, setCapturedImage] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [facingMode, setFacingMode] = useState("user"); // 👈 controla cámara frontal/trasera
+  const [facingMode, setFacingMode] = useState("user"); // cámara frontal por defecto
+  const [loadingCamera, setLoadingCamera] = useState(false); // estado para el fondo negro
   const navigate = useNavigate();
 
   // Capturar foto
@@ -18,20 +19,18 @@ const Photo = () => {
     setCapturedImage(imageSrc);
   };
 
-  // Repetir foto
-  const retakePhoto = () => {
-    setCapturedImage(null);
-  };
+  // Repetir
+  const retakePhoto = () => setCapturedImage(null);
 
-  // Alternar cámara (frontal ↔ trasera)
+  // Cambiar cámara
   const flipCamera = () => {
+    setLoadingCamera(true);
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };
 
-  // Publicar foto
+  // Publicar
   const publishPhoto = async () => {
     if (!capturedImage) return;
-
     setUploading(true);
     try {
       const baseImg = new window.Image();
@@ -56,9 +55,9 @@ const Photo = () => {
       ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
 
       const finalImage = canvas.toDataURL("image/png");
+
       const photoRef = ref(storage, `photos/${Date.now()}.png`);
       await uploadString(photoRef, finalImage, "data_url");
-
       await getDownloadURL(photoRef);
       navigate("/gallery");
     } catch (error) {
@@ -73,7 +72,7 @@ const Photo = () => {
       className="fixed inset-0 flex items-center justify-center bg-black"
       style={{ zIndex: 1000 }}
     >
-      {/* Botón de regresar */}
+      {/* Botón volver */}
       <div className="absolute top-2 left-4 flex flex-col items-center z-20">
         <button
           onClick={() => navigate("/choose")}
@@ -81,26 +80,34 @@ const Photo = () => {
         >
           <img src="/back.png" alt="Regresar" className="w-7 h-7" />
         </button>
-        <span className=" text-black font-bold mt-[-7px] ">volver</span>
+        <span className="text-black font-bold mt-[-7px]">volver</span>
       </div>
 
       {/* Cámara o foto */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center">
         {!capturedImage ? (
-          <Webcam
-            ref={webcamRef}
-            audio={false}
-            screenshotFormat="image/png"
-            className="w-full h-full object-cover"
-            videoConstraints={{ facingMode }}
-            style={{
-              width: "100vw",
-              height: "100vh",
-              objectFit: "cover",
-              transform: facingMode === "user" ? "scaleX(-1)" : "none",
-              background: "black",
-            }}
-          />
+          !loadingCamera ? (
+            <Webcam
+              key={facingMode}
+              ref={webcamRef}
+              audio={false}
+              screenshotFormat="image/png"
+              className="w-full h-full object-cover"
+              videoConstraints={{ facingMode }}
+              onUserMedia={() => setLoadingCamera(false)} // listo!
+              style={{
+                width: "100vw",
+                height: "100vh",
+                objectFit: "cover",
+                transform: facingMode === "user" ? "scaleX(-1)" : "none",
+                background: "black",
+              }}
+            />
+          ) : (
+            <div className="w-full h-full bg-black flex items-center justify-center">
+              <span className="text-white text-lg">Cambiando cámara...</span>
+            </div>
+          )
         ) : (
           <img
             src={capturedImage}
@@ -110,7 +117,7 @@ const Photo = () => {
               width: "100vw",
               height: "100vh",
               objectFit: "cover",
-              transform: facingMode === "user" ? "scaleX(-1)" : "none",
+              transform: "scaleX(-1)",
               background: "black",
             }}
           />
@@ -127,38 +134,36 @@ const Photo = () => {
       {/* Botones principales */}
       <div className="absolute bottom-2 left-0 w-full flex justify-center items-center z-20">
         {!capturedImage ? (
-          <div className="flex items-center gap-6">
-            {/* Botón flip (cambiar cámara) */}
+          <div className="flex flex-col items-center relative">
+            {/* Botón flip */}
             <div
+              className="absolute left-[-70px] top-1/2 transform -translate-y-1/2 flex flex-col items-center cursor-pointer"
               onClick={flipCamera}
-              className="flex flex-col items-center cursor-pointer"
             >
               <img
                 src="/flip.png"
                 alt="Cambiar cámara"
-                className="w-14 h-14 hover:opacity-80 transition"
+                className="w-16 h-16 hover:opacity-80 transition"
               />
-              <span className="text-black mt-1 text-sm font-semibold">
+              <span className="text-black mt-0 text-md font-semibold">
                 Cambiar
               </span>
             </div>
 
-            {/* Botón tomar foto */}
-            <div className="flex flex-col items-center">
-              <div
-                onClick={capturePhoto}
-                className="w-24 h-24 rounded-full border-6 border-yellow-500 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
-              >
-                <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
-              </div>
-              <span className="text-black mt-2 text-xl font-bold">
-                Haz tu foto
-              </span>
+            {/* Botón disparo */}
+            <div
+              onClick={capturePhoto}
+              className="w-24 h-24 rounded-full border-6 border-yellow-500 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
+            >
+              <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
             </div>
+            <span className="text-black mt-2 text-xl font-bold">
+              Haz tu foto
+            </span>
           </div>
         ) : (
           <div className="flex gap-24 mb-2">
-            {/* Botón repetir */}
+            {/* Repetir */}
             <div
               className="flex flex-col items-center cursor-pointer"
               onClick={retakePhoto}
@@ -173,7 +178,7 @@ const Photo = () => {
               </span>
             </div>
 
-            {/* Botón publicar */}
+            {/* Publicar */}
             <div
               className="flex flex-col items-center cursor-pointer"
               onClick={publishPhoto}
