@@ -8,11 +8,9 @@ const Photo = () => {
   const webcamRef = useRef(null);
   const [capturedImage, setCapturedImage] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [facingMode, setFacingMode] = useState("user"); // frontal por defecto
-  const [loadingCamera, setLoadingCamera] = useState(false);
   const navigate = useNavigate();
 
-  // Capturar foto
+  // Solo captura la foto (NO sube todavía)
   const capturePhoto = () => {
     if (!webcamRef.current) return;
     const imageSrc = webcamRef.current.getScreenshot();
@@ -24,45 +22,44 @@ const Photo = () => {
     setCapturedImage(null);
   };
 
-  // Cambiar entre frontal y trasera
-  const flipCamera = () => {
-    setLoadingCamera(true);
-    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
-  };
-
-  // Publicar foto (con marco)
+  // Combina la foto capturada con el marco usando canvas y la sube
   const publishPhoto = async () => {
     if (!capturedImage) return;
-    setUploading(true);
 
+    setUploading(true);
     try {
+      // Cargar la imagen capturada
       const baseImg = new window.Image();
       baseImg.src = capturedImage;
-      await new Promise((resolve) => (baseImg.onload = resolve));
+      await new Promise((resolve) => {
+        baseImg.onload = resolve;
+      });
 
+      // Cargar el marco
       const frameImg = new window.Image();
       frameImg.src = "/marco.png";
-      await new Promise((resolve) => (frameImg.onload = resolve));
+      await new Promise((resolve) => {
+        frameImg.onload = resolve;
+      });
 
+      // Crear canvas y dibujar ambas imágenes
       const canvas = document.createElement("canvas");
       canvas.width = baseImg.width;
       canvas.height = baseImg.height;
       const ctx = canvas.getContext("2d");
-
-      // Dibujar foto (solo espejo si es frontal)
+      // Dibuja la foto (espejada)
       ctx.save();
-      if (facingMode === "user") {
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-      }
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
       ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
       ctx.restore();
-
-      // Dibujar marco
+      // Dibuja el marco
       ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
 
+      // Obtiene la imagen final
       const finalImage = canvas.toDataURL("image/png");
 
+      // Sube la imagen combinada
       const photoRef = ref(storage, `photos/${Date.now()}.png`);
       await uploadString(photoRef, finalImage, "data_url");
 
@@ -84,44 +81,33 @@ const Photo = () => {
       <div className="absolute top-2 left-4 flex flex-col items-center z-20">
         <button
           onClick={() => navigate("/choose")}
-          className="w-12 h-12 flex items-center justify-center"
+          className="w-12 h-12   flex items-center justify-center"
         >
           <img src="/back.png" alt="Regresar" className="w-7 h-7" />
         </button>
-        <span className="text-black font-bold mt-[-7px]">volver</span>
+        <span className=" text-black font-bold mt-[-7px] ">volver</span>
       </div>
 
-      {/* Cámara o foto */}
+      {/* Cámara o foto ocupando toda la pantalla con marco superpuesto */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center">
+        {/* Foto o cámara */}
         {!capturedImage ? (
-          loadingCamera ? (
-            <div className="w-full h-full bg-black flex items-center justify-center">
-              <span className="text-white text-lg animate-pulse">
-                Cambiando cámara...
-              </span>
-            </div>
-          ) : (
-            <Webcam
-              key={facingMode} // fuerza a recargar la cámara
-              ref={webcamRef}
-              audio={false}
-              screenshotFormat="image/png"
-              className="w-full h-full object-cover"
-              videoConstraints={{ facingMode }}
-              onUserMedia={() => setLoadingCamera(false)}
-              onUserMediaError={(err) => {
-                console.error("❌ Error cámara:", err);
-                setLoadingCamera(false);
-              }}
-              style={{
-                width: "100vw",
-                height: "100vh",
-                objectFit: "cover",
-                transform: facingMode === "user" ? "scaleX(-1)" : "none",
-                background: "black",
-              }}
-            />
-          )
+          <Webcam
+            ref={webcamRef}
+            audio={false}
+            screenshotFormat="image/png"
+            className="w-full h-full object-cover"
+            videoConstraints={{
+              facingMode: "user",
+            }}
+            style={{
+              width: "100vw",
+              height: "100vh",
+              objectFit: "cover",
+              transform: "scaleX(-1)",
+              background: "black",
+            }}
+          />
         ) : (
           <img
             src={capturedImage}
@@ -131,12 +117,11 @@ const Photo = () => {
               width: "100vw",
               height: "100vh",
               objectFit: "cover",
-              transform: facingMode === "user" ? "scaleX(-1)" : "none",
+              transform: "scaleX(-1)",
               background: "black",
             }}
           />
         )}
-
         {/* Marco superpuesto */}
         <img
           src="/marco.png"
@@ -149,23 +134,7 @@ const Photo = () => {
       {/* Botones principales */}
       <div className="absolute bottom-2 left-0 w-full flex justify-center items-center z-20">
         {!capturedImage ? (
-          <div className="flex flex-col items-center relative">
-            {/* Botón flip a la izquierda */}
-            <button
-              onClick={flipCamera}
-              className="absolute -left-20 top-1/2 transform -translate-y-1/2 flex flex-col items-center cursor-pointer"
-            >
-              <img
-                src="/flip.png"
-                alt="Cambiar cámara"
-                className="w-12 h-12 hover:opacity-80 transition"
-              />
-              <span className="text-black mt-1 text-sm font-semibold">
-                Cambiar
-              </span>
-            </button>
-
-            {/* Botón de capturar */}
+          <div className="flex flex-col items-center">
             <div
               onClick={capturePhoto}
               className="w-24 h-24 rounded-full border-6 border-yellow-500 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
@@ -178,7 +147,6 @@ const Photo = () => {
           </div>
         ) : (
           <div className="flex gap-24 mb-2">
-            {/* Botón repetir */}
             <div
               className="flex flex-col items-center cursor-pointer"
               onClick={retakePhoto}
@@ -193,7 +161,6 @@ const Photo = () => {
               </span>
             </div>
 
-            {/* Botón publicar */}
             <div
               className="flex flex-col items-center cursor-pointer"
               onClick={publishPhoto}
