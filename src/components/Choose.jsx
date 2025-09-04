@@ -9,21 +9,20 @@ const Choose = () => {
       style={{ backgroundImage: "url('/anillos.jpg')" }}
     >
       {/* Botón Ir al inicio */}
-     <div 
-  onClick={() => navigate("/")} 
-  className="absolute top-4 left-4 flex flex-col items-center cursor-pointer"
->
-  <img
-    src="/back.png"
-    alt="Volver"
-    className="w-10 h-10 rounded-lg shadow-md "
-  />
-  <span className="text-sm text-black font-semibold">Inicio</span>
-</div>
-
+      <div
+        onClick={() => navigate("/")}
+        className="absolute top-4 left-4 flex flex-col items-center cursor-pointer"
+      >
+        <img
+          src="/back.png"
+          alt="Volver"
+          className="w-10 h-10 rounded-lg"
+        />
+        <span className="text-sm text-black font-semibold">Inicio</span>
+      </div>
 
       {/* Título */}
-      <h1 className="text-4xl sm:text-3xl font-bold text-gray-300 mb-20 text-center">
+      <h1 className="text-4xl sm:text-3xl font-bold text-gray-100 mb-20 text-center">
         ¿Qué quieres hacer primero?
       </h1>
 
