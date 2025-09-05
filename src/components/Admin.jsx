@@ -7,18 +7,17 @@ import {
   deleteObject,
   getBlob,
 } from "firebase/storage";
-//import { useNavigate } from "react-router-dom";
 
 const Admin = () => {
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null); // 🔹 Foto pendiente de eliminar
-  //   const navigate = useNavigate();
+  const [confirmDelete, setConfirmDelete] = useState(null); // puede ser foto o array de fotos
+  const [selectedPhotos, setSelectedPhotos] = useState([]); // ✅ fotos seleccionadas
+  const [selectAll, setSelectAll] = useState(false); // ✅ checkbox global
 
   // 🔹 Cargar fotos
   const fetchPhotos = async () => {
     try {
-      console.log("📂 Cargando fotos desde Firebase...");
       const listRef = ref(storage, "photos/");
       const result = await listAll(listRef);
 
@@ -29,7 +28,6 @@ const Admin = () => {
         }))
       );
 
-      console.log("✅ Fotos cargadas:", urls);
       setPhotos(urls.reverse()); // más recientes primero
     } catch (error) {
       console.error("❌ Error cargando fotos:", error);
@@ -45,17 +43,16 @@ const Admin = () => {
     try {
       const photoRef = ref(storage, `photos/${name}`);
       await deleteObject(photoRef);
-      console.log("🗑️ Foto eliminada:", name);
       setPhotos((prev) => prev.filter((photo) => photo.name !== name));
-      setSelectedPhoto(null); // cerrar modal si la elimino
-      setConfirmDelete(null); // cerrar confirmación
+      setSelectedPhoto(null);
+      setConfirmDelete(null);
+      setSelectedPhotos((prev) => prev.filter((n) => n !== name));
     } catch (error) {
       console.error("❌ Error al eliminar:", error);
     }
   };
 
   // 🔹 Descargar foto
-  // 🔹 Función corregida
   const handleDownload = async (fileName) => {
     try {
       const fileRef = ref(storage, `photos/${fileName}`);
@@ -76,29 +73,61 @@ const Admin = () => {
     }
   };
 
+  // 🔹 Descargar todas las seleccionadas
+  const handleDownloadSelected = async () => {
+    for (const name of selectedPhotos) {
+      await handleDownload(name);
+    }
+  };
+
   return (
     <div
       className="min-h-screen px-4 py-6"
       style={{ backgroundImage: "url('/anillos.jpg')" }}
     >
-      {/* Botón Volver */}
-      {/* <button
-        onClick={() => navigate("/choose")}
-        className="mb-4 px-4 py-2 bg-purple-400/70 text-white rounded-lg shadow-md hover:bg-purple-600 transition"
-      >
-        Regresar
-      </button> */}
-
       <h1 className="text-3xl font-bold text-white mb-6 mt-8 text-center">
         Dashboard Admin
       </h1>
 
-      <h2 className="text-xl font-semibold mr-44 text-white text-center mb-6">
+      {/* Contador + seleccionar todo */}
+      <h2 className="text-xl font-semibold text-white text-center mb-6 flex justify-center items-center gap-6">
         Total fotos: {photos.length}
+        {photos.length > 0 && (
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selectAll}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setSelectAll(checked);
+                setSelectedPhotos(checked ? photos.map((p) => p.name) : []);
+              }}
+            />
+            Seleccionar todo
+          </label>
+        )}
       </h2>
 
+      {/* Botones globales */}
+      {selectedPhotos.length > 0 && (
+        <div className="text-center mb-6 flex justify-center gap-4">
+          <button
+            onClick={() => setConfirmDelete(selectedPhotos)} // 🔹 ahora abre modal
+            className="px-4 py-2 bg-red-400 text-white rounded shadow hover:bg-red-600 transition"
+          >
+            Eliminar ({selectedPhotos.length})
+          </button>
+          <button
+            onClick={handleDownloadSelected}
+            className="px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-blue-700 transition"
+          >
+            Descargar ({selectedPhotos.length})
+          </button>
+        </div>
+      )}
+
       {photos.length === 0 ? (
-        <p className="text-center text-gray-600">No hay fotos aún.</p>
+        <p className="text-center text-gray-300">No hay fotos aún.</p>
       ) : (
         <div className="grid grid-cols-3 gap-4">
           {photos.map((photo, index) => (
@@ -111,11 +140,28 @@ const Admin = () => {
                 alt={`Foto ${index + 1}`}
                 className="w-full h-full object-cover"
                 style={{ transform: "scaleX(-1)" }}
-                onClick={() => setSelectedPhoto(photo)} // 🔹 Guardar objeto completo
+                onClick={() => setSelectedPhoto(photo)}
               />
 
-              {/* Acciones */}
-              <div className="absolute top-2 right-2 flex gap-8 mt-14 ">
+              {/* Checkbox individual */}
+              <input
+                type="checkbox"
+                className="absolute bottom-20 left-0 w-5 h-5"
+                checked={selectedPhotos.includes(photo.name)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedPhotos((prev) => [...prev, photo.name]);
+                  } else {
+                    setSelectedPhotos((prev) =>
+                      prev.filter((n) => n !== photo.name)
+                    );
+                    setSelectAll(false);
+                  }
+                }}
+              />
+
+              {/* Acciones individuales */}
+              <div className="absolute top-2 right-2 flex gap-8 mt-14">
                 <img
                   src="/descargar.png"
                   alt="Descargar"
@@ -126,7 +172,7 @@ const Admin = () => {
                   src="/borrar.png"
                   alt="Eliminar"
                   className="w-8 h-8 cursor-pointer rounded-full p-1 shadow bg-white"
-                  onClick={() => setConfirmDelete(photo)} // 🔹 Mostrar modal confirmación
+                  onClick={() => setConfirmDelete(photo)}
                 />
               </div>
             </div>
@@ -134,7 +180,7 @@ const Admin = () => {
         </div>
       )}
 
-      {/* Modal para ampliar la foto */}
+      {/* Modal ampliar foto */}
       {selectedPhoto && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
           <div className="relative">
@@ -145,7 +191,6 @@ const Admin = () => {
               style={{ transform: "scaleX(-1)" }}
             />
 
-            {/* Acciones en el modal */}
             <div className="absolute top-4 right-4 flex gap-4">
               <img
                 src="/descargar.png"
@@ -157,11 +202,10 @@ const Admin = () => {
                 src="/borrar.png"
                 alt="Eliminar"
                 className="w-10 h-10 cursor-pointer rounded-full p-2 bg-white shadow"
-                onClick={() => setConfirmDelete(selectedPhoto)} // 🔹 Confirmación antes de borrar
+                onClick={() => setConfirmDelete(selectedPhoto)}
               />
             </div>
 
-            {/* Botón cerrar */}
             <button
               className="absolute top-4 left-4 text-white text-xl bg-black/50 px-3 py-1 rounded"
               onClick={() => setSelectedPhoto(null)}
@@ -172,18 +216,30 @@ const Admin = () => {
         </div>
       )}
 
-      {/* Modal de confirmación para eliminar */}
+      {/* Modal confirmación */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-lg shadow-lg p-6 relative max-w-sm w-full text-center">
             <h2 className="text-lg font-bold text-gray-800 mb-4">
-              Estás a punto de eliminar esta foto
+              {Array.isArray(confirmDelete)
+                ? `Estás a punto de eliminar ${confirmDelete.length} fotos`
+                : "Estás a punto de eliminar esta foto"}
             </h2>
 
             <div className="flex justify-center gap-4">
               <button
                 className="px-4 py-2 bg-red-500 text-white rounded shadow hover:bg-red-600 transition"
-                onClick={() => handleDelete(confirmDelete.name)}
+                onClick={async () => {
+                  if (Array.isArray(confirmDelete)) {
+                    for (const name of confirmDelete) {
+                      await handleDelete(name);
+                    }
+                    setSelectedPhotos([]);
+                    setSelectAll(false);
+                  } else {
+                    await handleDelete(confirmDelete.name);
+                  }
+                }}
               >
                 Confirmar
               </button>
