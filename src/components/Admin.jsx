@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { storage } from "../firebase/firebase";
-import { ref, listAll, getDownloadURL, deleteObject,getBlob } from "firebase/storage";
+import {
+  ref,
+  listAll,
+  getDownloadURL,
+  deleteObject,
+  getBlob,
+} from "firebase/storage";
 //import { useNavigate } from "react-router-dom";
 
 const Admin = () => {
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null); // 🔹 Foto pendiente de eliminar
-//   const navigate = useNavigate();
+  //   const navigate = useNavigate();
 
   // 🔹 Cargar fotos
   const fetchPhotos = async () => {
@@ -49,31 +55,31 @@ const Admin = () => {
   };
 
   // 🔹 Descargar foto
-// 🔹 Función corregida
-const handleDownload = async (fileName) => {
-  try {
-    const fileRef = ref(storage, `photos/${fileName}`);
-    const blob = await getBlob(fileRef);
+  // 🔹 Función corregida
+  const handleDownload = async (fileName) => {
+    try {
+      const fileRef = ref(storage, `photos/${fileName}`);
+      const blob = await getBlob(fileRef);
 
-    const blobUrl = window.URL.createObjectURL(blob);
+      const blobUrl = window.URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-    window.URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    console.error("❌ Error descargando la foto:", error);
-  }
-};
-
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("❌ Error descargando la foto:", error);
+    }
+  };
 
   return (
-    <div className="min-h-screen px-4 py-6"
-     style={{ backgroundImage: "url('/anillos.jpg')" }}
+    <div
+      className="min-h-screen px-4 py-6"
+      style={{ backgroundImage: "url('/anillos.jpg')" }}
     >
       {/* Botón Volver */}
       {/* <button
@@ -86,6 +92,10 @@ const handleDownload = async (fileName) => {
       <h1 className="text-3xl font-bold text-white mb-6 mt-8 text-center">
         Dashboard Admin
       </h1>
+
+      <h2 className="text-xl font-semibold mr-44 text-white text-center mb-6">
+        Total fotos: {photos.length}
+      </h2>
 
       {photos.length === 0 ? (
         <p className="text-center text-gray-600">No hay fotos aún.</p>
