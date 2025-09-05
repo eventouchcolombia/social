@@ -90,10 +90,10 @@ const Admin = () => {
       </h1>
 
       {/* Contador + seleccionar todo */}
-      <h2 className="text-xl font-semibold text-white text-center mb-6 flex justify-center items-center gap-6">
+      <h2 className=" font-semibold text-white text-center mb-6 flex justify-center items-center gap-6">
         Total fotos: {photos.length}
         {photos.length > 0 && (
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="flex items-center gap-2  cursor-pointer">
             <input
               type="checkbox"
               checked={selectAll}
