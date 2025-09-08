@@ -197,7 +197,7 @@ const Admin = () => {
   if (session && !isAdmin) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen gap-4">
-        <h1 className="text-white text-2xl">Acceso denegado.</h1>
+        <h1 className="text-black text-2xl">Acceso denegado.</h1>
         <p className="text-sm text-gray-300">
           Usuario: {session.user?.email ?? "sin email"}
         </p>
