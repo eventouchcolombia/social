@@ -284,7 +284,7 @@ const Admin = () => {
                 src={photo.url}
                 alt={`Foto ${index + 1}`}
                 className="w-full h-full object-cover"
-                style={{ transform: "scaleX(-1)" }}
+                style={{ transform: "scaleX(1)" }}
                 onClick={() => setSelectedPhoto(photo)}
               />
               <input
@@ -302,17 +302,17 @@ const Admin = () => {
                   }
                 }}
               />
-              <div className="absolute top-2 right-2 flex gap-8 mt-14">
+              <div className="absolute top-6 right-2 flex gap-12 mt-14">
                 <img
                   src="/descargar.png"
                   alt="Descargar"
-                  className="w-8 h-8 cursor-pointer rounded-full p-1 bg-white"
+                  className="w-8 h-8 cursor-pointer rounded-full p-1 "
                   onClick={() => handleDownload(photo.name)}
                 />
                 <img
                   src="/borrar.png"
                   alt="Eliminar"
-                  className="w-8 h-8 cursor-pointer rounded-full p-1 bg-white"
+                  className="w-8 h-8 cursor-pointer rounded-full p-1 "
                   onClick={() => setConfirmDelete(photo)}
                 />
               </div>
@@ -328,24 +328,24 @@ const Admin = () => {
               src={selectedPhoto.url}
               alt="Foto ampliada"
               className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-lg"
-              style={{ transform: "scaleX(-1)" }}
+              style={{ transform: "scaleX(1)" }}
             />
             <div className="absolute top-4 right-4 flex gap-4">
               <img
                 src="/descargar.png"
                 alt="Descargar"
-                className="w-10 h-10 cursor-pointer rounded-full p-2 bg-white"
+                className="w-10 h-10 cursor-pointer rounded-full p-2 "
                 onClick={() => handleDownload(selectedPhoto.name)}
               />
               <img
                 src="/borrar.png"
                 alt="Eliminar"
-                className="w-10 h-10 cursor-pointer rounded-full p-2 bg-white"
+                className="w-10 h-10 cursor-pointer rounded-full p-2 "
                 onClick={() => setConfirmDelete(selectedPhoto)}
               />
             </div>
             <button
-              className="absolute top-4 left-4 text-white text-xl bg-black/50 px-3 py-1 rounded"
+              className="absolute top-4 left-4 text-white text-xl bg-black/50 px-3 py-1 rounded-full"
               onClick={() => setSelectedPhoto(null)}
             >
               ✕
