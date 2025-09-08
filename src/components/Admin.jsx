@@ -302,7 +302,7 @@ const Admin = () => {
                   }
                 }}
               />
-              <div className="absolute top-6 right-2 flex gap-12 mt-14">
+              <div className="absolute top-2 right-2 flex gap-8 mt-14">
                 <img
                   src="/descargar.png"
                   alt="Descargar"
