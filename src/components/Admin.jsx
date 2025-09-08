@@ -179,18 +179,23 @@ const Admin = () => {
 
   if (!session) {
     return (
-      <div
-        className="flex justify-center items-center min-h-screen bg-cover bg-center"
-        style={{ backgroundImage: "url('/anillos.jpg')" }}
-      >
-        <button
-          onClick={handleGoogleSignIn}
-          className="px-6 py-3 bg-white text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-[#357ae8] transition"
-        >
-          <img src="/google.png" alt="Google" className="w-6 h-6" />
-          Iniciar sesión con Google
-        </button>
-      </div>
+    <div
+  className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center"
+  style={{ backgroundImage: "url('/anillos.jpg')" }}
+>
+  <h1 className="text-3xl font-bold text-center text-black mb-6">
+    Login Admin
+  </h1>
+
+  <button
+    onClick={handleGoogleSignIn}
+    className="px-6 py-3 bg-white text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-[#357ae8] transition"
+  >
+    <img src="/google.png" alt="Google" className="w-6 h-6" />
+    Iniciar sesión con Google
+  </button>
+</div>
+
     );
   }
 
