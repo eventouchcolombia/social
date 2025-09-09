@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../supabaseClient"; // ajusta ruta si hace falta
+
+import { useState, useEffect } from "react";
 import { storage } from "../firebase/firebase";
 import {
   ref,
@@ -9,10 +9,11 @@ import {
   getBlob,
 } from "firebase/storage";
 
+import useAuthenticationSupabase from "./AuthenticationSupabase";
+
 const Admin = () => {
-  const [session, setSession] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { session, isAdmin, loading, signInWithGoogle, signOut } =
+    useAuthenticationSupabase();
 
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -20,75 +21,7 @@ const Admin = () => {
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // ===== Verificar admin =====
-  const checkIfAdmin = async (user) => {
-    try {
-      if (!user?.email) {
-        console.log("⚠️ Usuario sin email válido");
-        setIsAdmin(false);
-        return false;
-      }
-
-      const email = user.email.toLowerCase().trim();
-      console.log("🔍 Buscando en admins:", email);
-
-      const { data: admin, error } = await supabase
-        .from("admins")
-        .select("id, email")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (error) {
-        console.error("❌ Error consultando admins:", error);
-        setIsAdmin(false);
-        return false;
-      }
-
-      setIsAdmin(!!admin);
-      return !!admin;
-    } catch (err) {
-      console.error("❌ Error en checkIfAdmin:", err);
-      setIsAdmin(false);
-      return false;
-    }
-  };
-
-  // ===== Inicialización y escucha de sesión =====
-  useEffect(() => {
-    let unsub;
-    const init = async () => {
-      const { data } = await supabase.auth.getSession();
-      const currentSession = data?.session ?? null;
-      setSession(currentSession);
-
-      if (currentSession?.user) {
-        await checkIfAdmin(currentSession.user);
-      }
-      setLoading(false);
-
-      unsub = supabase.auth.onAuthStateChange(async (event, sessionObj) => {
-        const ses = sessionObj?.session ?? sessionObj;
-        setSession(ses);
-
-        if (event === "SIGNED_IN" && ses?.user) {
-          await checkIfAdmin(ses.user);
-        }
-        if (event === "SIGNED_OUT") {
-          setIsAdmin(false);
-          setSession(null);
-        }
-        setLoading(false);
-      });
-    };
-
-    init();
-
-    return () => {
-      unsub?.data?.subscription?.unsubscribe();
-    };
-  }, []);
-
-  // ===== fotos sólo si es admin =====
+  // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
     try {
       const listRef = ref(storage, "photos/");
@@ -109,7 +42,7 @@ const Admin = () => {
     if (isAdmin) fetchPhotos();
   }, [isAdmin]);
 
-  // ===== manejo fotos =====
+  // === eliminar foto ===
   const handleDelete = async (name) => {
     try {
       const photoRef = ref(storage, `photos/${name}`);
@@ -123,6 +56,7 @@ const Admin = () => {
     }
   };
 
+  // === descargar foto ===
   const handleDownload = async (fileName) => {
     try {
       const fileRef = ref(storage, `photos/${fileName}`);
@@ -146,29 +80,7 @@ const Admin = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin + "/admin",
-        },
-      });
-      if (error) console.error("❌ Error de autenticación:", error);
-    } catch (error) {
-      console.error("❌ Error de autenticación:", error);
-    }
-  };
-  console.log(
-    "[RENDER] loading:",
-    loading,
-    "session:",
-    session,
-    "isAdmin:",
-    isAdmin
-  );
-
-  // ===== UI =====
+  // === UI ===
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -179,23 +91,22 @@ const Admin = () => {
 
   if (!session) {
     return (
-    <div
-  className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center"
-  style={{ backgroundImage: "url('/anillos.jpg')" }}
->
-  <h1 className="text-3xl font-bold text-center text-black mb-6">
-    Login Admin
-  </h1>
+      <div
+        className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center"
+        style={{ backgroundImage: "url('/anillos.jpg')" }}
+      >
+        <h1 className="text-3xl font-bold text-center text-black mb-6">
+          Login Admin
+        </h1>
 
-  <button
-    onClick={handleGoogleSignIn}
-    className="px-6 py-3 bg-white text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-[#357ae8] transition"
-  >
-    <img src="/google.png" alt="Google" className="w-6 h-6" />
-    Iniciar sesión con Google
-  </button>
-</div>
-
+        <button
+          onClick={signInWithGoogle}
+          className="px-6 py-3 bg-white text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-[#357ae8] transition"
+        >
+          <img src="/google.png" alt="Google" className="w-6 h-6" />
+          Iniciar sesión con Google
+        </button>
+      </div>
     );
   }
 
@@ -207,11 +118,7 @@ const Admin = () => {
           Usuario: {session.user?.email ?? "sin email"}
         </p>
         <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            setIsAdmin(false);
-            setSession(null);
-          }}
+          onClick={signOut}
           className="px-4 py-2 bg-gray-700 text-white rounded"
         >
           Cerrar sesión
@@ -224,23 +131,19 @@ const Admin = () => {
     <div
       className="min-h-screen px-4 py-6"
       style={{ backgroundImage: "url('/anillos.jpg')" }}
-
     >
-         <img
-      src="/cerrarsesion.png"
-      alt="Cerrar sesión"
-      className="w-12 h-12 cursor-pointer absolute top-2 right-4 z-50  rounded-full p-2 shadow-lg hover:bg-gray-200 transition"
-      onClick={async () => {
-        await supabase.auth.signOut();
-        setIsAdmin(false);
-        setSession(null);
-      }}
-      title="Cerrar sesión"
-    />
+      <img
+        src="/cerrarsesion.png"
+        alt="Cerrar sesión"
+        className="w-12 h-12 cursor-pointer absolute top-2 right-4 z-50 rounded-full p-2 shadow-lg hover:bg-gray-200 transition"
+        onClick={signOut}
+        title="Cerrar sesión"
+      />
+
       <h1 className="text-3xl font-bold text-white mb-6 mt-8 text-center">
         Dashboard Admin
       </h1>
-      
+
       <h2 className="font-semibold text-white text-center mb-6 flex justify-center items-center gap-6">
         Total fotos: {photos.length}
         {photos.length > 0 && (
@@ -289,7 +192,6 @@ const Admin = () => {
                 src={photo.url}
                 alt={`Foto ${index + 1}`}
                 className="w-full h-full object-cover"
-                style={{ transform: "scaleX(1)" }}
                 onClick={() => setSelectedPhoto(photo)}
               />
               <input
@@ -311,13 +213,13 @@ const Admin = () => {
                 <img
                   src="/descargar.png"
                   alt="Descargar"
-                  className="w-8 h-8 cursor-pointer rounded-full p-1 "
+                  className="w-8 h-8 cursor-pointer rounded-full p-1"
                   onClick={() => handleDownload(photo.name)}
                 />
                 <img
                   src="/borrar.png"
                   alt="Eliminar"
-                  className="w-8 h-8 cursor-pointer rounded-full p-1 "
+                  className="w-8 h-8 cursor-pointer rounded-full p-1"
                   onClick={() => setConfirmDelete(photo)}
                 />
               </div>
@@ -326,6 +228,7 @@ const Admin = () => {
         </div>
       )}
 
+      {/* Modal foto ampliada */}
       {selectedPhoto && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
           <div className="relative">
@@ -333,19 +236,18 @@ const Admin = () => {
               src={selectedPhoto.url}
               alt="Foto ampliada"
               className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-lg"
-              style={{ transform: "scaleX(1)" }}
             />
             <div className="absolute top-4 right-4 flex gap-4">
               <img
                 src="/descargar.png"
                 alt="Descargar"
-                className="w-10 h-10 cursor-pointer rounded-full p-2 "
+                className="w-10 h-10 cursor-pointer rounded-full p-2"
                 onClick={() => handleDownload(selectedPhoto.name)}
               />
               <img
                 src="/borrar.png"
                 alt="Eliminar"
-                className="w-10 h-10 cursor-pointer rounded-full p-2 "
+                className="w-10 h-10 cursor-pointer rounded-full p-2"
                 onClick={() => setConfirmDelete(selectedPhoto)}
               />
             </div>
@@ -359,6 +261,7 @@ const Admin = () => {
         </div>
       )}
 
+      {/* Modal confirmación borrar */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-lg shadow-lg p-6 relative max-w-sm w-full text-center">
