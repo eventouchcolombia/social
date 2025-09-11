@@ -1,16 +1,18 @@
 import { useNavigate } from "react-router-dom";
+import { useEvent } from "../hooks/useEvent";
 
 const Choose = () => {
   const navigate = useNavigate();
+  const { eventSlug, getAssetUrl } = useEvent();
 
   return (
     <div
       className="relative flex flex-col items-center justify-center min-h-screen bg-cover bg-center  px-4"
-      style={{ backgroundImage: "url('/anillos.jpg')" }}
+      style={{ backgroundImage: `url('${getAssetUrl('background.jpg')}')` }}
     >
       {/* Botón Ir al inicio */}
       <div
-        onClick={() => navigate("/")}
+        onClick={() => navigate(`/${eventSlug}`)}
         className="absolute top-4 left-4 flex flex-col items-center cursor-pointer"
       >
         <img
@@ -29,14 +31,14 @@ const Choose = () => {
       {/* Opciones */}
       <div className="w-full max-w-xs flex flex-col gap-4">
         <button
-          onClick={() => navigate("/photo")}
+          onClick={() => navigate(`/${eventSlug}/photo`)}
           className="w-full bg-gray-400 text-white py-3 rounded-xl text-lg font-semibold shadow-md hover:bg-purple-600 transition"
         >
           Tomate una foto
         </button>
 
         <button
-          onClick={() => navigate("/gallery")}
+          onClick={() => navigate(`/${eventSlug}/gallery`)}
           className="w-full bg-gray-400 text-white py-3 rounded-xl text-lg font-semibold shadow-md hover:bg-gray-200 transition"
         >
           Ir a la galería

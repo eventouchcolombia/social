@@ -76,10 +76,26 @@ const AuthenticationSupabase = () => {
   // === Métodos de login/logout ===
   const signInWithGoogle = async () => {
     try {
+      // Construir la URL de redirect manualmente para asegurar que use el dominio correcto
+      const protocol = window.location.protocol;
+      const host = window.location.host;
+      const pathname = window.location.pathname;
+      
+      // Asegurar que estamos usando el host correcto (local o producción)
+      let redirectUrl;
+      if (host.includes('localhost')) {
+        redirectUrl = `http://localhost:5174${pathname}`;
+      } else {
+        redirectUrl = `${protocol}//${host}${pathname}`;
+      }
+      
+      console.log("🔗 Redirect URL:", redirectUrl);
+      console.log("🌍 Current host:", host);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin + "/admin",
+          redirectTo: redirectUrl,
         },
       });
       if (error) console.error("❌ Error de autenticación:", error);

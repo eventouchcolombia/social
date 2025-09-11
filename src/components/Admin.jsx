@@ -10,10 +10,12 @@ import {
 } from "firebase/storage";
 
 import useAuthenticationSupabase from "./AuthenticationSupabase";
+import { useEvent } from "../hooks/useEvent";
 
 const Admin = () => {
   const { session, isAdmin, loading, signInWithGoogle, signOut } =
     useAuthenticationSupabase();
+  const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
 
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -24,7 +26,7 @@ const Admin = () => {
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
     try {
-      const listRef = ref(storage, "photos/");
+      const listRef = ref(storage, getStoragePath());
       const result = await listAll(listRef);
       const urls = await Promise.all(
         result.items.map(async (item) => ({
@@ -40,12 +42,12 @@ const Admin = () => {
 
   useEffect(() => {
     if (isAdmin) fetchPhotos();
-  }, [isAdmin]);
+  }, [isAdmin, eventSlug]);
 
   // === eliminar foto ===
   const handleDelete = async (name) => {
     try {
-      const photoRef = ref(storage, `photos/${name}`);
+      const photoRef = ref(storage, getStoragePath(name));
       await deleteObject(photoRef);
       setPhotos((prev) => prev.filter((photo) => photo.name !== name));
       setSelectedPhoto(null);
@@ -59,7 +61,7 @@ const Admin = () => {
   // === descargar foto ===
   const handleDownload = async (fileName) => {
     try {
-      const fileRef = ref(storage, `photos/${fileName}`);
+      const fileRef = ref(storage, getStoragePath(fileName));
       const blob = await getBlob(fileRef);
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -93,10 +95,10 @@ const Admin = () => {
     return (
       <div
         className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center"
-        style={{ backgroundImage: "url('/anillos.jpg')" }}
+        style={{ backgroundImage: `url('${getAssetUrl('background.jpg')}')` }}
       >
         <h1 className="text-3xl font-bold text-center text-black mb-6">
-          Login Admin
+          Login Admin - {eventSlug}
         </h1>
 
         <button
@@ -130,7 +132,7 @@ const Admin = () => {
   return (
     <div
       className="min-h-screen px-4 py-6"
-      style={{ backgroundImage: "url('/anillos.jpg')" }}
+      style={{ backgroundImage: `url('${getAssetUrl('background.jpg')}')` }}
     >
       <img
         src="/cerrarsesion.png"
@@ -141,7 +143,7 @@ const Admin = () => {
       />
 
       <h1 className="text-3xl font-bold text-white mb-6 mt-8 text-center">
-        Dashboard Admin
+        Dashboard Admin - {eventSlug}
       </h1>
 
       <h2 className="font-semibold text-white text-center mb-6 flex justify-center items-center gap-6">

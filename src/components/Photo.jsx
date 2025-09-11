@@ -3,12 +3,14 @@ import Webcam from "react-webcam";
 import { storage } from "../firebase/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
+import { useEvent } from "../hooks/useEvent";
 
 const Photo = () => {
   const webcamRef = useRef(null);
   const [capturedImage, setCapturedImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
+  const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
 
   // Solo captura la foto (NO sube todavía)
   const capturePhoto = () => {
@@ -35,9 +37,9 @@ const Photo = () => {
         baseImg.onload = resolve;
       });
 
-      // Cargar el marco
+      // Cargar el marco específico del evento
       const frameImg = new window.Image();
-      frameImg.src = "/marco.png";
+      frameImg.src = getAssetUrl('marco.png');
       await new Promise((resolve) => {
         frameImg.onload = resolve;
       });
@@ -59,12 +61,12 @@ const Photo = () => {
       // Obtiene la imagen final
       const finalImage = canvas.toDataURL("image/png");
 
-      // Sube la imagen combinada
-      const photoRef = ref(storage, `photos/${Date.now()}.png`);
+      // Sube la imagen combinada al directorio específico del evento
+      const photoRef = ref(storage, getStoragePath(`${Date.now()}.png`));
       await uploadString(photoRef, finalImage, "data_url");
 
       await getDownloadURL(photoRef);
-      navigate("/gallery");
+      navigate(`/${eventSlug}/gallery`);
     } catch (error) {
       console.error("❌ Error al subir la foto:", error);
     } finally {
@@ -80,7 +82,7 @@ const Photo = () => {
       {/* Botón de regresar */}
       <div className="absolute top-2 left-4 flex flex-col items-center z-20">
         <button
-          onClick={() => navigate("/choose")}
+          onClick={() => navigate(`/${eventSlug}/choose`)}
           className="w-12 h-12   flex items-center justify-center"
         >
           <img src="/back.png" alt="Regresar" className="w-7 h-7" />
@@ -124,7 +126,7 @@ const Photo = () => {
         )}
         {/* Marco superpuesto */}
         <img
-          src="/marco.png"
+          src={getAssetUrl('marco.png')}
           alt="Marco decorativo"
           className="absolute inset-0 w-full h-full pointer-events-none select-none"
           style={{ zIndex: 10 }}

@@ -10,11 +10,15 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Rutas con eventSlug */}
+        <Route path="/:eventSlug" element={<Welcome />} />
+        <Route path="/:eventSlug/photo" element={<Photo />} />
+        <Route path="/:eventSlug/choose" element={<Choose />} />
+        <Route path="/:eventSlug/gallery" element={<Gallery />} />
+        <Route path="/:eventSlug/admin" element={<Admin />} />
+        
+        {/* Ruta por defecto - redirige al evento principal */}
         <Route path="/" element={<Welcome />} />
-        <Route path="/photo" element={<Photo />} />
-        <Route path="/choose" element={<Choose />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/admin" element={<Admin />} />
       </Routes>
     </Router>
   );

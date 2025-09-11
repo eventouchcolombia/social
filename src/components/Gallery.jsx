@@ -2,17 +2,19 @@ import { useEffect, useState } from "react";
 import { storage } from "../firebase/firebase";
 import { ref, listAll, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
+import { useEvent } from "../hooks/useEvent";
 
 const Gallery = () => {
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const navigate = useNavigate();
+  const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
 
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
-        console.log("📂 Cargando fotos desde Firebase...");
-        const listRef = ref(storage, "photos/");
+        console.log(`📂 Cargando fotos desde Firebase para evento: ${eventSlug}...`);
+        const listRef = ref(storage, getStoragePath());
         const result = await listAll(listRef);
 
         const urls = await Promise.all(
@@ -27,15 +29,15 @@ const Gallery = () => {
     };
 
     fetchPhotos();
-  }, []);
+  }, [eventSlug, getStoragePath]);
 
   return (
     <div className="min-h-screen bg-white px-4 py-6 bg-cover bg-center"
-     style={{ backgroundImage: "url('/anillos.jpg')" }}
+     style={{ backgroundImage: `url('${getAssetUrl('background.jpg')}')` }}
     >
       {/* Botón Volver */}
       <div
-        onClick={() => navigate("/choose")}
+        onClick={() => navigate(`/${eventSlug}/choose`)}
         className="absolute top-2 left-4 flex flex-col items-center cursor-pointer"
       >
         <img
@@ -102,7 +104,7 @@ const Gallery = () => {
             />
             {/* Marco superpuesto */}
             <img
-              src="/marco.png"
+              src={getAssetUrl('marco.png')}
               alt="Marco decorativo"
               className="pointer-events-none select-none"
               style={{
