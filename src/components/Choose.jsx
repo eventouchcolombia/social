@@ -5,7 +5,7 @@ import { useEvent } from "../hooks/useEvent";
 const themes = {
   happybirth: {
     title: "text-[#8C6A2F]",
-    button: "bg-yellow-100 text-[#BFA065] hover:bg-yellow-300",
+    button: "bg-yellow-100/65 text-[#8C6A2F] hover:bg-yellow-300",
   },
   // 🎉 Agrega aquí más estilos personalizados por evento
 };
@@ -31,15 +31,15 @@ const Choose = () => {
       {/* Botón Ir al inicio */}
       <div
         onClick={() => navigate(`/${eventSlug}`)}
-        className="absolute top-4 left-4 flex flex-col items-center cursor-pointer"
+        className="absolute top-4 left-0 flex flex-col items-center cursor-pointer"
       >
-        <img src="/back.png" alt="Volver" className="w-10 h-10 rounded-lg" />
-        <span className="text-sm text-black font-semibold">Inicio</span>
+        <img src="/back.png" alt="Volver" className="w-14 h-10 rounded-lg" />
+        {/* <span className="text-sm text-black font-semibold">Inicio</span> */}
       </div>
 
       {/* Título */}
       <h1
-        className={`text-4xl sm:text-3xl font-bold mb-20 text-center ${theme.title}`}
+        className={`text-4xl sm:text-3xl font-bold mb-14 mt-[-120px] text-center ${theme.title}`}
       >
         ¿Qué quieres hacer primero?
       </h1>
