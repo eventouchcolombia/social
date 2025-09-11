@@ -4,7 +4,7 @@ import { useEvent } from "../hooks/useEvent";
 // 🎨 Configuración de estilos por evento
 const themes = {
   happybirth: {
-    title: "text-[#BFA065]",
+    title: "text-[#8C6A2F]",
     button: "bg-yellow-100 text-[#BFA065] hover:bg-yellow-300",
   },
   // 🎉 Agrega aquí más estilos personalizados por evento
