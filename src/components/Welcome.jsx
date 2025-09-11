@@ -6,15 +6,17 @@ const Welcome = () => {
   const { eventSlug, getAssetUrl } = useEvent();
 
   return (
-     <div
-      className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center px-4 "
-      style={{ backgroundImage: `url('${getAssetUrl('background.jpg')}')` }}
+    <div
+      className="flex flex-col items-center justify-between min-h-screen bg-cover bg-center px-4"
+      style={{ backgroundImage: `url('${getAssetUrl("background.jpg")}')` }}
     >
-      <h1 className="text-4xl font-bold text-black mb-46 text-center mt-[-200px] ">EventPhotos</h1>
-      {/* <p className="text-lg text-white text-center">Captura momentos únicos y compártelos en el evento</p> */}
-      <div className="mt-6">
+      <h1 className="text-4xl font-bold text-black text-center mt-8">
+        EventPhotos
+      </h1>
+
+      <div className="mb-16">
         <button
-          className="bg-black/40 text-white px-4 py-2 w-44 h-14 font-semibold  rounded-2xl text-2xl"
+          className="bg-yellow-100 text-yellow-800 px-4 py-2 w-44 h-14 font-semibold rounded-2xl text-2xl shadow-xl hover:bg-yellow-300 transition"
           onClick={() => navigate(`/${eventSlug}/choose`)}
         >
           Comenzar!
@@ -22,6 +24,6 @@ const Welcome = () => {
       </div>
     </div>
   );
-}
+};
 
 export default Welcome;
