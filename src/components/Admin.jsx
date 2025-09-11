@@ -42,6 +42,7 @@ const Admin = () => {
 
   useEffect(() => {
     if (isAdmin) fetchPhotos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, eventSlug]);
 
   // === eliminar foto ===

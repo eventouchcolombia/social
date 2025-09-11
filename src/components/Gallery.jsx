@@ -33,7 +33,7 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen bg-white px-4 py-6 bg-cover bg-center"
-     style={{ backgroundImage: `url('${getAssetUrl('background.jpg')}')` }}
+     style={{ backgroundImage: `url('${getAssetUrl('bggallery.png')}')` }}
     >
       {/* Botón Volver */}
       <div
@@ -48,7 +48,7 @@ const Gallery = () => {
         <span className="text-sm text-black font-semibold">volver</span>
       </div>
 
-      <h1 className="text-3xl text-white font-bold  mb-8  mt-14 text-center">
+      <h1 className="text-3xl text-black font-bold  mb-8  mt-14 text-center">
         Galería
       </h1>
 
