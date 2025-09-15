@@ -33,7 +33,7 @@ const Welcome = () => {
     loadBackground();
   }, [eventSlug, getAssetUrl]);
 
-   const thetheme = themes[eventSlug] || defaultTheme;
+   
 
   return (
     <div

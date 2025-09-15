@@ -13,12 +13,13 @@ const Photo = () => {
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
   const [frameUrl, setFrameUrl] = useState(null);
 
-    useEffect(() => {
+  useEffect(() => {
     const loadFrame = async () => {
       const url = await getAssetUrl("marco.png");
       setFrameUrl(url);
     };
     loadFrame();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventSlug]);
 
   // Solo captura la foto (NO sube todavía)
@@ -47,8 +48,11 @@ const Photo = () => {
       });
 
       // Cargar el marco específico del evento
+      // Cargar el marco específico del evento
+      const frameUrl = await getAssetUrl("marco.png"); // <-- espera la promesa
       const frameImg = new window.Image();
-      frameImg.src = getAssetUrl('marco.png');
+      frameImg.crossOrigin = "anonymous";
+      frameImg.src = frameUrl;
       await new Promise((resolve) => {
         frameImg.onload = resolve;
       });
@@ -134,13 +138,13 @@ const Photo = () => {
           />
         )}
         {/* Marco superpuesto */}
-      {frameUrl && (
-        <img
-          src={frameUrl}
-          alt="Marco decorativo"
-          className="absolute inset-0 w-full h-full pointer-events-none"
-        />
-      )}
+        {frameUrl && (
+          <img
+            src={frameUrl}
+            alt="Marco decorativo"
+            className="absolute inset-0 w-full h-full pointer-events-none"
+          />
+        )}
       </div>
 
       {/* Botones principales */}

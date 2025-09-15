@@ -116,19 +116,22 @@ const Gallery = () => {
               }}
             />
             {/* Marco superpuesto */}
-            <img
-              src={getAssetUrl('marco.png')}
-              alt="Marco decorativo"
-              className="pointer-events-none select-none"
-              style={{
-                width: "100%",
-                height: "100%",
-                position: "absolute",
-                top: 0,
-                left: 0,
-                zIndex: 10
-              }}
-            />
+            {frameUrl && (
+  <img
+    src={frameUrl}
+    alt="Marco decorativo"
+    className="pointer-events-none select-none"
+    style={{
+      width: "100%",
+      height: "100%",
+      position: "absolute",
+      top: 0,
+      left: 0,
+      zIndex: 10
+    }}
+  />
+)}
+
           </div>
         </div>
       )}
