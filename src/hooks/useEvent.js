@@ -1,24 +1,35 @@
-import { useParams } from 'react-router-dom';
+import { storage } from "../firebase/firebase";
+import { ref, getDownloadURL } from "firebase/storage";
+import { useParams } from "react-router-dom";
 
+/**
+ * Hook para manejar configuración de eventos
+ * - Carga assets (desde Firebase Storage)
+ * - Devuelve rutas de storage (para fotos)
+ */
 export const useEvent = () => {
   const { eventSlug } = useParams();
-  
-  // Si no hay eventSlug en la URL, usar uno por defecto
-  const currentEventSlug = eventSlug || 'boda-principal';
-  
-  // Generar las URLs de los assets basados en el evento
-  const getAssetUrl = (assetName) => {
-    return `/events/${currentEventSlug}/${assetName}`;
+  const currentEventSlug = eventSlug || "boda-principal";
+
+  // 🔹 Devuelve URL de un asset del evento (async)
+  const getAssetUrl = async (assetName) => {
+    try {
+      const fileRef = ref(storage, `assets/${currentEventSlug}/${assetName}`);
+      return await getDownloadURL(fileRef);
+    } catch (err) {
+      console.error(`❌ Error cargando asset ${assetName}:`, err);
+      return null;
+    }
   };
-  
-  // Obtener el directorio de Firebase Storage para este evento
-  const getStoragePath = (subPath = '') => {
+
+  // 🔹 Devuelve la ruta en Firebase para fotos del evento
+  const getStoragePath = (subPath = "") => {
     return `photos/${currentEventSlug}/${subPath}`;
   };
-  
+
   return {
     eventSlug: currentEventSlug,
-    getAssetUrl,
-    getStoragePath
+    getAssetUrl, // ahora es async
+    getStoragePath,
   };
 };

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { storage } from "../firebase/firebase";
+import AssetWizard from "./AssetWizard";
 import {
   ref,
   listAll,
@@ -22,7 +23,10 @@ const Admin = () => {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
 
+
+    const [backgroundUrl, setBackgroundUrl] = useState(null);
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
     try {
@@ -45,6 +49,13 @@ const Admin = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, eventSlug]);
 
+    useEffect(() => {
+    const loadBackground = async () => {
+      const url = await getAssetUrl("background.jpg");
+      setBackgroundUrl(url);
+    };
+    loadBackground();
+  }, [eventSlug, getAssetUrl]);
   // === eliminar foto ===
   const handleDelete = async (name) => {
     try {
@@ -132,8 +143,8 @@ const Admin = () => {
 
   return (
     <div
-      className="min-h-screen px-4 py-6"
-      style={{ backgroundImage: `url('${getAssetUrl('background.jpg')}')` }}
+      className="min-h-screen px-4 py-6 bg-cover"
+      style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
     >
       <img
         src="/cerrarsesion.png"
@@ -146,6 +157,17 @@ const Admin = () => {
       <h1 className="text-3xl font-bold text-white mb-6 mt-8 text-center">
         Dashboard Admin - {eventSlug}
       </h1>
+
+      <div className="text-center mb-6">
+        <button
+          onClick={() => setShowWizard(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded shadow-md hover:bg-blue-700 transition"
+        >
+          Configurar Assets del Evento
+        </button>
+      </div>
+
+      {showWizard && <AssetWizard onClose={() => setShowWizard(false)} />}
 
       <h2 className="font-semibold text-white text-center mb-6 flex justify-center items-center gap-6">
         Total fotos: {photos.length}

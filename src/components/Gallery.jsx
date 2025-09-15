@@ -7,6 +7,9 @@ import { useEvent } from "../hooks/useEvent";
 const Gallery = () => {
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [backgroundUrl, setBackgroundUrl] = useState(null);
+  const [frameUrl, setFrameUrl] = useState(null);
+
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
 
@@ -31,9 +34,19 @@ const Gallery = () => {
     fetchPhotos();
   }, [eventSlug, getStoragePath]);
 
+    useEffect(() => {
+    const loadAssets = async () => {
+      const bg = await getAssetUrl("bggallery.png");
+      const frame = await getAssetUrl("marco.png");
+      setBackgroundUrl(bg);
+      setFrameUrl(frame);
+    };
+    loadAssets();
+  }, [eventSlug, getAssetUrl]);
+
   return (
     <div className="min-h-screen bg-white px-4 py-6 bg-cover bg-center"
-     style={{ backgroundImage: `url('${getAssetUrl('bggallery.png')}')` }}
+     style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
     >
       {/* Botón Volver */}
       <div

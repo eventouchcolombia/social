@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import { storage } from "../firebase/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
@@ -11,6 +11,15 @@ const Photo = () => {
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
+  const [frameUrl, setFrameUrl] = useState(null);
+
+    useEffect(() => {
+    const loadFrame = async () => {
+      const url = await getAssetUrl("marco.png");
+      setFrameUrl(url);
+    };
+    loadFrame();
+  }, [eventSlug]);
 
   // Solo captura la foto (NO sube todavía)
   const capturePhoto = () => {
@@ -125,12 +134,13 @@ const Photo = () => {
           />
         )}
         {/* Marco superpuesto */}
+      {frameUrl && (
         <img
-          src={getAssetUrl('marco.png')}
+          src={frameUrl}
           alt="Marco decorativo"
-          className="absolute inset-0 w-full h-full pointer-events-none select-none"
-          style={{ zIndex: 10 }}
+          className="absolute inset-0 w-full h-full pointer-events-none"
         />
+      )}
       </div>
 
       {/* Botones principales */}

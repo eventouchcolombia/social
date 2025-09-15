@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
+import { useEffect, useState } from "react";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -19,14 +20,25 @@ const defaultTheme = {
 const Welcome = () => {
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl } = useEvent();
+  const [backgroundUrl, setBackgroundUrl] = useState(null);
 
   // Selecciona el tema según la ruta, o usa el default
   const theme = themes[eventSlug] || defaultTheme;
 
+  useEffect(() => {
+    const loadBackground = async () => {
+      const url = await getAssetUrl("background.jpg");
+      setBackgroundUrl(url);
+    };
+    loadBackground();
+  }, [eventSlug, getAssetUrl]);
+
+   const thetheme = themes[eventSlug] || defaultTheme;
+
   return (
     <div
       className="flex flex-col items-center justify-between min-h-screen bg-cover bg-center px-4"
-      style={{ backgroundImage: `url('${getAssetUrl("background.jpg")}')` }}
+      style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
     >
       <h1
         className={`text-4xl font-bold text-center mt-8 ${theme.title}`}
