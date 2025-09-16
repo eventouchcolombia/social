@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import { storage } from "../firebase/firebase";
+// eslint-disable-next-line no-unused-vars
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
@@ -35,57 +36,80 @@ const Photo = () => {
   };
 
   // Combina la foto capturada con el marco usando canvas y la sube
-  const publishPhoto = async () => {
-    if (!capturedImage) return;
+  // 👇 Reemplaza SOLO tu publishPhoto con esta versión
+const publishPhoto = async () => {
+  if (!capturedImage) return;
 
-    setUploading(true);
-    try {
-      // Cargar la imagen capturada
-      const baseImg = new window.Image();
-      baseImg.src = capturedImage;
-      await new Promise((resolve) => {
-        baseImg.onload = resolve;
-      });
+  setUploading(true);
+  try {
+    // 1) Cargar primero el marco (usamos su tamaño para el canvas)
+    const frameUrl = await getAssetUrl("marco.png");
+    const frameImg = new Image();
+    frameImg.crossOrigin = "anonymous";
+    frameImg.src = frameUrl;
+    await new Promise((res) => (frameImg.onload = res));
 
-      // Cargar el marco específico del evento
-      // Cargar el marco específico del evento
-      const frameUrl = await getAssetUrl("marco.png"); // <-- espera la promesa
-      const frameImg = new window.Image();
-      frameImg.crossOrigin = "anonymous";
-      frameImg.src = frameUrl;
-      await new Promise((resolve) => {
-        frameImg.onload = resolve;
-      });
+    // 2) Crear canvas con el tamaño del marco (así encaja perfecto)
+    const canvas = document.createElement("canvas");
+    canvas.width = frameImg.width;
+    canvas.height = frameImg.height;
+    const ctx = canvas.getContext("2d");
 
-      // Crear canvas y dibujar ambas imágenes
-      const canvas = document.createElement("canvas");
-      canvas.width = baseImg.width;
-      canvas.height = baseImg.height;
-      const ctx = canvas.getContext("2d");
-      // Dibuja la foto (espejada)
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
-      ctx.restore();
-      // Dibuja el marco
-      ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+    // 3) Cargar la foto capturada
+    const baseImg = new Image();
+    baseImg.src = capturedImage; // dataURL desde react-webcam
+    await new Promise((res) => (baseImg.onload = res));
 
-      // Obtiene la imagen final
-      const finalImage = canvas.toDataURL("image/png");
+    // 4) Calcular 'cover' (centrado + recorte) para que la foto llene el canvas
+    const imgAspect = baseImg.width / baseImg.height;
+    const canvasAspect = canvas.width / canvas.height;
+    let renderWidth, renderHeight, xOffset, yOffset;
 
-      // Sube la imagen combinada al directorio específico del evento
-      const photoRef = ref(storage, getStoragePath(`${Date.now()}.png`));
-      await uploadString(photoRef, finalImage, "data_url");
-
-      await getDownloadURL(photoRef);
-      navigate(`/${eventSlug}/gallery`);
-    } catch (error) {
-      console.error("❌ Error al subir la foto:", error);
-    } finally {
-      setUploading(false);
+    if (imgAspect > canvasAspect) {
+      // imagen más ancha -> recortamos los lados
+      renderHeight = canvas.height;
+      renderWidth = baseImg.width * (canvas.height / baseImg.height);
+      xOffset = (canvas.width - renderWidth) / 2;
+      yOffset = 0;
+    } else {
+      // imagen más alta -> recortamos arriba/abajo
+      renderWidth = canvas.width;
+      renderHeight = baseImg.height * (canvas.width / baseImg.width);
+      xOffset = 0;
+      yOffset = (canvas.height - renderHeight) / 2;
     }
-  };
+
+    // 5) Dibujar la foto ESPEJADA (para que coincida con preview mirrored)
+    //    Para posicionarla correctamente calculamos la X destino que queremos
+    const xDest = canvas.width - xOffset - renderWidth; // posición izquierda deseada después del espejo
+
+    ctx.save();
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    // dibujamos la foto en la coordenada calculada (en el contexto transformado)
+    ctx.drawImage(baseImg, xDest, yOffset, renderWidth, renderHeight);
+    ctx.restore(); // RESTABLECEMOS la transform para que el marco NO se vea espejado
+
+    // 6) Dibujar el marco encima (sin espejo)
+    ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+
+    // 7) Exportar y subir a Firebase (mantengo uploadString porque lo usabas)
+    const finalDataUrl = canvas.toDataURL("image/png");
+    const photoRef = ref(storage, getStoragePath(`${Date.now()}.png`));
+    await uploadString(photoRef, finalDataUrl, "data_url");
+
+    // ir a la galería
+    navigate(`/${eventSlug}/gallery`);
+  } catch (error) {
+    console.error("❌ Error al subir la foto:", error);
+  } finally {
+    setUploading(false);
+  }
+};
+
+
+
+
 
   return (
     <div
@@ -153,16 +177,14 @@ const Photo = () => {
           <div className="flex flex-col items-center">
             <div
               onClick={capturePhoto}
-              className="w-24 h-24 rounded-full border-6 border-yellow-500 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
+              className="w-22 h-22 rounded-full border-6 mb-8 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
             >
               <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
             </div>
-            <span className="text-black mt-2 text-xl font-bold">
-              Haz tu foto
-            </span>
+            
           </div>
         ) : (
-          <div className="flex gap-24 mb-2">
+          <div className="flex gap-24 mb-8">
             <div
               className="flex flex-col items-center cursor-pointer"
               onClick={retakePhoto}
@@ -170,11 +192,11 @@ const Photo = () => {
               <img
                 src="/repetir.png"
                 alt="Repetir"
-                className="w-20 h-18 hover:opacity-80 transition"
+                className="w-20 h-18 mt-[-10px] hover:opacity-80 transition"
               />
-              <span className="text-black mt-0 text-xl font-semibold">
+              {/* <span className="text-black mt-0 text-xl font-semibold">
                 Repetir
-              </span>
+              </span> */}
             </div>
 
             <div
@@ -184,13 +206,13 @@ const Photo = () => {
               <img
                 src="/publicar.png"
                 alt="Publicar"
-                className={`w-20 h-18 hover:opacity-80 transition ${
+                className={`w-15 h-13 hover:opacity-80 transition ${
                   uploading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               />
-              <span className="text-black mt-0 text-xl font-semibold">
+              {/* <span className="text-black mt-0 text-xl font-semibold">
                 {uploading ? "Publicando..." : "Publicar"}
-              </span>
+              </span> */}
             </div>
           </div>
         )}

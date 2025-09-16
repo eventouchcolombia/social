@@ -107,15 +107,15 @@ const Admin = () => {
     return (
       <div
         className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center"
-        style={{ backgroundImage: `url('${getAssetUrl('background.jpg')}')` }}
+        style={{ backgroundImage: "url('/adminbg.png')" }}
       >
-        <h1 className="text-3xl font-bold text-center text-black mb-6">
+        <h1 className="text-3xl font-bold text-center text-white mb-8 mt-[-200px]">
           Login Admin - {eventSlug}
         </h1>
 
         <button
           onClick={signInWithGoogle}
-          className="px-6 py-3 bg-white text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-[#357ae8] transition"
+          className="px-6 py-3 mt-12 bg-white/75 text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-[#357ae8] transition"
         >
           <img src="/google.png" alt="Google" className="w-6 h-6" />
           Iniciar sesión con Google
@@ -143,7 +143,7 @@ const Admin = () => {
 
   return (
     <div
-      className="min-h-screen px-4 py-6 bg-cover"
+      className=" px-4 py-6 min-h-screen bg-cover bg-center "
       style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
     >
       <img

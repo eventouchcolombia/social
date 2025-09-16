@@ -44,7 +44,7 @@ const Choose = () => {
         onClick={() => navigate(`/${eventSlug}`)}
         className="absolute top-4 left-0 flex flex-col items-center cursor-pointer"
       >
-        <img src="/back.png" alt="Volver" className="w-14 h-10 rounded-lg" />
+        <img src="/back.png" alt="Volver" className="w-10 h-10 rounded-lg ml-2" />
         {/* <span className="text-sm text-black font-semibold">Inicio</span> */}
       </div>
 
