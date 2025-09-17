@@ -9,7 +9,7 @@ const AssetWizard = ({ onClose }) => {
   const [files, setFiles] = useState({
     background: null,
     marco: null,
-    bgchoose: null,
+    bgchosee: null,
     bggallery: null,
     adminbg: null, // 🔹 Nuevo asset para el fondo admin
   });
@@ -49,7 +49,7 @@ const AssetWizard = ({ onClose }) => {
         e.preventDefault();
         handleFile(key, e.dataTransfer.files[0]);
       }}
-      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-6 w-[200px] h-[160px] cursor-pointer hover:border-blue-500 transition"
+      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-4 sm:p-6 w-full max-w-[180px] h-[140px] sm:h-[160px] cursor-pointer hover:border-blue-500 transition"
       onClick={() => document.getElementById(key).click()}
     >
       {files[key]?.preview ? (
@@ -61,7 +61,7 @@ const AssetWizard = ({ onClose }) => {
       ) : (
         <div className="flex flex-col items-center text-gray-500">
           <Upload className="w-6 h-6 mb-2" />
-          <span className="text-sm">{label}</span>
+          <span className="text-sm text-center">{label}</span>
         </div>
       )}
       <input
@@ -74,11 +74,11 @@ const AssetWizard = ({ onClose }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl shadow-xl p-8 w-[900px] relative"
+        className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-5xl relative overflow-y-auto max-h-[95vh]"
       >
         {/* Cerrar */}
         <button
@@ -88,31 +88,31 @@ const AssetWizard = ({ onClose }) => {
           <X size={20} />
         </button>
 
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6 text-center sm:text-left">
           Subir Assets
         </h2>
 
         {/* Grid de zonas */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
           {renderDropZone("Background", "background")}
           {renderDropZone("Marco", "marco")}
-          {renderDropZone("Background Choose", "bgchoose")}
+          {renderDropZone("Background Choose", "bgchosee")}
           {renderDropZone("Background Galería", "bggallery")}
           {renderDropZone("Admin Background", "adminbg")} {/* 🔹 Nuevo */}
         </div>
 
         {/* Botones */}
-        <div className="mt-8 flex justify-end space-x-4">
+        <div className="mt-8 flex flex-col sm:flex-row justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+            className="px-4 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition w-full sm:w-auto"
           >
             Cancelar
           </button>
           <button
             onClick={handleUpload}
             disabled={uploading}
-            className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
+            className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 w-full sm:w-auto"
           >
             {uploading ? "Subiendo..." : "Guardar"}
           </button>
