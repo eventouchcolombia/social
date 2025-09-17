@@ -27,7 +27,7 @@ const Welcome = () => {
 
   useEffect(() => {
     const loadBackground = async () => {
-      const url = await getAssetUrl("background.jpg");
+      const url = await getAssetUrl("background.png");
       setBackgroundUrl(url);
     };
     loadBackground();

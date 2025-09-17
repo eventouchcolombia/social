@@ -1,131 +1,123 @@
 import { useState } from "react";
 import { uploadAsset } from "../utils/uploadAsset";
 import { useEvent } from "../hooks/useEvent";
-import { ref, getDownloadURL } from "firebase/storage";
-import { storage } from "../firebase/firebase";
+import { motion } from "framer-motion";
+import { Upload, X } from "lucide-react";
 
 const AssetWizard = ({ onClose }) => {
   const { eventSlug } = useEvent();
-
-  const [step, setStep] = useState(1);
-  const [assetType, setAssetType] = useState("background.jpg");
-  const [currentUrl, setCurrentUrl] = useState(null);
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [files, setFiles] = useState({
+    background: null,
+    marco: null,
+    bgchoose: null,
+    bggallery: null,
+    adminbg: null, // 🔹 Nuevo asset para el fondo admin
+  });
   const [uploading, setUploading] = useState(false);
 
-  const handleNext = async () => {
-    if (step === 1) {
-      try {
-        const url = await getDownloadURL(
-          ref(storage, `assets/${eventSlug}/${assetType}`)
-        );
-        setCurrentUrl(url);
-      } catch {
-        setCurrentUrl(null);
+  const handleFile = (type, f) => {
+    setFiles((prev) => ({
+      ...prev,
+      [type]: {
+        file: f,
+        preview: URL.createObjectURL(f),
+      },
+    }));
+  };
+
+  const handleUpload = async () => {
+    try {
+      setUploading(true);
+      for (const [key, value] of Object.entries(files)) {
+        if (value?.file) {
+          await uploadAsset(value.file, `assets/${eventSlug}/${key}.png`);
+        }
       }
-      setStep(2);
-    } else if (step === 2) {
-      if (!file) return alert("Selecciona un archivo");
-      setStep(3);
-    } else if (step === 3) {
-      try {
-        setUploading(true);
-        const newUrl = await uploadAsset(
-          file,
-          `assets/${eventSlug}/${assetType}` // 👈 ruta correcta de assets
-        );
-        setCurrentUrl(newUrl);
-        setUploading(false);
-        alert("✅ Asset actualizado");
-        onClose();
-      } catch (err) {
-        console.error("Error subiendo asset", err);
-      }
+      setUploading(false);
+      alert("✅ Assets subidos correctamente");
+      onClose();
+    } catch (err) {
+      console.error("Error subiendo assets", err);
+      setUploading(false);
     }
   };
 
+  const renderDropZone = (label, key) => (
+    <div
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        handleFile(key, e.dataTransfer.files[0]);
+      }}
+      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-6 w-[200px] h-[160px] cursor-pointer hover:border-blue-500 transition"
+      onClick={() => document.getElementById(key).click()}
+    >
+      {files[key]?.preview ? (
+        <img
+          src={files[key].preview}
+          alt={label}
+          className="w-full h-full object-contain rounded-xl"
+        />
+      ) : (
+        <div className="flex flex-col items-center text-gray-500">
+          <Upload className="w-6 h-6 mb-2" />
+          <span className="text-sm">{label}</span>
+        </div>
+      )}
+      <input
+        id={key}
+        type="file"
+        hidden
+        onChange={(e) => handleFile(key, e.target.files[0])}
+      />
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-[500px] text-center">
-        {step === 1 && (
-          <>
-            <h2 className="text-xl font-bold mb-4">Seleccionar asset</h2>
-            <select
-              value={assetType}
-              onChange={(e) => setAssetType(e.target.value)}
-              className="border rounded p-2 w-full"
-            >
-              <option value="background.jpg">Background</option>
-              <option value="marco.png">Marco</option>
-              <option value="bgchosee.png">Background Choose</option>
-              <option value="bggallery.png">Background Galería</option>
-            </select>
-          </>
-        )}
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl shadow-xl p-8 w-[900px] relative"
+      >
+        {/* Cerrar */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
+          <X size={20} />
+        </button>
 
-        {step === 2 && (
-          <>
-            <h2 className="text-xl font-bold mb-4">Previsualización</h2>
-            {currentUrl ? (
-              <img
-                src={currentUrl}
-                alt="asset"
-                className="w-full h-48 object-contain mb-4"
-              />
-            ) : (
-              <p>No hay asset actual</p>
-            )}
-            <input
-              type="file"
-              onChange={(e) => {
-                const f = e.target.files[0];
-                setFile(f);
-                setPreview(URL.createObjectURL(f));
-              }}
-              className="mt-4"
-            />
-            {preview && (
-              <img
-                src={preview}
-                alt="preview"
-                className="w-full h-40 object-contain mt-4"
-              />
-            )}
-          </>
-        )}
+        <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+          Subir Assets
+        </h2>
 
-        {step === 3 && (
-          <>
-            <h2 className="text-xl font-bold mb-4">Confirmar</h2>
-            {preview && (
-              <img
-                src={preview}
-                alt="preview"
-                className="w-full h-48 object-contain mb-4"
-              />
-            )}
-            {uploading && <p className="text-blue-500">Subiendo...</p>}
-          </>
-        )}
+        {/* Grid de zonas */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
+          {renderDropZone("Background", "background")}
+          {renderDropZone("Marco", "marco")}
+          {renderDropZone("Background Choose", "bgchoose")}
+          {renderDropZone("Background Galería", "bggallery")}
+          {renderDropZone("Admin Background", "adminbg")} {/* 🔹 Nuevo */}
+        </div>
 
-        <div className="mt-6 flex justify-between">
-          {step > 1 && (
-            <button
-              onClick={() => setStep((s) => s - 1)}
-              className="px-4 py-2 bg-gray-300 rounded"
-            >
-              Atrás
-            </button>
-          )}
+        {/* Botones */}
+        <div className="mt-8 flex justify-end space-x-4">
           <button
-            onClick={handleNext}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
           >
-            {step === 3 ? "Subir" : "Siguiente"}
+            Cancelar
+          </button>
+          <button
+            onClick={handleUpload}
+            disabled={uploading}
+            className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {uploading ? "Subiendo..." : "Guardar"}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

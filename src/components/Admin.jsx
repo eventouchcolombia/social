@@ -49,13 +49,14 @@ const Admin = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, eventSlug]);
 
-    useEffect(() => {
-    const loadBackground = async () => {
-      const url = await getAssetUrl("background.jpg");
-      setBackgroundUrl(url);
-    };
-    loadBackground();
-  }, [eventSlug, getAssetUrl]);
+useEffect(() => {
+  const loadBackground = async () => {
+    const url = await getAssetUrl("adminbg.png"); // 🔹 usa el mismo nombre del wizard
+    setBackgroundUrl(url);
+  };
+  loadBackground();
+}, [eventSlug, getAssetUrl]);
+
   // === eliminar foto ===
   const handleDelete = async (name) => {
     try {
@@ -107,7 +108,8 @@ const Admin = () => {
     return (
       <div
         className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center"
-        style={{ backgroundImage: "url('/adminbg.png')" }}
+        style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
+
       >
         <h1 className="text-3xl font-bold text-center text-white mb-8 mt-[-200px]">
           Login Admin - {eventSlug}
@@ -161,10 +163,11 @@ const Admin = () => {
       <div className="text-center mb-6">
         <button
           onClick={() => setShowWizard(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded shadow-md hover:bg-blue-700 transition"
+          className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition"
         >
-          Configurar Assets del Evento
+          Configurar Assets
         </button>
+
       </div>
 
       {showWizard && <AssetWizard onClose={() => setShowWizard(false)} />}
