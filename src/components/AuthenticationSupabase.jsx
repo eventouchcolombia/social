@@ -8,35 +8,38 @@ const AuthenticationSupabase = () => {
   const [loading, setLoading] = useState(true);
 
   // === Verificar si el usuario es admin ===
-  const checkIfAdmin = async (user) => {
-    try {
-      if (!user?.email) {
-        setIsAdmin(false);
-        return false;
-      }
-
-      const email = user.email.toLowerCase().trim();
-
-      const { data: admin, error } = await supabase
-        .from("admins")
-        .select("id, email")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (error) {
-        console.error("❌ Error consultando admins:", error);
-        setIsAdmin(false);
-        return false;
-      }
-
-      setIsAdmin(!!admin);
-      return !!admin;
-    } catch (err) {
-      console.error("❌ Error en checkIfAdmin:", err);
+// AuthenticationSupabase.jsx
+const checkIfAdmin = async (user, eventSlug) => {
+  try {
+    if (!user?.email) {
       setIsAdmin(false);
       return false;
     }
-  };
+
+    const email = user.email.toLowerCase().trim();
+
+    const { data: admin, error } = await supabase
+      .from("admins")
+      .select("id, email, event_slug")
+      .eq("email", email)
+      .eq("event_slug", eventSlug)  // 🔹 validar también por slug
+      .maybeSingle();
+
+    if (error) {
+      console.error("❌ Error consultando admins:", error);
+      setIsAdmin(false);
+      return false;
+    }
+
+    setIsAdmin(!!admin);
+    return !!admin;
+  } catch (err) {
+    console.error("❌ Error en checkIfAdmin:", err);
+    setIsAdmin(false);
+    return false;
+  }
+};
+
 
   // === Inicializar sesión y escuchar cambios ===
   useEffect(() => {
@@ -47,16 +50,18 @@ const AuthenticationSupabase = () => {
       setSession(currentSession);
 
       if (currentSession?.user) {
-        await checkIfAdmin(currentSession.user);
+        // 🔹 Obtén el slug actual de la URL
+        const slug = window.location.pathname.split("/")[1]; // ej: /happybirth/admin → "happybirth"
+        await checkIfAdmin(currentSession.user, slug);
       }
-      setLoading(false);
 
       unsub = supabase.auth.onAuthStateChange(async (event, sessionObj) => {
         const ses = sessionObj?.session ?? sessionObj;
         setSession(ses);
 
         if (event === "SIGNED_IN" && ses?.user) {
-          await checkIfAdmin(ses.user);
+          const slug = window.location.pathname.split("/")[1];
+          await checkIfAdmin(ses.user, slug);
         }
         if (event === "SIGNED_OUT") {
           setIsAdmin(false);

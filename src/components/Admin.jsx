@@ -126,22 +126,23 @@ useEffect(() => {
     );
   }
 
-  if (session && !isAdmin) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-screen gap-4">
-        <h1 className="text-black text-2xl">Acceso denegado.</h1>
-        <p className="text-sm text-gray-300">
-          Usuario: {session.user?.email ?? "sin email"}
-        </p>
-        <button
-          onClick={signOut}
-          className="px-4 py-2 bg-gray-700 text-white rounded"
-        >
-          Cerrar sesión
-        </button>
-      </div>
-    );
-  }
+if (session && !isAdmin) {
+  return (
+    <div className="flex flex-col justify-center items-center min-h-screen gap-4">
+      <h1 className="text-black text-2xl">Acceso denegado.</h1>
+      <p className="text-sm text-gray-300">
+        Usuario: {session.user?.email ?? "sin email"}
+      </p>
+      <button
+        onClick={signOut}
+        className="px-4 py-2 bg-gray-700 text-white rounded"
+      >
+        Cerrar sesión
+      </button>
+    </div>
+  );
+}
+
 
   return (
     <div
