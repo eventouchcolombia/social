@@ -211,16 +211,16 @@ const SuperAdmin = () => {
   // No authenticated
   if (!session) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900">
-        <h1 className="text-4xl font-bold text-center text-white mb-8">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-4">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-white mb-6 sm:mb-8">
           SuperAdmin Panel
         </h1>
-        <p className="text-gray-300 mb-8">Acceso restringido para súper administradores</p>
+        <p className="text-gray-300 mb-6 sm:mb-8 text-center text-sm sm:text-base">Acceso restringido para súper administradores</p>
         <button
           onClick={signInWithGoogle}
-          className="px-6 py-3 bg-white/90 text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-gray-100 transition"
+          className="px-6 py-3 bg-white/90 text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-gray-100 transition text-sm sm:text-base w-full max-w-xs"
         >
-          <img src="/google.png" alt="Google" className="w-6 h-6" />
+          <img src="/google.png" alt="Google" className="w-5 h-5 sm:w-6 sm:h-6" />
           Iniciar sesión con Google
         </button>
       </div>
@@ -230,17 +230,17 @@ const SuperAdmin = () => {
   // Not authorized
   if (session && !isSuperAdmin) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-900 gap-4">
-        <h1 className="text-red-400 text-3xl font-bold">Acceso Denegado</h1>
-        <p className="text-gray-300">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-900 gap-4 px-4">
+        <h1 className="text-red-400 text-2xl sm:text-3xl font-bold text-center">Acceso Denegado</h1>
+        <p className="text-gray-300 text-center text-sm sm:text-base break-all">
           Usuario: {session.user?.email ?? "sin email"}
         </p>
-        <p className="text-gray-400 text-sm">
+        <p className="text-gray-400 text-xs sm:text-sm text-center">
           No tienes permisos de súper administrador
         </p>
         <button
           onClick={signOut}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base w-full max-w-xs"
         >
           Cerrar sesión
         </button>
@@ -253,16 +253,16 @@ const SuperAdmin = () => {
 
   // SuperAdmin Panel
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-4 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-2 sm:px-4 py-4 sm:py-6">
       {/* Header */}
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-white">SuperAdmin Panel</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-green-400">✓ {session.user.email}</span>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">SuperAdmin Panel</h1>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <span className="text-green-400 text-sm sm:text-base truncate max-w-full">✓ {session.user.email}</span>
             <button
               onClick={signOut}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base w-full sm:w-auto"
             >
               Cerrar sesión
             </button>
@@ -281,15 +281,15 @@ const SuperAdmin = () => {
         )}
 
         {/* Create Event Form */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-white mb-4">Crear Nuevo Evento</h2>
-          <form onSubmit={createEvent} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mb-8">
+          <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">Crear Nuevo Evento</h2>
+          <form onSubmit={createEvent} className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0">
             <input
               type="email"
               placeholder="Email del administrador"
               value={newEvent.email}
               onChange={(e) => setNewEvent(prev => ({ ...prev, email: e.target.value }))}
-              className="px-4 py-2 rounded-lg bg-white/20 text-white placeholder-gray-300 border border-white/30 focus:border-blue-400 focus:outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 border border-white/30 focus:border-blue-400 focus:outline-none text-sm sm:text-base"
               required
             />
             <input
@@ -297,7 +297,7 @@ const SuperAdmin = () => {
               placeholder="Event slug (ej: boda-maria-juan)"
               value={newEvent.eventSlug}
               onChange={(e) => setNewEvent(prev => ({ ...prev, eventSlug: e.target.value.toLowerCase() }))}
-              className="px-4 py-2 rounded-lg bg-white/20 text-white placeholder-gray-300 border border-white/30 focus:border-blue-400 focus:outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 border border-white/30 focus:border-blue-400 focus:outline-none text-sm sm:text-base"
               pattern="[a-z0-9-]+"
               title="Solo letras minúsculas, números y guiones"
               required
@@ -305,32 +305,32 @@ const SuperAdmin = () => {
             <button
               type="submit"
               disabled={isCreating}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed transition"
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed transition text-sm sm:text-base font-medium"
             >
               {isCreating ? "Creando..." : "Crear Evento"}
             </button>
           </form>
-          <p className="text-gray-400 text-sm mt-2">
+          <p className="text-gray-400 text-xs sm:text-sm mt-2 break-all">
             El slug del evento será la URL: /{newEvent.eventSlug || "evento-slug"}
           </p>
         </div>
 
         {/* Events List */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-2xl font-semibold text-white">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-semibold text-white">
                 Eventos Existentes ({events.length})
               </h2>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-xs sm:text-sm break-all">
                 Debug: isSuperAdmin={isSuperAdmin.toString()}, events.length={events.length}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={fetchEvents}
                 disabled={loadingEvents}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm disabled:bg-blue-800 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm disabled:bg-blue-800 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {loadingEvents ? "🔄 Cargando..." : "🔄 Refrescar"}
               </button>
@@ -341,7 +341,7 @@ const SuperAdmin = () => {
                   console.log("🔍 Debug - Todos los registros:", allData);
                   alert(`Debug: ${allData?.length || 0} registros encontrados. Ver consola para detalles.`);
                 }}
-                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm"
+                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm w-full sm:w-auto"
               >
                 🧪 Debug
               </button>
@@ -353,74 +353,122 @@ const SuperAdmin = () => {
           ) : events.length === 0 ? (
             <p className="text-gray-400">No hay eventos creados aún.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-white/20">
-                    <th className="text-gray-300 py-3 px-4">Event Slug</th>
-                    <th className="text-gray-300 py-3 px-4">Admin Email</th>
-                    <th className="text-gray-300 py-3 px-4">Estado</th>
-                    <th className="text-gray-300 py-3 px-4">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {events.map((event) => (
-                    <tr key={event.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="text-white py-3 px-4 font-semibold">{event.event_slug}</td>
-                      <td className="text-gray-300 py-3 px-4">{event.email}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-yellow-400 text-sm">⚙️ Pendiente configuración</span>
-                          <span className="text-gray-400 text-xs">Ir a Admin → Configurar Assets</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex gap-2 flex-wrap">
-                          <a
-                            href={`/${event.event_slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
-                            title="Ver evento público"
-                          >
-                            Ver
-                          </a>
-                          <a
-                            href={`/${event.event_slug}/admin`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition"
-                            title="Panel de administración y AssetWizard"
-                          >
-                            Admin
-                          </a>
-                          <button
-                            onClick={() => deleteEvent(event.id, event.event_slug)}
-                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
-                            title="Eliminar evento"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </td>
+            <>
+              {/* Mobile Card Layout */}
+              <div className="block lg:hidden space-y-4">
+                {events.map((event) => (
+                  <div key={event.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="mb-3">
+                      <h3 className="text-white font-semibold text-lg mb-1">{event.event_slug}</h3>
+                      <p className="text-gray-300 text-sm truncate">{event.email}</p>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <span className="text-yellow-400 text-sm">⚙️ Pendiente configuración</span>
+                      <p className="text-gray-400 text-xs">Ir a Admin → Configurar Assets</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <a
+                        href={`/${event.event_slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition text-center"
+                        title="Ver evento público"
+                      >
+                        Ver
+                      </a>
+                      <a
+                        href={`/${event.event_slug}/admin`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition text-center"
+                        title="Panel de administración y AssetWizard"
+                      >
+                        Admin
+                      </a>
+                      <button
+                        onClick={() => deleteEvent(event.id, event.event_slug)}
+                        className="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition col-span-2"
+                        title="Eliminar evento"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table Layout */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-white/20">
+                      <th className="text-gray-300 py-3 px-4">Event Slug</th>
+                      <th className="text-gray-300 py-3 px-4">Admin Email</th>
+                      <th className="text-gray-300 py-3 px-4">Estado</th>
+                      <th className="text-gray-300 py-3 px-4">Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {events.map((event) => (
+                      <tr key={event.id} className="border-b border-white/10 hover:bg-white/5">
+                        <td className="text-white py-3 px-4 font-semibold">{event.event_slug}</td>
+                        <td className="text-gray-300 py-3 px-4">{event.email}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-yellow-400 text-sm">⚙️ Pendiente configuración</span>
+                            <span className="text-gray-400 text-xs">Ir a Admin → Configurar Assets</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2 flex-wrap">
+                            <a
+                              href={`/${event.event_slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
+                              title="Ver evento público"
+                            >
+                              Ver
+                            </a>
+                            <a
+                              href={`/${event.event_slug}/admin`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition"
+                              title="Panel de administración y AssetWizard"
+                            >
+                              Admin
+                            </a>
+                            <button
+                              onClick={() => deleteEvent(event.id, event.event_slug)}
+                              className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
+                              title="Eliminar evento"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 
         {/* Instructions */}
-        <div className="mt-8 bg-yellow-500/10 border border-yellow-500/50 rounded-lg p-4">
-          <h3 className="text-yellow-200 font-semibold mb-2">📋 Proceso para crear eventos:</h3>
-          <ul className="text-yellow-100 text-sm space-y-1">
-            <li>• <strong>Paso 1:</strong> Crea un evento ingresando el email del admin y un slug único</li>
-            <li>• <strong>Paso 2:</strong> El admin debe ir a /{`{slug}`}/admin e iniciar sesión</li>
-            <li>• <strong>Paso 3:</strong> Usar "Configurar Assets" para subir imágenes al AssetWizard</li>
-            <li>• <strong>Assets requeridos:</strong> background.png y marco.png</li>
-            <li>• <strong>Assets opcionales:</strong> bgchosee.png, bggallery.png, adminbg.png</li>
-            <li>• <strong>Resultado:</strong> El evento estará disponible en /{`{slug}`}</li>
+        <div className="mt-6 sm:mt-8 bg-yellow-500/10 border border-yellow-500/50 rounded-lg p-3 sm:p-4">
+          <h3 className="text-yellow-200 font-semibold mb-2 text-sm sm:text-base">📋 Proceso para crear eventos:</h3>
+          <ul className="text-yellow-100 text-xs sm:text-sm space-y-1 sm:space-y-2">
+            <li className="break-words">• <strong>Paso 1:</strong> Crea un evento ingresando el email del admin y un slug único</li>
+            <li className="break-words">• <strong>Paso 2:</strong> El admin debe ir a /{`{slug}`}/admin e iniciar sesión</li>
+            <li className="break-words">• <strong>Paso 3:</strong> Usar "Configurar Assets" para subir imágenes al AssetWizard</li>
+            <li className="break-words">• <strong>Assets requeridos:</strong> background.png y marco.png</li>
+            <li className="break-words">• <strong>Assets opcionales:</strong> bgchosee.png, bggallery.png, adminbg.png</li>
+            <li className="break-words">• <strong>Resultado:</strong> El evento estará disponible en /{`{slug}`}</li>
           </ul>
         </div>
       </div>
