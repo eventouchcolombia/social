@@ -30,10 +30,7 @@ Cada evento tendrá su propia URL única:
 
 Para agregar un nuevo evento:
 
-1. **Crear carpeta del evento** en `/public/events/nombre-del-evento/`
-2. **Subir assets**:
-   - `marco.png` - Marco personalizado (se superpone sobre la foto)
-   - `background.jpg` - Fondo de las pantallas de bienvenida, selección y admin
+
 3. **Configurar admin** en Supabase (tabla `admins` - agregar email del admin)
 4. **Compartir URL** con el cliente: `https://tu-dominio.com/nombre-del-evento`
 

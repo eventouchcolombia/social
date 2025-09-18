@@ -5,11 +5,15 @@ import Photo from "./components/Photo";
 import Choose from "./components/Choose";
 import Gallery from "./components/Gallery";
 import Admin from "./components/Admin";
+import SuperAdmin from "./components/SuperAdmin";
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* SuperAdmin route - must be before eventSlug routes */}
+        <Route path="/superadmin" element={<SuperAdmin />} />
+        
         {/* Rutas con eventSlug */}
         <Route path="/:eventSlug" element={<Welcome />} />
         <Route path="/:eventSlug/photo" element={<Photo />} />
