@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
-  happybirth: {
+fabian: {
     title: "text-[#8C6A2F]",
     button: "bg-yellow-100/65 text-[#8C6A2F] hover:bg-yellow-300",
   },
