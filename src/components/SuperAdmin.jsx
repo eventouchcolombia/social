@@ -366,33 +366,19 @@ const SuperAdmin = () => {
                       <p className="text-gray-300 text-sm truncate">{event.email}</p>
                     </div>
                     
-                    <div className="mb-3">
-                      <span className="text-yellow-400 text-sm">⚙️ Pendiente configuración</span>
-                      <p className="text-gray-400 text-xs">Ir a Admin → Configurar Assets</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="flex gap-2">
                       <a
                         href={`/${event.event_slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition text-center"
+                        className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition text-center flex-1"
                         title="Ver evento público"
                       >
-                        Ver
-                      </a>
-                      <a
-                        href={`/${event.event_slug}/admin`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition text-center"
-                        title="Panel de administración y AssetWizard"
-                      >
-                        Admin
+                        Ver Evento
                       </a>
                       <button
                         onClick={() => deleteEvent(event.id, event.event_slug)}
-                        className="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition col-span-2"
+                        className="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition flex-1"
                         title="Eliminar evento"
                       >
                         Eliminar
@@ -409,7 +395,6 @@ const SuperAdmin = () => {
                     <tr className="border-b border-white/20">
                       <th className="text-gray-300 py-3 px-4">Event Slug</th>
                       <th className="text-gray-300 py-3 px-4">Admin Email</th>
-                      <th className="text-gray-300 py-3 px-4">Estado</th>
                       <th className="text-gray-300 py-3 px-4">Acciones</th>
                     </tr>
                   </thead>
@@ -419,12 +404,6 @@ const SuperAdmin = () => {
                         <td className="text-white py-3 px-4 font-semibold">{event.event_slug}</td>
                         <td className="text-gray-300 py-3 px-4">{event.email}</td>
                         <td className="py-3 px-4">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-yellow-400 text-sm">⚙️ Pendiente configuración</span>
-                            <span className="text-gray-400 text-xs">Ir a Admin → Configurar Assets</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
                           <div className="flex gap-2 flex-wrap">
                             <a
                               href={`/${event.event_slug}`}
@@ -433,16 +412,7 @@ const SuperAdmin = () => {
                               className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
                               title="Ver evento público"
                             >
-                              Ver
-                            </a>
-                            <a
-                              href={`/${event.event_slug}/admin`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition"
-                              title="Panel de administración y AssetWizard"
-                            >
-                              Admin
+                              Ver Evento
                             </a>
                             <button
                               onClick={() => deleteEvent(event.id, event.event_slug)}

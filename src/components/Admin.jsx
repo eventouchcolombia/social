@@ -100,8 +100,12 @@ useEffect(() => {
   // === UI ===
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <h1 className="text-white text-2xl">Cargando...</h1>
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <h1 className="text-white text-2xl font-semibold mb-2">Cargando Panel Admin</h1>
+          <p className="text-gray-300 text-sm">Verificando autenticación para {eventSlug}...</p>
+        </div>
       </div>
     );
   }
@@ -109,21 +113,26 @@ useEffect(() => {
   if (!session) {
     return (
       <div
-        className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center"
+        className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center relative"
         style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
-
       >
-        <h1 className="text-3xl font-bold text-center text-white mb-8 mt-[-200px]">
-          Login Admin - {eventSlug}
-        </h1>
+        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="relative z-10 text-center px-4">
+          <h1 className="text-3xl font-bold text-center text-white mb-4">
+            Panel Admin - {eventSlug}
+          </h1>
+          <p className="text-white/80 mb-8 text-sm sm:text-base">
+            Inicia sesión para acceder al panel de administración
+          </p>
 
-        <button
-          onClick={signInWithGoogle}
-          className="px-6 py-3 mt-12 bg-white/75 text-black font-bold rounded-lg flex items-center gap-2 shadow-md hover:bg-[#357ae8] transition"
-        >
-          <img src="/google.png" alt="Google" className="w-6 h-6" />
-          Iniciar sesión con Google
-        </button>
+          <button
+            onClick={signInWithGoogle}
+            className="px-6 py-3 bg-white/90 text-black font-bold rounded-lg flex items-center gap-2 shadow-lg hover:bg-white transition mx-auto"
+          >
+            <img src="/google.png" alt="Google" className="w-6 h-6" />
+            Iniciar sesión con Google
+          </button>
+        </div>
       </div>
     );
   }
@@ -159,7 +168,7 @@ if (session && !isAdmin) {
         title="Cerrar sesión"
       />
 
-      <h1 className="text-3xl font-bold text-white mb-6 mt-8 text-center">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6 mt-8 text-center drop-shadow-lg">
         Administrador de Eventos - {eventSlug}
       </h1>
 
@@ -195,10 +204,10 @@ if (session && !isAdmin) {
         />
       )}
 
-      <h2 className="font-semibold text-white text-center mb-6 flex justify-center items-center gap-6">
+      <h2 className="font-semibold text-gray-900 text-center mb-6 flex justify-center items-center gap-6 drop-shadow-lg">
         Total fotos: {photos.length}
         {photos.length > 0 && (
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer text-gray-800">
             <input
               type="checkbox"
               checked={selectAll}
@@ -231,7 +240,7 @@ if (session && !isAdmin) {
       )}
 
       {photos.length === 0 ? (
-        <p className="text-center text-gray-300">No hay fotos aún.</p>
+        <p className="text-center text-gray-700 drop-shadow-lg">No hay fotos aún.</p>
       ) : (
         <div className="grid grid-cols-3 gap-4">
           {photos.map((photo, index) => (
