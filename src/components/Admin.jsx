@@ -160,22 +160,30 @@ if (session && !isAdmin) {
       />
 
       <h1 className="text-3xl font-bold text-white mb-6 mt-8 text-center">
-        Dashboard Admin - {eventSlug}
+        Administrador de Eventos - {eventSlug}
       </h1>
 
-      <div className="text-center mb-6 space-y-4">
+      <div className="mb-6 flex flex-col sm:flex-row justify-center items-center gap-4 px-4">
         <button
           onClick={() => setShowWizard(true)}
-          className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition block mx-auto"
+          className="w-full sm:w-48 md:w-56 px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition font-medium text-sm sm:text-base"
         >
           Configurar Assets
         </button>
         
         <button
           onClick={() => setShowShareModal(true)}
-          className="px-6 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 transition block mx-auto"
+          className="w-full sm:w-48 md:w-56 px-6 py-3 rounded-xl bg-green-600 text-white hover:bg-green-700 transition font-medium text-sm sm:text-base"
         >
           Compartir Evento
+        </button>
+
+        <button
+          onClick={() => window.open(`/${eventSlug}`, '_blank')}
+          className="w-full sm:w-48 md:w-56 px-6 py-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition font-medium text-sm sm:text-base flex items-center justify-center gap-2"
+          title="Ver cómo se ve el evento para los invitados"
+        >
+          👁️ Vista Previa
         </button>
       </div>
 

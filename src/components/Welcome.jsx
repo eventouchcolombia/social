@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import { useEffect, useState } from "react";
+import useAuthenticationSupabase from "./AuthenticationSupabase";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -20,6 +21,7 @@ const defaultTheme = {
 const Welcome = () => {
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl } = useEvent();
+  const { isAdmin } = useAuthenticationSupabase();
   const [backgroundUrl, setBackgroundUrl] = useState(null);
 
   // Selecciona el tema según la ruta, o usa el default
@@ -37,9 +39,20 @@ const Welcome = () => {
 
   return (
     <div
-      className="flex flex-col items-center justify-between min-h-screen bg-cover bg-center px-4"
+      className="flex flex-col items-center justify-between min-h-screen bg-cover bg-center px-4 relative"
       style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
     >
+      {/* Botón Admin flotante - solo visible para administradores */}
+      {isAdmin && (
+        <button
+          onClick={() => navigate(`/${eventSlug}/admin`)}
+          className="fixed top-4 left-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition z-50 flex items-center gap-2 text-sm font-medium"
+          title="Ir al Panel de Administración"
+        >
+          🔧 Panel Admin
+        </button>
+      )}
+
       <h1
         className={`text-4xl font-bold text-center mt-8 ${theme.title}`}
       >
