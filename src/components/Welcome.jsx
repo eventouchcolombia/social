@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import { useEffect, useState } from "react";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
+import { loadEventTexts } from "../utils/uploadAsset";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -23,16 +24,25 @@ const Welcome = () => {
   const { eventSlug, getAssetUrl } = useEvent();
   const { isAdmin } = useAuthenticationSupabase();
   const [backgroundUrl, setBackgroundUrl] = useState(null);
+  const [eventTexts, setEventTexts] = useState({
+    title: "EventPhotos",
+    subtitle: ""
+  });
 
   // Selecciona el tema según la ruta, o usa el default
   const theme = themes[eventSlug] || defaultTheme;
 
   useEffect(() => {
-    const loadBackground = async () => {
+    const loadAssets = async () => {
+      // Cargar background
       const url = await getAssetUrl("background.png");
       setBackgroundUrl(url);
+      
+      // Cargar textos personalizados
+      const texts = await loadEventTexts(eventSlug);
+      setEventTexts(texts);
     };
-    loadBackground();
+    loadAssets();
   }, [eventSlug, getAssetUrl]);
 
    
@@ -53,11 +63,18 @@ const Welcome = () => {
         </button>
       )}
 
-      <h1
-        className={`text-4xl font-bold text-center mt-8 ${theme.title}`}
-      >
-        EventPhotos
-      </h1>
+      <div className="text-center mt-8">
+        <h1
+          className={`text-4xl font-bold ${theme.title}`}
+        >
+          {eventTexts.title}
+        </h1>
+        {eventTexts.subtitle && (
+          <p className={`text-lg mt-4 ${theme.title} opacity-80`}>
+            {eventTexts.subtitle}
+          </p>
+        )}
+      </div>
 
       <div className="mb-16">
         <button

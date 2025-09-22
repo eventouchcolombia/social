@@ -15,3 +15,25 @@ export const uploadAsset = async (file, fullPath) => {
   await uploadBytes(storageRef, file);
   return await getDownloadURL(storageRef);
 };
+
+/**
+ * Carga los textos del evento desde Firebase Storage
+ * @param {string} eventSlug - slug del evento
+ * @returns {Promise<object>} - objeto con title y subtitle
+ */
+export const loadEventTexts = async (eventSlug) => {
+  try {
+    const textRef = ref(storage, `assets/${eventSlug}/event-texts.json`);
+    const url = await getDownloadURL(textRef);
+    const response = await fetch(url);
+    const texts = await response.json();
+    return texts;
+  } catch (error) {
+    // Si no existe el archivo, devolver valores por defecto
+    console.log("No se encontraron textos personalizados, usando valores por defecto");
+    return {
+      title: "EventPhotos",
+      subtitle: ""
+    };
+  }
+};

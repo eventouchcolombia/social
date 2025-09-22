@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { uploadAsset } from "../utils/uploadAsset";
+import { useState, useEffect } from "react";
+import { uploadAsset, loadEventTexts } from "../utils/uploadAsset";
 import { useEvent } from "../hooks/useEvent";
 import { motion } from "framer-motion";
 import { Upload, X } from "lucide-react";
@@ -13,7 +13,20 @@ const AssetWizard = ({ onClose }) => {
     bggallery: null,
     adminbg: null, // 🔹 Nuevo asset para el fondo admin
   });
+  const [eventTexts, setEventTexts] = useState({
+    title: "EventPhotos",
+    subtitle: ""
+  });
   const [uploading, setUploading] = useState(false);
+
+  // Cargar textos existentes al abrir el wizard
+  useEffect(() => {
+    const loadExistingTexts = async () => {
+      const texts = await loadEventTexts(eventSlug);
+      setEventTexts(texts);
+    };
+    loadExistingTexts();
+  }, [eventSlug]);
 
   const handleFile = (type, f) => {
     setFiles((prev) => ({
@@ -28,13 +41,21 @@ const AssetWizard = ({ onClose }) => {
   const handleUpload = async () => {
     try {
       setUploading(true);
+      
+      // Subir archivos de imagen
       for (const [key, value] of Object.entries(files)) {
         if (value?.file) {
           await uploadAsset(value.file, `assets/${eventSlug}/${key}.png`);
         }
       }
+      
+      // Subir textos del evento como archivo JSON
+      const textsBlob = new Blob([JSON.stringify(eventTexts)], { type: 'application/json' });
+      const textsFile = new File([textsBlob], 'event-texts.json', { type: 'application/json' });
+      await uploadAsset(textsFile, `assets/${eventSlug}/event-texts.json`);
+      
       setUploading(false);
-      alert("✅ Assets subidos correctamente");
+      alert("✅ Assets y configuración subidos correctamente");
       onClose();
     } catch (err) {
       console.error("Error subiendo assets", err);
@@ -89,16 +110,50 @@ const AssetWizard = ({ onClose }) => {
         </button>
 
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6 text-center sm:text-left">
-          Subir Assets
+          Configurar Evento
         </h2>
 
+        {/* Configuración de textos */}
+        <div className="mb-8 bg-gray-50 rounded-xl p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Textos del Evento</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Título del Evento
+              </label>
+              <input
+                type="text"
+                value={eventTexts.title}
+                onChange={(e) => setEventTexts(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Ej: Boda María & Juan"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Leyenda/Subtítulo (opcional)
+              </label>
+              <input
+                type="text"
+                value={eventTexts.subtitle}
+                onChange={(e) => setEventTexts(prev => ({ ...prev, subtitle: e.target.value }))}
+                placeholder="Ej: Celebremos juntos este momento especial"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Grid de zonas */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
-          {renderDropZone("Background", "background")}
-          {renderDropZone("Marco", "marco")}
-          {renderDropZone("Background Choose", "bgchosee")}
-          {renderDropZone("Background Galería", "bggallery")}
-          {renderDropZone("Admin Background", "adminbg")} {/* 🔹 Nuevo */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Imágenes del Evento</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+            {renderDropZone("Background", "background")}
+            {renderDropZone("Marco", "marco")}
+            {renderDropZone("Background Choose", "bgchosee")}
+            {renderDropZone("Background Galería", "bggallery")}
+            {renderDropZone("Admin Background", "adminbg")} {/* 🔹 Nuevo */}
+          </div>
         </div>
 
         {/* Botones */}
