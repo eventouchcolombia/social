@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { storage } from "../firebase/firebase";
 import AssetWizard from "./AssetWizard";
+import ShareEvent from "./ShareEvent";
 import {
   ref,
   listAll,
@@ -24,6 +25,7 @@ const Admin = () => {
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
 
     const [backgroundUrl, setBackgroundUrl] = useState(null);
@@ -161,17 +163,29 @@ if (session && !isAdmin) {
         Dashboard Admin - {eventSlug}
       </h1>
 
-      <div className="text-center mb-6">
+      <div className="text-center mb-6 space-y-4">
         <button
           onClick={() => setShowWizard(true)}
-          className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition"
+          className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition block mx-auto"
         >
           Configurar Assets
         </button>
-
+        
+        <button
+          onClick={() => setShowShareModal(true)}
+          className="px-6 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 transition block mx-auto"
+        >
+          Compartir Evento
+        </button>
       </div>
 
       {showWizard && <AssetWizard onClose={() => setShowWizard(false)} />}
+      {showShareModal && (
+        <ShareEvent 
+          eventSlug={eventSlug} 
+          onClose={() => setShowShareModal(false)} 
+        />
+      )}
 
       <h2 className="font-semibold text-white text-center mb-6 flex justify-center items-center gap-6">
         Total fotos: {photos.length}

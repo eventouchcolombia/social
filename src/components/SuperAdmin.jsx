@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
+import ShareEvent from "./ShareEvent";
 import { 
   validateEventSlug, 
   getEventAssetInstructions, 
@@ -21,6 +22,8 @@ const SuperAdmin = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedEventSlug, setSelectedEventSlug] = useState("");
 
   // Verificar si el usuario es SuperAdmin
   useEffect(() => {
