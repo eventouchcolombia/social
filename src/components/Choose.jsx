@@ -79,7 +79,8 @@ const Choose = () => {
           <img
             src="/Log_Out.png"
             alt="Cerrar sesión"
-            className="w-8 h-8 rounded-lg"
+            className="w-8 h-8
+             rounded-lg"
           />
         </button>
       </div>
