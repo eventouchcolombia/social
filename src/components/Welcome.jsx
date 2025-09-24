@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
 import { loadEventTexts } from "../utils/uploadAsset";
 import Modals from "../components/Modals";
+import { supabase } from "../supabaseClient";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -11,10 +12,8 @@ const themes = {
     title: "text-[#BFA065]",
     button: "bg-yellow-100 text-[#BFA065] hover:bg-yellow-300",
   },
-  // 🎉 Agregas aquí más estilos personalizados
 };
 
-// 🎨 Tema por defecto (para rutas que no tengan personalización)
 const defaultTheme = {
   title: "text-black",
   button: "bg-[#753E89] text-white hover:bg-purple-800",
@@ -23,36 +22,62 @@ const defaultTheme = {
 const Welcome = () => {
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl } = useEvent();
-  const { isAdmin } = useAuthenticationSupabase();
+  const { isAdmin, signInWithGoogle, session } = useAuthenticationSupabase();
   const [backgroundUrl, setBackgroundUrl] = useState(null);
   const [eventTexts, setEventTexts] = useState({
     title: "EventPhotos",
     subtitle: "",
   });
 
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Selecciona el tema según la ruta, o usa el default
   const theme = themes[eventSlug] || defaultTheme;
 
+  // 🔹 Cargar assets y textos del evento
   useEffect(() => {
     const loadAssets = async () => {
-      // Cargar background con fallback si no hay bg en firebase
       const url = await getAssetUrl("background.png");
-      if (url) {
-        setBackgroundUrl(url);
-      } else {
-        setBackgroundUrl("/Mobile.png"); // fallback local desde public
-      }
+      setBackgroundUrl(url || "/Mobile.png");
 
-      // Cargar textos personalizados
       const texts = await loadEventTexts(eventSlug);
       setEventTexts(texts);
     };
     loadAssets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 🔹 Revisar si hay usuario logueado
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("❌ Error obteniendo usuario:", error.message);
+      } else if (data?.user) {
+        console.log("✅ Usuario logueado:", data.user);
+      }
+    };
+    checkUser();
+  }, [session]);
+
+  // 🔹 Manejo del botón comenzar
+  const handleStart = async () => {
+    const { data, error } = await supabase.auth.getUser();
+
+    if (data?.user) {
+      // Ya logueado → navega directo
+      navigate(`/${eventSlug}/choose`);
+    } else {
+      // No logueado → inicia login Google
+      await signInWithGoogle();
+      // El navigate ocurrirá automáticamente cuando vuelva con sesión
+    }
+  };
+
+  // 🔹 Redirección automática si ya hay sesión activa
+  useEffect(() => {
+    if (session?.user) {
+      navigate(`/${eventSlug}/choose`);
+    }
+  }, [session, navigate, eventSlug]);
 
   return (
     <div
@@ -61,18 +86,15 @@ const Welcome = () => {
         backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none",
       }}
     >
-      {/* Botón Admin flotante - solo visible para administradores */}
       {isAdmin && (
         <button
           onClick={() => navigate(`/${eventSlug}/admin`)}
           className="fixed top-4 left-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition z-50 flex items-center gap-2 text-sm font-medium"
-          title="Ir al Panel de Administración"
         >
           🔧 Panel Admin
         </button>
       )}
 
-      {/* Título del evento */}
       <div className="text-center mt-8">
         <h1 className={`text-4xl font-bold text-white ${theme.title}`}>
           {eventTexts.title}
@@ -84,7 +106,6 @@ const Welcome = () => {
         )}
       </div>
 
-      {/* 📦 Card de bienvenida */}
       <div className="bg-white/60 rounded-2xl p-4 text-center max-w-md mx-auto mt-12 mb-6">
         <h1 className="text-sm font-semibold text-gray-800">
           ¡Bienvenido a nuestro photobooth digital!
@@ -93,15 +114,13 @@ const Welcome = () => {
           Captura momentos increíbles y llévatelos contigo.
         </p>
 
-        {/* Botón principal */}
         <button
-          className={`mt-6 px-6 py-3 w-full font-bold rounded-full text-lg transition bg-[#753E89]  hover:bg-purple-800 ${theme.button}`}
-          onClick={() => navigate(`/${eventSlug}/choose`)}
+          className={`mt-6 px-6 py-3 w-full font-bold rounded-full text-lg transition ${theme.button}`}
+          onClick={handleStart}
         >
           Comenzar
         </button>
 
-        {/* Enlace secundario */}
         <button
           className="mt-4 text-sm font-semibold text-gray-800 underline"
           onClick={() => setIsModalOpen(true)}
@@ -110,9 +129,7 @@ const Welcome = () => {
         </button>
       </div>
 
-      {/* Modal */}
       <Modals isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      
     </div>
   );
 };
