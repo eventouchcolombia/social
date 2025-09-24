@@ -5,7 +5,7 @@ import { Camera, Image as ImageIcon } from "lucide-react";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
-fabian: {
+  fabian: {
     title: "text-[#8C6A2F]",
     button: "bg-yellow-100 text-[#8C6A2F] hover:bg-yellow-300",
   },
@@ -42,7 +42,10 @@ const Choose = () => {
   return (
     <div
       className="relative flex flex-col items-center justify-center min-h-screen bg-cover bg-center px-4"
-      style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
+      style={{
+        backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none",
+        minHeight: "100dvh",
+      }}
     >
       {/* Botón Ir al inicio */}
       {/* <div
@@ -55,7 +58,7 @@ const Choose = () => {
       */}
 
       {/* Caja inferior */}
-      <div className="w-[109%] bg-white rounded-t-3xl shadow-lg p-4 flex flex-col  mt-136">
+      <div className="w-[109%]  bg-white rounded-t-3xl shadow-lg p-4 flex flex-col  mt-138">
         {/* Título */}
         <h1 className="text-lg text-left  font-bold mb-6 text-black">
           ¿Qué quieres hacer?
@@ -65,7 +68,7 @@ const Choose = () => {
         <div className="grid grid-cols-2 gap-4 w-full">
           <button
             onClick={() => navigate(`/${eventSlug}/photo`)}
-          className={`flex flex-col items-center justify-center gap-2 p-6 rounded-xl   font-semibold shadow-md hover:bg-purple-800 transition ${theme.button}`}
+            className={`flex flex-col items-center justify-center gap-2 p-6 rounded-xl   font-semibold shadow-md hover:bg-purple-800 transition ${theme.button}`}
           >
             <Camera size={28} />
             <span>Tomar foto</span>
@@ -83,6 +86,5 @@ const Choose = () => {
     </div>
   );
 };
-
 
 export default Choose;
