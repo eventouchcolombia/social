@@ -9,7 +9,7 @@ import { useParams } from "react-router-dom";
  */
 export const useEvent = () => {
   const { eventSlug } = useParams();
-  const currentEventSlug = eventSlug || "boda-principal";
+  const currentEventSlug = eventSlug || "demo-event";
 
   // 🔹 Devuelve URL de un asset del evento (async)
   const getAssetUrl = async (assetName) => {

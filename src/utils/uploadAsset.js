@@ -29,8 +29,16 @@ export const loadEventTexts = async (eventSlug) => {
     const texts = await response.json();
     return texts;
   } catch (error) {
-    // Si no existe el archivo, devolver valores por defecto
-    console.log("No se encontraron textos personalizados, usando valores por defecto");
+    // Solo mostrar log amigable si el archivo no existe
+    if (error.code === "storage/object-not-found") {
+      console.warn(
+        `⚠️ No se encontraron textos personalizados para ${eventSlug}, usando valores por defecto`
+      );
+    } else {
+      console.error("❌ Error cargando textos del evento:", error);
+    }
+
+    // Valores por defecto
     return {
       title: "EventPhotos",
       subtitle: ""
