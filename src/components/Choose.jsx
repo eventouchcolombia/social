@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import { useEffect, useState } from "react";
+import { Camera, Image as ImageIcon } from "lucide-react";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
 fabian: {
     title: "text-[#8C6A2F]",
-    button: "bg-yellow-100/65 text-[#8C6A2F] hover:bg-yellow-300",
+    button: "bg-yellow-100 text-[#8C6A2F] hover:bg-yellow-300",
   },
   // 🎉 Agrega aquí más estilos personalizados por evento
 };
@@ -14,7 +15,7 @@ fabian: {
 // 🎨 Tema por defecto (para rutas que no tengan personalización)
 const defaultTheme = {
   title: "text-black",
-  button: "bg-black/55 text-white hover:bg-purple-600",
+  button: "text-white bg-[#753E89]",
 };
 
 const Choose = () => {
@@ -29,7 +30,11 @@ const Choose = () => {
   useEffect(() => {
     const loadBackground = async () => {
       const url = await getAssetUrl("bgchosee.png");
-      setBackgroundUrl(url);
+      if (url) {
+        setBackgroundUrl(url);
+      } else {
+        setBackgroundUrl("/Mobile.png"); // fallback local desde public
+      }
     };
     loadBackground();
   }, [eventSlug, getAssetUrl]);
@@ -40,39 +45,44 @@ const Choose = () => {
       style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
     >
       {/* Botón Ir al inicio */}
-      <div
+      {/* <div
         onClick={() => navigate(`/${eventSlug}`)}
         className="absolute top-4 left-0 flex flex-col items-center cursor-pointer"
       >
         <img src="/back.png" alt="Volver" className="w-10 h-10 rounded-lg ml-2" />
-        {/* <span className="text-sm text-black font-semibold">Inicio</span> */}
-      </div>
+        {/* <span className="text-sm text-black font-semibold">Inicio</span> 
+      </div> 
+      */}
 
-      {/* Título */}
-      <h1
-        className={`text-4xl sm:text-3xl font-bold mb-14 mt-[-120px] text-center ${theme.title}`}
-      >
-        ¿Qué quieres hacer primero?
-      </h1>
+      {/* Caja inferior */}
+      <div className="w-[109%] bg-white rounded-t-3xl shadow-lg p-4 flex flex-col  mt-136">
+        {/* Título */}
+        <h1 className="text-lg text-left  font-bold mb-6 text-black">
+          ¿Qué quieres hacer?
+        </h1>
 
-      {/* Opciones */}
-      <div className="w-full max-w-xs flex flex-col gap-4">
-        <button
-          onClick={() => navigate(`/${eventSlug}/photo`)}
-          className={`w-full py-3 rounded-xl text-lg font-semibold shadow-md transition ${theme.button}`}
-        >
-          Tomate una foto
-        </button>
+        {/* Opciones en dos columnas */}
+        <div className="grid grid-cols-2 gap-4 w-full">
+          <button
+            onClick={() => navigate(`/${eventSlug}/photo`)}
+          className={`flex flex-col items-center justify-center gap-2 p-6 rounded-xl   font-semibold shadow-md hover:bg-purple-800 transition ${theme.button}`}
+          >
+            <Camera size={28} />
+            <span>Tomar foto</span>
+          </button>
 
-        <button
-          onClick={() => navigate(`/${eventSlug}/gallery`)}
-          className={`w-full py-3 rounded-xl text-lg font-semibold shadow-md transition ${theme.button}`}
-        >
-          Ir a la galería
-        </button>
+          <button
+            onClick={() => navigate(`/${eventSlug}/gallery`)}
+            className="flex flex-col items-center justify-center gap-2 p-6 rounded-xl bg-purple-100 text-[#753E89] font-semibold shadow-md hover:bg-purple-200 transition"
+          >
+            <ImageIcon size={28} />
+            <span>Ver galería</span>
+          </button>
+        </div>
       </div>
     </div>
   );
 };
+
 
 export default Choose;
