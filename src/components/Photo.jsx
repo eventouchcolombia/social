@@ -5,6 +5,7 @@ import { storage } from "../firebase/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
+import AuthenticationSupabase from "../components/AuthenticationSupabase";
 
 const Photo = () => {
   const webcamRef = useRef(null);
@@ -13,14 +14,17 @@ const Photo = () => {
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
   const [frameUrl, setFrameUrl] = useState(null);
+  const { session } = AuthenticationSupabase();
+
+  const user = session?.user;
 
   useEffect(() => {
     const loadFrame = async () => {
       const url = await getAssetUrl("marco.png");
-      setFrameUrl(url);
+      setFrameUrl(url || "/marco_local.png");
     };
     loadFrame();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventSlug]);
 
   // Solo captura la foto (NO sube todavía)
@@ -37,79 +41,89 @@ const Photo = () => {
 
   // Combina la foto capturada con el marco usando canvas y la sube
   // 👇 Reemplaza SOLO tu publishPhoto con esta versión
-const publishPhoto = async () => {
-  if (!capturedImage) return;
+  const publishPhoto = async () => {
+    if (!capturedImage) return;
 
-  setUploading(true);
-  try {
-    // 1) Cargar primero el marco (usamos su tamaño para el canvas)
-    const frameUrl = await getAssetUrl("marco.png");
-    const frameImg = new Image();
-    frameImg.crossOrigin = "anonymous";
-    frameImg.src = frameUrl;
-    await new Promise((res) => (frameImg.onload = res));
+    setUploading(true);
+    try {
+      // 1) Intentar cargar el marco desde Firebase o usar el local
+      let frameUrl = await getAssetUrl("marco.png");
+      if (!frameUrl) {
+        frameUrl = "/marco_local.png"; // fallback local si no existe en Firebase
+      }
 
-    // 2) Crear canvas con el tamaño del marco (así encaja perfecto)
-    const canvas = document.createElement("canvas");
-    canvas.width = frameImg.width;
-    canvas.height = frameImg.height;
-    const ctx = canvas.getContext("2d");
+      const frameImg = new Image();
+      frameImg.crossOrigin = "anonymous";
+      frameImg.src = frameUrl;
+      await new Promise((res) => (frameImg.onload = res));
 
-    // 3) Cargar la foto capturada
-    const baseImg = new Image();
-    baseImg.src = capturedImage; // dataURL desde react-webcam
-    await new Promise((res) => (baseImg.onload = res));
+      // 2) Crear canvas con el tamaño del marco
+      const canvas = document.createElement("canvas");
+      canvas.width = frameImg.width;
+      canvas.height = frameImg.height;
+      const ctx = canvas.getContext("2d");
 
-    // 4) Calcular 'cover' (centrado + recorte) para que la foto llene el canvas
-    const imgAspect = baseImg.width / baseImg.height;
-    const canvasAspect = canvas.width / canvas.height;
-    let renderWidth, renderHeight, xOffset, yOffset;
+      // 3) Cargar la foto capturada
+      const baseImg = new Image();
+      baseImg.src = capturedImage; // dataURL desde react-webcam
+      await new Promise((res) => (baseImg.onload = res));
 
-    if (imgAspect > canvasAspect) {
-      // imagen más ancha -> recortamos los lados
-      renderHeight = canvas.height;
-      renderWidth = baseImg.width * (canvas.height / baseImg.height);
-      xOffset = (canvas.width - renderWidth) / 2;
-      yOffset = 0;
-    } else {
-      // imagen más alta -> recortamos arriba/abajo
-      renderWidth = canvas.width;
-      renderHeight = baseImg.height * (canvas.width / baseImg.width);
-      xOffset = 0;
-      yOffset = (canvas.height - renderHeight) / 2;
+      // 4) Calcular cover (centrado + recorte)
+      const imgAspect = baseImg.width / baseImg.height;
+      const canvasAspect = canvas.width / canvas.height;
+      let renderWidth, renderHeight, xOffset, yOffset;
+
+      if (imgAspect > canvasAspect) {
+        renderHeight = canvas.height;
+        renderWidth = baseImg.width * (canvas.height / baseImg.height);
+        xOffset = (canvas.width - renderWidth) / 2;
+        yOffset = 0;
+      } else {
+        renderWidth = canvas.width;
+        renderHeight = baseImg.height * (canvas.width / baseImg.width);
+        xOffset = 0;
+        yOffset = (canvas.height - renderHeight) / 2;
+      }
+
+      // 5) Dibujar la foto espejada
+      const xDest = canvas.width - xOffset - renderWidth;
+      ctx.save();
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(baseImg, xDest, yOffset, renderWidth, renderHeight);
+      ctx.restore();
+
+      // 6) Dibujar el marco encima
+      ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+
+      // 7) Exportar y subir a Firebase
+      const finalDataUrl = canvas.toDataURL("image/png");
+      const photoRef = ref(storage, getStoragePath(`${Date.now()}.png`));
+       console.log("Usuario actual:", user);
+      const metadata = {
+      customMetadata: {
+        email: user?.email || "",
+        uid: user?.id || "",
+      },
+    };
+
+    console.log("Metadata a subir:", metadata);
+      await uploadString(photoRef, finalDataUrl, "data_url",metadata);
+
+      console.log("📸 Foto subida:", {
+        path: photoRef.fullPath,
+        uid: user?.id,
+        email: user?.email,
+      });
+
+      // Ir a la galería
+      navigate(`/${eventSlug}/gallery`);
+    } catch (error) {
+      console.error("❌ Error al subir la foto:", error);
+    } finally {
+      setUploading(false);
     }
-
-    // 5) Dibujar la foto ESPEJADA (para que coincida con preview mirrored)
-    //    Para posicionarla correctamente calculamos la X destino que queremos
-    const xDest = canvas.width - xOffset - renderWidth; // posición izquierda deseada después del espejo
-
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    // dibujamos la foto en la coordenada calculada (en el contexto transformado)
-    ctx.drawImage(baseImg, xDest, yOffset, renderWidth, renderHeight);
-    ctx.restore(); // RESTABLECEMOS la transform para que el marco NO se vea espejado
-
-    // 6) Dibujar el marco encima (sin espejo)
-    ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-
-    // 7) Exportar y subir a Firebase (mantengo uploadString porque lo usabas)
-    const finalDataUrl = canvas.toDataURL("image/png");
-    const photoRef = ref(storage, getStoragePath(`${Date.now()}.png`));
-    await uploadString(photoRef, finalDataUrl, "data_url");
-
-    // ir a la galería
-    navigate(`/${eventSlug}/gallery`);
-  } catch (error) {
-    console.error("❌ Error al subir la foto:", error);
-  } finally {
-    setUploading(false);
-  }
-};
-
-
-
-
+  };
 
   return (
     <div
@@ -117,14 +131,13 @@ const publishPhoto = async () => {
       style={{ zIndex: 1000 }}
     >
       {/* Botón de regresar */}
-      <div className="absolute top-2 left-4 flex flex-col items-center z-20">
+      <div className="absolute top-0 left-2 flex flex-col items-center z-20">
         <button
           onClick={() => navigate(`/${eventSlug}/choose`)}
           className="w-12 h-12   flex items-center justify-center"
         >
-          <img src="/back.png" alt="Regresar" className="w-7 h-7" />
+          <img src="/back.png" alt="Regresar" className="w-9 h-8" />
         </button>
-        <span className=" text-black font-bold mt-[-7px] ">volver</span>
       </div>
 
       {/* Cámara o foto ocupando toda la pantalla con marco superpuesto */}
@@ -181,7 +194,6 @@ const publishPhoto = async () => {
             >
               <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
             </div>
-            
           </div>
         ) : (
           <div className="flex gap-24 mb-8">

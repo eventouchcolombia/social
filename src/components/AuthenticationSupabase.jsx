@@ -115,7 +115,11 @@ const checkIfAdmin = async (user, eventSlug) => {
     setSession(null);
   };
 
-  return { session, isAdmin, loading, signInWithGoogle, signOut };
+   const getSession = async () => {
+        return supabase.auth.getSession();
+    };
+
+  return { session, isAdmin, loading, signInWithGoogle, signOut,getSession };
 };
 
 export default AuthenticationSupabase;

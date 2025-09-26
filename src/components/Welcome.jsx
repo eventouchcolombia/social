@@ -60,7 +60,7 @@ const Welcome = () => {
 
   // 🔹 Manejo del botón comenzar
   const handleStart = async () => {
-    const { data, error } = await supabase.auth.getUser();
+    const { data,  } = await supabase.auth.getUser();
 
     if (data?.user) {
       // Ya logueado → navega directo

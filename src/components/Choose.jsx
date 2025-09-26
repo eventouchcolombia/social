@@ -48,42 +48,45 @@ const Choose = () => {
         minHeight: "100dvh",
       }}
     >
-      {/* Header con usuario + logout */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-        {/* 👤 Usuario logueado */}
-        {user && (
-          <div className="flex items-center gap-2  px-3 py-1 rounded-lg ">
-            {user.user_metadata?.avatar_url && (
-              <img
-                src={user.user_metadata.avatar_url}
-                alt="avatar"
-                className="w-8 h-8 rounded-full border"
-              />
-            )}
-            <span className="text-sm font-semibold text-black">
-              {user.user_metadata?.name ||
-                user.user_metadata?.full_name ||
-                user.email}
-            </span>
-          </div>
-        )}
+     {/* Header con usuario + logout */}
+<div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+  {/* 👤 Usuario logueado (Este ya tiene la condición user &&) */}
+  {user && (
+    <div className="flex items-center gap-2 px-3 py-1 rounded-lg ">
+      {user.user_metadata?.avatar_url && (
+        <img
+          src={user.user_metadata.avatar_url}
+          alt="avatar"
+          className="w-8 h-8 rounded-full border"
+        />
+      )}
+      <span className="text-sm font-semibold text-black">
+        {user.user_metadata?.name ||
+         user.user_metadata?.full_name ||
+         user.email}
+      </span>
+    </div>
+  )}
 
-        {/* 🔴 Botón cerrar sesión */}
-        <button
-          onClick={async () => {
-            await signOut(); // cerrar sesión en Supabase
-           navigate(`/${eventSlug}`); // redirigir al inicio
-          }}
-          className="cursor-pointer"
-        >
-          <img
-            src="/Log_Out.png"
-            alt="Cerrar sesión"
-            className="w-8 h-8
-             rounded-lg"
-          />
-        </button>
-      </div>
+  {/* 🔴 Botón cerrar sesión (AHORA CONDICIONAL) */}
+  {user && ( // 👈 NUEVA CONDICIÓN: Solo renderiza si hay usuario
+    <button
+      onClick={async () => {
+         await signOut(); // cerrar sesión en Supabase
+         navigate(`/${eventSlug}`); // redirigir al inicio
+      }}
+      className="cursor-pointer"
+    >
+      <img
+        src="/Log_Out.png"
+        alt="Cerrar sesión"
+        className="w-8 h-8
+         rounded-lg"
+      />
+    </button>
+  )}
+</div>
+
 
       {/* Caja inferior */}
       <div className="w-[109%] bg-white rounded-t-3xl shadow-lg p-4 flex flex-col mt-138">
