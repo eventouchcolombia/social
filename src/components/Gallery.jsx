@@ -112,7 +112,7 @@ const Gallery = () => {
       }}
     >
       {/* Botón volver */}
-      <div className="flex items-center gap-26 mb-8 mt-0">
+      <div className="flex items-center gap-30 mb-8 mt-0">
         {/* Botón volver */}
         <div
           onClick={() => {
