@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { uploadAsset, loadEventTexts } from "../utils/uploadAsset";
 import { useEvent } from "../hooks/useEvent";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Upload, X } from "lucide-react";
 
@@ -167,7 +168,7 @@ const AssetWizard = ({ onClose }) => {
           <button
             onClick={handleUpload}
             disabled={uploading}
-            className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 w-full sm:w-auto"
+            className="px-6 py-2 rounded-xl bg-[#753E89] text-white hover:bg-[#753E89] transition disabled:opacity-50 w-full sm:w-auto"
           >
             {uploading ? "Subiendo..." : "Guardar"}
           </button>

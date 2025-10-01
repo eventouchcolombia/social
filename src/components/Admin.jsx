@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { storage } from "../firebase/firebase";
 import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
+import { Camera, Users, Settings, Images, Share2, Eye } from "lucide-react";
 import {
   ref,
   listAll,
@@ -22,13 +22,15 @@ const Admin = () => {
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [selectedPhotos, setSelectedPhotos] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [selectAll, setSelectAll] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
+  const [backgroundUrl, setBackgroundUrl] = useState(null);
 
-    const [backgroundUrl, setBackgroundUrl] = useState(null);
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
     try {
@@ -48,16 +50,16 @@ const Admin = () => {
 
   useEffect(() => {
     if (isAdmin) fetchPhotos();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, eventSlug]);
 
-useEffect(() => {
-  const loadBackground = async () => {
-    const url = await getAssetUrl("adminbg.png"); // 🔹 usa el mismo nombre del wizard
-    setBackgroundUrl(url);
-  };
-  loadBackground();
-}, [eventSlug, getAssetUrl]);
+  useEffect(() => {
+    const loadBackground = async () => {
+      const url = await getAssetUrl("adminbg.png");
+      setBackgroundUrl(url);
+    };
+    loadBackground();
+  }, [eventSlug, getAssetUrl]);
 
   // === eliminar foto ===
   const handleDelete = async (name) => {
@@ -91,20 +93,24 @@ useEffect(() => {
     }
   };
 
-  const handleDownloadSelected = async () => {
-    for (const name of selectedPhotos) {
-      await handleDownload(name);
-    }
-  };
+  // const handleDownloadSelected = async () => {
+  //   for (const name of selectedPhotos) {
+  //     await handleDownload(name);
+  //   }
+  // };
 
-  // === UI ===
+  // === UI estados previos ===
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <h1 className="text-white text-2xl font-semibold mb-2">Cargando Panel Admin</h1>
-          <p className="text-gray-300 text-sm">Verificando autenticación para {eventSlug}...</p>
+          <h1 className="text-white text-2xl font-semibold mb-2">
+            Cargando Panel Admin
+          </h1>
+          <p className="text-gray-300 text-sm">
+            Verificando autenticación para {eventSlug}...
+          </p>
         </div>
       </div>
     );
@@ -114,7 +120,9 @@ useEffect(() => {
     return (
       <div
         className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center relative"
-        style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
+        style={{
+          backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none",
+        }}
       >
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10 text-center px-4">
@@ -137,160 +145,128 @@ useEffect(() => {
     );
   }
 
-if (session && !isAdmin) {
-  return (
-    <div className="flex flex-col justify-center items-center min-h-screen gap-4">
-      <h1 className="text-black text-2xl">Acceso denegado.</h1>
-      <p className="text-sm text-gray-300">
-        Usuario: {session.user?.email ?? "sin email"}
-      </p>
-      <button
-        onClick={signOut}
-        className="px-4 py-2 bg-gray-700 text-white rounded"
-      >
-        Cerrar sesión
-      </button>
-    </div>
-  );
-}
-
-
-  return (
-    <div
-      className=" px-4 py-6 min-h-screen bg-cover bg-center "
-      style={{ backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none" }}
-    >
-      <img
-        src="/cerrarsesion.png"
-        alt="Cerrar sesión"
-        className="w-12 h-12 cursor-pointer absolute top-2 right-4 z-50 rounded-full p-2 shadow-lg hover:bg-gray-200 transition"
-        onClick={signOut}
-        title="Cerrar sesión"
-      />
-
-      <h1 className="text-3xl font-bold text-gray-900 mb-6 mt-8 text-center drop-shadow-lg">
-        Administrador de Eventos - {eventSlug}
-      </h1>
-
-      <div className="mb-6 flex flex-col sm:flex-row justify-center items-center gap-4 px-4">
+  if (session && !isAdmin) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen gap-4">
+        <h1 className="text-black text-2xl">Acceso denegado.</h1>
+        <p className="text-sm text-gray-300">
+          Usuario: {session.user?.email ?? "sin email"}
+        </p>
         <button
-          onClick={() => setShowWizard(true)}
-          className="w-full sm:w-48 md:w-56 px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition font-medium text-sm sm:text-base"
+          onClick={signOut}
+          className="px-4 py-2 bg-gray-700 text-white rounded"
         >
-          Configurar Assets
-        </button>
-        
-        <button
-          onClick={() => setShowShareModal(true)}
-          className="w-full sm:w-48 md:w-56 px-6 py-3 rounded-xl bg-green-600 text-white hover:bg-green-700 transition font-medium text-sm sm:text-base"
-        >
-          Compartir Evento
-        </button>
-
-        <button
-          onClick={() => window.open(`/${eventSlug}`, '_blank')}
-          className="w-full sm:w-48 md:w-56 px-6 py-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition font-medium text-sm sm:text-base flex items-center justify-center gap-2"
-          title="Ver cómo se ve el evento para los invitados"
-        >
-          👁️ Vista Previa
+          Cerrar sesión
         </button>
       </div>
+    );
+  }
 
+  const user = session?.user;
+  const userName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email ||
+    "Usuario";
+
+  return (
+    <div className="px-4 py-6 min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-18">
+        <h1 className="text-md font-bold text-gray-900">{userName}</h1>
+        <img
+          src="/Log_Out.png"
+          alt="Cerrar sesión"
+          className="w-8 h-8 cursor-pointer hover:opacity-80 transition"
+          onClick={signOut}
+          title="Cerrar sesión"
+        />
+      </div>
+
+      {/* Tarjetas estadísticas */}
+      <div className="grid grid-cols-2 gap-4 mb-6 h-32">
+        <div className="bg-[#753E89] rounded-xl p-4 flex flex-col justify-center items-center text-white shadow-md">
+          <Camera className="w-6 h-6 mb-2" />
+          <p className="text-2xl font-bold">{photos.length}</p>
+          <p className="text-sm">Fotos totales</p>
+        </div>
+
+        <div className="bg-[#753E89] rounded-xl p-4 flex flex-col justify-center items-center text-white shadow-md">
+          <Users className="w-6 h-6 mb-2" />
+          <p className="text-2xl font-bold">32</p>
+          <p className="text-sm">Usuarios activos</p>
+        </div>
+      </div>
+
+      {/* Secciones */}
+      <h2 className="text-gray-900 font-bold mb-4">Gestionar contenidos</h2>
+
+      {/* Configurar assets */}
+      <div
+        className="bg-white rounded-xl shadow-xl p-4 flex items-center gap-2  mb-3 cursor-pointer hover:bg-gray-100"
+        onClick={() => setShowWizard(true)}
+      >
+        <Settings className="w-5 h-5 text-[#753E89] mr-2 " />
+        <div>
+          <p className="font-semibold text-sm">Configurar assets</p>
+          <p className="text-xs text-gray-500">
+            Personaliza colores, imágenes, logos y marcos
+          </p>
+        </div>
+      </div>
+
+      {/* Administrar fotos */}
+      <div
+        className="bg-white rounded-xl shadow-xl p-4 flex items-center  gap-2 mb-3 cursor-pointer hover:bg-gray-100"
+        onClick={() => setSelectedPhoto("gallery")}
+      >
+        <Images className="w-5 h-5 text-[#753E89] mr-2 " />
+        <div>
+          <p className="font-semibold text-sm">Administrar fotos</p>
+          <p className="text-xs text-gray-500">
+            Gestiona y elimina las fotos del evento
+          </p>
+        </div>
+      </div>
+
+      {/* Compartir evento */}
+      <div
+        className="bg-white rounded-xl shadow-xl p-4 flex items-center  gap-2 mb-3 cursor-pointer hover:bg-gray-100"
+        onClick={() => setShowShareModal(true)}
+      >
+        <Share2 className="w-5 h-5 text-[#753E89] mr-2 " />
+        <div>
+          <p className="font-semibold text-sm">Compartir evento</p>
+          <p className="text-xs text-gray-500">
+            Comparte tu evento con tus invitados
+          </p>
+        </div>
+      </div>
+
+      {/* Vista previa */}
+      <div
+        className="bg-white rounded-xl shadow-xl p-4 flex items-center gap-2 mb-3 cursor-pointer hover:bg-gray-100"
+        onClick={() => window.open(`/${eventSlug}`, "_blank")}
+      >
+        <Eye className="w-5 h-5 text-[#753E89] mr-2 " />
+        <div>
+          <p className="font-semibold text-sm">Vista previa</p>
+          <p className="text-xs text-gray-500">Observa tus cambios</p>
+        </div>
+      </div>
+
+      {/* Modales */}
       {showWizard && <AssetWizard onClose={() => setShowWizard(false)} />}
       {showShareModal && (
-        <ShareEvent 
-          eventSlug={eventSlug} 
-          onClose={() => setShowShareModal(false)} 
+        <ShareEvent
+          eventSlug={eventSlug}
+          onClose={() => setShowShareModal(false)}
         />
-      )}
-
-      <h2 className="font-semibold text-gray-900 text-center mb-6 flex justify-center items-center gap-6 drop-shadow-lg">
-        Total fotos: {photos.length}
-        {photos.length > 0 && (
-          <label className="flex items-center gap-2 cursor-pointer text-gray-800">
-            <input
-              type="checkbox"
-              checked={selectAll}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setSelectAll(checked);
-                setSelectedPhotos(checked ? photos.map((p) => p.name) : []);
-              }}
-            />
-            Seleccionar todo
-          </label>
-        )}
-      </h2>
-
-      {selectedPhotos.length > 0 && (
-        <div className="text-center mb-6 flex justify-center gap-4">
-          <button
-            onClick={() => setConfirmDelete(selectedPhotos)}
-            className="px-4 py-2 bg-red-400 text-white rounded"
-          >
-            Eliminar ({selectedPhotos.length})
-          </button>
-          <button
-            onClick={handleDownloadSelected}
-            className="px-4 py-2 bg-green-600 text-white rounded"
-          >
-            Descargar ({selectedPhotos.length})
-          </button>
-        </div>
-      )}
-
-      {photos.length === 0 ? (
-        <p className="text-center text-gray-700 drop-shadow-lg">No hay fotos aún.</p>
-      ) : (
-        <div className="grid grid-cols-3 gap-4">
-          {photos.map((photo, index) => (
-            <div
-              key={index}
-              className="relative group w-full aspect-square overflow-hidden rounded-md shadow-md"
-            >
-              <img
-                src={photo.url}
-                alt={`Foto ${index + 1}`}
-                className="w-full h-full object-cover"
-                onClick={() => setSelectedPhoto(photo)}
-              />
-              <input
-                type="checkbox"
-                className="absolute bottom-20 left-0 w-5 h-5"
-                checked={selectedPhotos.includes(photo.name)}
-                onChange={(e) => {
-                  if (e.target.checked)
-                    setSelectedPhotos((prev) => [...prev, photo.name]);
-                  else {
-                    setSelectedPhotos((prev) =>
-                      prev.filter((n) => n !== photo.name)
-                    );
-                    setSelectAll(false);
-                  }
-                }}
-              />
-              <div className="absolute top-2 right-2 flex gap-8 mt-14">
-                <img
-                  src="/descargar.png"
-                  alt="Descargar"
-                  className="w-8 h-8 cursor-pointer rounded-full p-1"
-                  onClick={() => handleDownload(photo.name)}
-                />
-                <img
-                  src="/borrar.png"
-                  alt="Eliminar"
-                  className="w-8 h-8 cursor-pointer rounded-full p-1"
-                  onClick={() => setConfirmDelete(photo)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
       )}
 
       {/* Modal foto ampliada */}
       {selectedPhoto && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
           <div className="relative">
             <img
               src={selectedPhoto.url}
@@ -317,6 +293,58 @@ if (session && !isAdmin) {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal galería completa */}
+      {selectedPhoto === "gallery" && (
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-4 max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-gray-800">
+                Administrar fotos
+              </h2>
+              <button
+                className="text-gray-600 hover:text-black text-xl"
+                onClick={() => setSelectedPhoto(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {photos.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {photos.map((photo, index) => (
+                  <div
+                    key={index}
+                    className="relative group cursor-pointer"
+                    onClick={() => setSelectedPhoto(photo)}
+                  >
+                    <img
+                      src={photo.url}
+                      alt={`Foto ${index + 1}`}
+                      className="w-full h-32 object-cover rounded"
+                    />
+                    <button
+                      className="absolute top-2 right-2 bg-white/80 p-1 rounded-full opacity-0 group-hover:opacity-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmDelete(photo);
+                      }}
+                    >
+                      <img
+                        src="/borrar.png"
+                        alt="Eliminar"
+                        className="w-5 h-5"
+                      />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No hay fotos aún.</p>
+            )}
           </div>
         </div>
       )}
