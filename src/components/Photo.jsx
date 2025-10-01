@@ -104,6 +104,8 @@ const Photo = () => {
       customMetadata: {
         email: user?.email || "",
         uid: user?.id || "",
+        name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
+        avatar: user?.user_metadata?.avatar_url || ""
       },
     };
 

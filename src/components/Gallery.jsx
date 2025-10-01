@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { storage } from "../firebase/firebase";
-import { ref, listAll, getDownloadURL, getMetadata } from "firebase/storage";
+import {
+  ref,
+  listAll,
+  getDownloadURL,
+  getMetadata,
+  deleteObject,
+} from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import AuthenticationSupabase from "../components/AuthenticationSupabase";
@@ -57,6 +63,9 @@ const Gallery = () => {
               createdAt: metadata?.timeCreated || new Date().toISOString(),
               email: metadata?.customMetadata?.email || null, // <-- leer email
               uid: metadata?.customMetadata?.uid || null,
+              nameCustom: metadata?.customMetadata?.name || null,
+              avatar: metadata?.customMetadata?.avatar || null,
+             fullPath: item.fullPath,
             };
           })
         );
@@ -104,6 +113,24 @@ const Gallery = () => {
     (photo) => photo.email !== user?.email && photo.uid !== user?.id
   );
 
+  const handleDeletePhoto = async (photo) => {
+  try {
+    if (!photo.fullPath) {
+      throw new Error("La foto no tiene fullPath en Firebase");
+    }
+
+    const photoRef = ref(storage, photo.fullPath); // ✅ referencia al archivo
+    await deleteObject(photoRef);
+
+    console.log("✅ Foto eliminada correctamente");
+    // Opcional: refrescar galería
+    setPhotos((prev) => prev.filter((p) => p.fullPath !== photo.fullPath));
+    setSelectedPhoto(null);
+  } catch (error) {
+    console.error("❌ Error eliminando foto:", error);
+  }
+};
+
   return (
     <div
       className="min-h-screen px-4 py-6 bg-cover bg-center relative pb-40"
@@ -118,7 +145,7 @@ const Gallery = () => {
           onClick={() => {
             navigate(`/${eventSlug}/choose`);
             window.location.reload();
-          }} 
+          }}
           className="flex items-center cursor-pointer z-30"
         >
           <img src="/back.png" alt="Volver" className="w-6 h-6 rounded-lg" />
@@ -195,20 +222,51 @@ const Gallery = () => {
       )}
 
       {/* Modal */}
-      {selectedPhoto && (
-        <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <div className="relative flex items-center justify-center w-[90vw] h-[90vh]">
+     {selectedPhoto && (
+  <div
+    className="fixed inset-0 bg-white/90 flex flex-col items-center justify-center z-50"
+    onClick={() => setSelectedPhoto(null)}
+  >
+    <div className="relative flex flex-col items-start justify-center w-[90vw] h-[90vh]">
+      {/* 👤 Avatar + Nombre + Botón eliminar */}
+      {selectedPhoto.nameCustom && (
+        <div className="flex items-center justify-between w-full mb-6">
+          <div className="flex items-center gap-3">
             <img
-              src={selectedPhoto.url}
-              alt="Foto ampliada"
-              className="object-contain max-w-full max-h-full"
+              src={selectedPhoto.avatar || "/avatar.png"}
+              alt="Avatar"
+              className="w-10 h-10 rounded-full object-cover border border-gray-300"
             />
+            <p className="text-lg font-semibold text-gray-800">
+              {selectedPhoto.nameCustom}
+            </p>
           </div>
+
+          {/* Botón eliminar - solo dueño */}
+          {user && selectedPhoto.uid === user.id && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // evita cerrar modal al hacer click
+                handleDeletePhoto(selectedPhoto);
+              }}
+              className="bg-white/80 rounded-full p-2 hover:bg-red-100"
+            >
+              <img src="/Trash.png" alt="Eliminar foto" className="w-6 h-6" />
+            </button>
+          )}
         </div>
       )}
+
+      <img
+        src={selectedPhoto.url}
+        alt="Foto ampliada"
+        className="object-contain rounded-2xl max-w-full max-h-full"
+      />
+    </div>
+  </div>
+)}
+
+
       {/* Botones inferiores */}
       {!selectedPhoto && (
         <div className="fixed bottom-0 left-0 w-full  py-6 flex flex-col items-center gap-3 z-50">
@@ -221,9 +279,9 @@ const Gallery = () => {
 
           <button
             onClick={() => {
-            navigate(`/${eventSlug}/choose`);
-            window.location.reload();
-          }}  // 🔹 Ruta de inicio
+              navigate(`/${eventSlug}/choose`);
+              window.location.reload();
+            }} // 🔹 Ruta de inicio
             className="w-3/4 px-6 py-3 bg-gray-200 text-[#753E89] font-semibold rounded-full shadow hover:bg-gray-300 transition"
           >
             Volver
