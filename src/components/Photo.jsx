@@ -27,6 +27,24 @@ const Photo = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventSlug]);
 
+  useEffect(() => {
+    const scene = document.querySelector('a-scene');
+    if (scene) {
+      scene.addEventListener('loaded', () => {
+        console.log('A-Frame scene loaded');
+        const system = scene.systems['mindar-face-system'];
+        if (system) {
+          system.start();
+          console.log('MindAR started');
+        } else {
+          console.log('MindAR system not found');
+        }
+      });
+    } else {
+      console.log('a-scene not found');
+    }
+  }, []);
+
   // Solo captura la foto (NO sube todavía)
   const capturePhoto = () => {
     if (!webcamRef.current) return;
@@ -184,6 +202,19 @@ const Photo = () => {
             className="absolute inset-0 w-full h-full pointer-events-none"
           />
         )}
+      </div>
+
+      {/* AR Scene superpuesto */}
+      <div className="absolute inset-0 w-full h-full" style={{ zIndex: 10 }}>
+        <a-scene mindar-face="autoStart: false" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+          <a-assets>
+            <a-asset-item id="glasses" src="/assets/glasses/scene.gltf"></a-asset-item>
+          </a-assets>
+          <a-entity mindar-face-target="anchorIndex: 168">
+            <a-gltf-model rotation="0 0 0" position="0 0 -0.05" scale="0.135 0.135 0.135" src="#glasses"></a-gltf-model>
+          </a-entity>
+          <a-camera active="false" position="0 0 0"></a-camera>
+        </a-scene>
       </div>
 
       {/* Botones principales */}
