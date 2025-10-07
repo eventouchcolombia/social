@@ -28,20 +28,14 @@ const Photo = () => {
   }, [eventSlug]);
 
   useEffect(() => {
-    const scene = document.querySelector('a-scene');
+    const scene = document.querySelector("a-scene");
     if (scene) {
-      scene.addEventListener('loaded', () => {
-        console.log('A-Frame scene loaded');
-        const system = scene.systems['mindar-face-system'];
+      scene.addEventListener("loaded", () => {
+        const system = scene.systems["mindar-face-system"];
         if (system) {
           system.start();
-          console.log('MindAR started');
-        } else {
-          console.log('MindAR system not found');
         }
       });
-    } else {
-      console.log('a-scene not found');
     }
   }, []);
 
@@ -50,71 +44,142 @@ const Photo = () => {
     if (!webcamRef.current) return;
     const imageSrc = webcamRef.current.getScreenshot();
     setCapturedImage(imageSrc);
+    // Detener AR para que las gafas se congelen
+    const scene = document.querySelector("a-scene");
+    if (scene) {
+      const system = scene.systems["mindar-face-system"];
+      if (system) {
+        system.stop();
+      }
+    }
   };
 
   // Repetir foto
   const retakePhoto = () => {
     setCapturedImage(null);
+    // Reiniciar AR
+    const scene = document.querySelector("a-scene");
+    if (scene) {
+      const system = scene.systems["mindar-face-system"];
+      if (system) {
+        system.start();
+      }
+    }
+  };
+
+  const loadImage = async (src) => {
+    if (!src) {
+      return Promise.reject(new Error("Fuente de imagen no válida"));
+    }
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = (err) => reject(err);
+      img.src = src;
+    });
   };
 
   // Combina la foto capturada con el marco usando canvas y la sube
   // 👇 Reemplaza SOLO tu publishPhoto con esta versión
   const publishPhoto = async () => {
-    if (!capturedImage) return;
+    if (!capturedImage || uploading) return;
 
     setUploading(true);
     try {
-      // 1) Intentar cargar el marco desde Firebase o usar el local
-      let frameUrl = await getAssetUrl("marco.png");
-      if (!frameUrl) {
-        frameUrl = "/marco_local.png"; // fallback local si no existe en Firebase
+      // 1) Capturar la escena AR directamente desde el canvas de A-Frame
+      const arScene = document.querySelector("a-scene");
+      if (!arScene) {
+        console.error("AR scene not found");
+        setUploading(false);
+        return;
+      }
+      const arCanvas = arScene.canvas || arScene.renderer?.domElement;
+      if (!arCanvas) {
+        console.error("AR canvas not available");
+        setUploading(false);
+        return;
+      }
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const arDataUrl = arCanvas.toDataURL("image/png");
+
+      // 2) Intentar cargar el marco desde Firebase o usar el local
+      let frameSrc = await getAssetUrl("marco.png");
+      if (!frameSrc) {
+        frameSrc = "/marco_local.png";
+      }
+      let frameImg;
+      try {
+        frameImg = await loadImage(frameSrc);
+      } catch (error) {
+        console.warn("Fallo al cargar marco remoto, usando local", error);
+        frameSrc = "/marco_local.png";
+        frameImg = await loadImage(frameSrc);
       }
 
-      const frameImg = new Image();
-      frameImg.crossOrigin = "anonymous";
-      frameImg.src = frameUrl;
-      await new Promise((res) => (frameImg.onload = res));
+      // 3) Preparar canvas intermedio con la vista exacta (webcam + AR)
+      //    usando la resolución original de la foto capturada
+      const viewCanvas = document.createElement("canvas");
+      const viewCtx = viewCanvas.getContext("2d");
 
-      // 2) Crear canvas con el tamaño del marco
-      const canvas = document.createElement("canvas");
-      canvas.width = frameImg.width;
-      canvas.height = frameImg.height;
-      const ctx = canvas.getContext("2d");
-
-      // 3) Cargar la foto capturada
+      // 4) Cargar la foto capturada
       const baseImg = new Image();
       baseImg.src = capturedImage; // dataURL desde react-webcam
       await new Promise((res) => (baseImg.onload = res));
+      viewCanvas.width = baseImg.width;
+      viewCanvas.height = baseImg.height;
 
-      // 4) Calcular cover (centrado + recorte)
-      const imgAspect = baseImg.width / baseImg.height;
-      const canvasAspect = canvas.width / canvas.height;
-      let renderWidth, renderHeight, xOffset, yOffset;
+      // 5) Cargar la imagen AR
+      const arImg = new Image();
+    arImg.crossOrigin = "anonymous";
+      arImg.src = arDataUrl;
+      await new Promise((res) => (arImg.onload = res));
 
-      if (imgAspect > canvasAspect) {
-        renderHeight = canvas.height;
-        renderWidth = baseImg.width * (canvas.height / baseImg.height);
-        xOffset = (canvas.width - renderWidth) / 2;
-        yOffset = 0;
-      } else {
-        renderWidth = canvas.width;
-        renderHeight = baseImg.height * (canvas.width / baseImg.width);
-        xOffset = 0;
-        yOffset = (canvas.height - renderHeight) / 2;
-      }
+      // 6) Componer la vista tal cual se muestra en pantalla
+      // Foto (mirrored) + capa AR en la misma resolución
+      viewCtx.save();
+      viewCtx.translate(viewCanvas.width, 0);
+      viewCtx.scale(-1, 1);
+      viewCtx.drawImage(baseImg, 0, 0, viewCanvas.width, viewCanvas.height);
+      viewCtx.restore();
 
-      // 5) Dibujar la foto espejada
-      const xDest = canvas.width - xOffset - renderWidth;
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(baseImg, xDest, yOffset, renderWidth, renderHeight);
-      ctx.restore();
+      // MindAR ya pinta la capa alineada en el canvas original, solo la escalamos si difiere
+      viewCtx.drawImage(arImg, 0, 0, viewCanvas.width, viewCanvas.height);
 
-      // 6) Dibujar el marco encima
+      // 7) Crear el canvas final con el tamaño del marco
+      const canvas = document.createElement("canvas");
+      canvas.width = frameImg.width || 1080;
+      canvas.height = frameImg.height || 1920;
+      const ctx = canvas.getContext("2d");
+
+      const drawCover = (image) => {
+        const imgAspect = image.width / image.height;
+        const canvasAspect = canvas.width / canvas.height;
+        let drawWidth;
+        let drawHeight;
+        let drawX;
+        let drawY;
+
+        if (imgAspect > canvasAspect) {
+          drawHeight = canvas.height;
+          drawWidth = imgAspect * canvas.height;
+          drawX = (canvas.width - drawWidth) / 2;
+          drawY = 0;
+        } else {
+          drawWidth = canvas.width;
+          drawHeight = canvas.width / imgAspect;
+          drawX = 0;
+          drawY = (canvas.height - drawHeight) / 2;
+        }
+
+        ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+      };
+
+      // 8) Dibujar la composición y luego el marco
+      drawCover(viewCanvas);
       ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
 
-      // 7) Exportar y subir a Firebase
+      // 9) Exportar y subir a Firebase
       const finalDataUrl = canvas.toDataURL("image/png");
       const photoRef = ref(storage, getStoragePath(`${Date.now()}.png`));
        console.log("Usuario actual:", user);
@@ -140,6 +205,8 @@ const Photo = () => {
       navigate(`/${eventSlug}/gallery`);
     } catch (error) {
       console.error("❌ Error al subir la foto:", error);
+      setUploading(false);
+      return;
     } finally {
       setUploading(false);
     }
@@ -205,8 +272,15 @@ const Photo = () => {
       </div>
 
       {/* AR Scene superpuesto */}
-      <div className="absolute inset-0 w-full h-full" style={{ zIndex: 10 }}>
-        <a-scene mindar-face="autoStart: false" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <div className="ar-scene absolute inset-0 w-full h-full" style={{ zIndex: 10 }}>
+        <a-scene
+          mindar-face="autoStart: false"
+          embedded
+          color-space="sRGB"
+          renderer="colorManagement: true, physicallyCorrectLights: true, preserveDrawingBuffer: true"
+          vr-mode-ui="enabled: false"
+          device-orientation-permission-ui="enabled: false"
+        >
           <a-assets>
             <a-asset-item id="glasses" src="/assets/glasses/scene.gltf"></a-asset-item>
           </a-assets>
