@@ -3,6 +3,7 @@ import { useEvent } from "../hooks/useEvent";
 import { useEffect, useState } from "react";
 import { Camera, Image as ImageIcon } from "lucide-react";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
+import { supabase } from "../supabaseClient";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -25,6 +26,7 @@ const Choose = () => {
   const { eventSlug, getAssetUrl } = useEvent();
 
   const [backgroundUrl, setBackgroundUrl] = useState(null);
+  const [agendaText, setAgendaText] = useState("");
 
   // Selecciona el tema según la ruta, o usa el default
   const theme = themes[eventSlug] || defaultTheme;
@@ -37,6 +39,30 @@ const Choose = () => {
     loadBackground();
   }, [eventSlug, getAssetUrl]);
 
+  // 📦 Cargar texto desde Supabase
+  useEffect(() => {
+    const loadAgenda = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("event_agenda")
+          .select("content")
+          .eq("event_slug", eventSlug)
+          .order("created_at", { ascending: false }) // si tienes timestamp
+          .limit(1)
+          .single();
+
+        if (error) throw error;
+        console.log("📦 Datos cargados desde Supabase:", data);
+
+        if (data) setAgendaText(data.content);
+      } catch (err) {
+        console.error("❌ Error cargando agenda:", err.message);
+      }
+    };
+
+    loadAgenda();
+  }, [eventSlug]);
+
   // 👤 Usuario actual
   const user = session?.user;
 
@@ -48,45 +74,50 @@ const Choose = () => {
         minHeight: "100dvh",
       }}
     >
-     {/* Header con usuario + logout */}
-<div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-  {/* 👤 Usuario logueado (Este ya tiene la condición user &&) */}
-  {user && (
-    <div className="flex items-center gap-2 px-3 py-1 rounded-lg ">
-      {user.user_metadata?.avatar_url && (
-        <img
-          src={user.user_metadata.avatar_url}
-          alt="avatar"
-          className="w-8 h-8 rounded-full border"
-        />
-      )}
-      <span className="text-sm font-semibold text-black">
-        {user.user_metadata?.name ||
-         user.user_metadata?.full_name ||
-         user.email}
-      </span>
-    </div>
-  )}
+      {/* Header con usuario + logout */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+        {/* 👤 Usuario logueado (Este ya tiene la condición user &&) */}
+        {user && (
+          <div className="flex items-center gap-2 px-3 py-1 rounded-lg ">
+            {user.user_metadata?.avatar_url && (
+              <img
+                src={user.user_metadata.avatar_url}
+                alt="avatar"
+                className="w-8 h-8 rounded-full border"
+              />
+            )}
+            <span className="text-sm font-semibold text-black">
+              {user.user_metadata?.name ||
+                user.user_metadata?.full_name ||
+                user.email}
+            </span>
+          </div>
+        )}
 
-  {/* 🔴 Botón cerrar sesión (AHORA CONDICIONAL) */}
-  {user && ( // 👈 NUEVA CONDICIÓN: Solo renderiza si hay usuario
-    <button
-      onClick={async () => {
-         await signOut(); // cerrar sesión en Supabase
-         navigate(`/${eventSlug}`); // redirigir al inicio
-      }}
-      className="cursor-pointer"
-    >
-      <img
-        src="/Log_Out.png"
-        alt="Cerrar sesión"
-        className="w-8 h-8
+        {/* 🔴 Botón cerrar sesión (AHORA CONDICIONAL) */}
+        {user && ( // 👈 NUEVA CONDICIÓN: Solo renderiza si hay usuario
+          <button
+            onClick={async () => {
+              await signOut(); // cerrar sesión en Supabase
+              navigate(`/${eventSlug}`); // redirigir al inicio
+            }}
+            className="cursor-pointer"
+          >
+            <img
+              src="/Log_Out.png"
+              alt="Cerrar sesión"
+              className="w-8 h-8
          rounded-lg"
-      />
-    </button>
-  )}
-</div>
-
+            />
+          </button>
+        )}
+      </div>
+      {/* 🧾 Texto de la agenda (flotante) */}
+      {agendaText && (
+        <p className="absolute  top-24 text-sm text-left mr-18 text-gray-700">
+          {agendaText}
+        </p>
+      )}
 
       {/* Caja inferior */}
       <div className="w-[109%] bg-white rounded-t-3xl shadow-lg p-4 flex flex-col mt-138">

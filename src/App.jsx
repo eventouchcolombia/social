@@ -6,6 +6,7 @@ import Choose from "./components/Choose";
 import Gallery from "./components/Gallery";
 import Admin from "./components/Admin";
 import SuperAdmin from "./components/SuperAdmin";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (

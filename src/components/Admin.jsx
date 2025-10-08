@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { storage } from "../firebase/firebase";
 import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
-import { Camera, Users, Settings, Images, Share2, Eye } from "lucide-react";
+import Agenda from "./Agenda";
+import { Camera, Users, Settings, Images, Share2, Eye,Calendar } from "lucide-react";
 import {
   ref,
   listAll,
@@ -34,6 +35,7 @@ const Admin = () => {
   const [activeUsers, setActiveUsers] = useState(0);
   const [usersList, setUsersList] = useState([]);
   const [showUsersModal, setShowUsersModal] = useState(false);
+  const [showAgenda, setShowAgenda] = useState(false);
 
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
@@ -284,6 +286,18 @@ const Admin = () => {
         </div>
       </div>
 
+      {/* Vista agenda*/}
+      <div
+        className="bg-white rounded-xl shadow-xl p-4 flex items-center gap-2 mb-3 cursor-pointer hover:bg-gray-100"
+        onClick={() => setShowAgenda(true)}
+      >
+        <Calendar className="w-5 h-5 text-[#753E89] mr-2 " />
+        <div>
+          <p className="font-semibold text-sm">Agenda</p>
+          <p className="text-xs text-gray-500">haz la agenda de tu evento</p>
+        </div>
+      </div>
+
       {/* Modales */}
       {showWizard && <AssetWizard onClose={() => setShowWizard(false)} />}
       {showShareModal && (
@@ -327,7 +341,7 @@ const Admin = () => {
       )}
       {/* 🧍 Modal de usuarios activos */}
       {showUsersModal && (
-        <div className="fixed inset-0 bg-white/70  bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black/70  bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white border-2 border-[#753E89] rounded-2xl p-6 w-80 md:w-[400px] max-h-[80vh] overflow-y-auto shadow-lg">
             <h2 className="text-xl font-bold text-center mb-4 text-[#753E89]">
               Usuarios activos
@@ -361,6 +375,10 @@ const Admin = () => {
             </button>
           </div>
         </div>
+      )}
+       {/* mostrar el modal Agenda */}
+      {showAgenda && (
+        <Agenda eventSlug={eventSlug} onClose={() => setShowAgenda(false)} />
       )}
 
       {/* Modal galería completa */}
