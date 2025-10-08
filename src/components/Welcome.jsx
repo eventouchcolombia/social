@@ -79,6 +79,50 @@ const Welcome = () => {
     }
   }, [session, navigate, eventSlug]);
 
+    // 🔹 Registrar usuario en la tabla event_users
+  useEffect(() => {
+    const registerUser = async () => {
+      if (!session?.user || !eventSlug) return;
+
+      try {
+        // Verificar si ya está registrado
+        const { data: existing, error: selectError } = await supabase
+          .from("event_users")
+          .select("id")
+          .eq("event_slug", eventSlug)
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (selectError) throw selectError;
+
+        if (!existing) {
+          // Insertar nuevo registro
+          const { error: insertError } = await supabase.from("event_users").insert([
+            {
+              event_slug: eventSlug,
+              user_id: session.user.id,
+              email: session.user.email,
+              full_name:
+                session.user.user_metadata?.full_name ||
+                session.user.user_metadata?.name ||
+                session.user.email.split("@")[0],
+            },
+          ]);
+
+          if (insertError) throw insertError;
+          console.log("✅ Usuario registrado en event_users");
+        } else {
+          console.log("ℹ️ Usuario ya registrado");
+        }
+      } catch (err) {
+        console.error("❌ Error registrando usuario:", err.message);
+      }
+    };
+
+    registerUser();
+  }, [session, eventSlug]);
+
+
   return (
     <div
       className="flex flex-col items-center justify-between min-h-screen bg-cover bg-center px-4 relative"

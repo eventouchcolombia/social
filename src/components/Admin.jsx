@@ -13,6 +13,7 @@ import {
 
 import useAuthenticationSupabase from "./AuthenticationSupabase";
 import { useEvent } from "../hooks/useEvent";
+import { supabase } from "../supabaseClient";
 
 const Admin = () => {
   const { session, isAdmin, loading, signInWithGoogle, signOut } =
@@ -30,6 +31,9 @@ const Admin = () => {
   const [showShareModal, setShowShareModal] = useState(false);
 
   const [backgroundUrl, setBackgroundUrl] = useState(null);
+  const [activeUsers, setActiveUsers] = useState(0);
+  const [usersList, setUsersList] = useState([]);
+  const [showUsersModal, setShowUsersModal] = useState(false);
 
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
@@ -99,7 +103,29 @@ const Admin = () => {
   //   }
   // };
 
-  // === UI estados previos ===
+  // === contar usuarios activos ===
+
+  useEffect(() => {
+    const fetchActiveUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("event_users")
+          .select("*", { count: "exact" })
+          .eq("event_slug", eventSlug);
+
+        if (error) throw error;
+
+        // Si quieres mostrar la cantidad:
+        setUsersList(data || []);
+        setActiveUsers(data.length || 0);
+      } catch (err) {
+        console.error("❌ Error obteniendo usuarios activos:", err.message);
+      }
+    };
+
+    fetchActiveUsers();
+  }, [eventSlug]);
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-4">
@@ -191,9 +217,12 @@ const Admin = () => {
           <p className="text-sm">Fotos totales</p>
         </div>
 
-        <div className="bg-[#753E89] rounded-xl p-4 flex flex-col justify-center items-center text-white shadow-md">
+        <div
+          className="bg-[#753E89] rounded-xl p-4 flex flex-col justify-center items-center text-white shadow-md"
+          onClick={() => setShowUsersModal(true)}
+        >
           <Users className="w-6 h-6 mb-2" />
-          <p className="text-2xl font-bold">32</p>
+          <p className="text-2xl font-bold">{activeUsers}</p>
           <p className="text-sm">Usuarios activos</p>
         </div>
       </div>
@@ -292,6 +321,43 @@ const Admin = () => {
               onClick={() => setSelectedPhoto(null)}
             >
               ✕
+            </button>
+          </div>
+        </div>
+      )}
+      {/* 🧍 Modal de usuarios activos */}
+      {showUsersModal && (
+        <div className="fixed inset-0 bg-white/70  bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white border-2 border-[#753E89] rounded-2xl p-6 w-80 md:w-[400px] max-h-[80vh] overflow-y-auto shadow-lg">
+            <h2 className="text-xl font-bold text-center mb-4 text-[#753E89]">
+              Usuarios activos
+            </h2>
+
+            {usersList.length > 0 ? (
+              <ul className="space-y-3">
+                {usersList.map((user) => (
+                  <li
+                    key={user.id}
+                    className="border-b border-gray-200 pb-2 text-gray-800"
+                  >
+                    <p className="font-semibold">
+                      {user.full_name || "Sin nombre"}
+                    </p>
+                    <p className="text-sm text-gray-500">{user.email}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-center text-gray-500">
+                No hay usuarios registrados aún.
+              </p>
+            )}
+
+            <button
+              className="mt-6 w-full bg-[#753E89] text-white py-2 rounded-full font-semibold hover:bg-[#8a4ea0] transition"
+              onClick={() => setShowUsersModal(false)}
+            >
+              Cerrar
             </button>
           </div>
         </div>
