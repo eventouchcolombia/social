@@ -6,6 +6,7 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import AuthenticationSupabase from "../components/AuthenticationSupabase";
+import { loadEventTexts } from "../utils/uploadAsset";
 
 const Photo = () => {
   const webcamRef = useRef(null);
@@ -15,6 +16,7 @@ const Photo = () => {
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
   const [frameUrl, setFrameUrl] = useState(null);
   const { session } = AuthenticationSupabase();
+  const [arAsset, setArAsset] = useState("glasses"); // 🔹 Estado para el asset de AR
 
   const user = session?.user;
 
@@ -25,6 +27,14 @@ const Photo = () => {
     };
     loadFrame();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventSlug]);
+
+  useEffect(() => {
+    const loadARConfig = async () => {
+      const texts = await loadEventTexts(eventSlug);
+      setArAsset(texts.arAsset || "glasses");
+    };
+    loadARConfig();
   }, [eventSlug]);
 
   useEffect(() => {
@@ -283,9 +293,19 @@ const Photo = () => {
         >
           <a-assets>
             <a-asset-item id="glasses" src="/assets/glasses/scene.gltf"></a-asset-item>
+            <a-asset-item id="hat" src="/assets/hat/scene.gltf"></a-asset-item>
+            <a-asset-item id="mustashe" src="/assets/mustashe/scene.gltf"></a-asset-item>
           </a-assets>
           <a-entity mindar-face-target="anchorIndex: 168">
-            <a-gltf-model rotation="0 0 0" position="0 0 -0.05" scale="0.135 0.135 0.135" src="#glasses"></a-gltf-model>
+            {arAsset === 'glasses' && (
+              <a-gltf-model rotation="0 0 0" position="0 0 -0.05" scale="0.135 0.135 0.135" src="#glasses"></a-gltf-model>
+            )}
+            {arAsset === 'hat' && (
+              <a-gltf-model rotation="0 0 0" position="0 0.25 -0.45" scale="1.3 1.3 1.3" src="#hat"></a-gltf-model>
+            )}
+            {arAsset === 'mustashe' && (
+              <a-gltf-model rotation="0 0 0" position="0 -0.37 -0.05" scale="0.001 0.001 0.001" src="#mustashe"></a-gltf-model>
+            )}
           </a-entity>
           <a-camera active="false" position="0 0 0"></a-camera>
         </a-scene>
