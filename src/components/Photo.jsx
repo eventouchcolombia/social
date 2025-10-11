@@ -227,6 +227,19 @@ const Photo = () => {
       className="fixed inset-0 flex items-center justify-center bg-black"
       style={{ zIndex: 1000 }}
     >
+      {/* Estilos para ocultar el video de MindAR y hacer transparente el canvas AR */}
+      <style>{`
+        .ar-scene video {
+          display: none !important;
+        }
+        .ar-scene canvas {
+          background: transparent !important;
+        }
+        .ar-scene a-scene {
+          background: transparent !important;
+        }
+      `}</style>
+
       {/* Botón de regresar */}
       <div className="absolute top-0 left-2 flex flex-col items-center z-20">
         <button
@@ -282,14 +295,15 @@ const Photo = () => {
       </div>
 
       {/* AR Scene superpuesto */}
-      <div className="ar-scene absolute inset-0 w-full h-full" style={{ zIndex: 10 }}>
+      <div className="ar-scene absolute inset-0 w-full h-full" style={{ zIndex: 10, pointerEvents: 'none' }}>
         <a-scene
           mindar-face="autoStart: false"
           embedded
           color-space="sRGB"
-          renderer="colorManagement: true, physicallyCorrectLights: true, preserveDrawingBuffer: true"
+          renderer="colorManagement: true, physicallyCorrectLights: true, preserveDrawingBuffer: true, alpha: true"
           vr-mode-ui="enabled: false"
           device-orientation-permission-ui="enabled: false"
+          style={{ background: 'transparent' }}
         >
           <a-assets>
             <a-asset-item id="glasses" src="/assets/glasses/scene.gltf"></a-asset-item>
