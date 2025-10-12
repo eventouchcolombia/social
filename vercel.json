@@ -2,7 +2,6 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "installCommand": "npm ci",
-  "buildCommand": "npm run build",
-  "framework": null
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm run build"
 }
