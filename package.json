@@ -16,7 +16,6 @@
     "aframe": "^1.7.1",
     "firebase": "^12.2.1",
     "framer-motion": "^12.23.15",
-    "html2canvas": "^1.4.1",
     "lucide-react": "^0.544.0",
     "mind-ar": "^1.2.5",
     "qrcode": "^1.5.4",
