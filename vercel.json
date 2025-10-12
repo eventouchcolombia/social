@@ -2,5 +2,7 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "installCommand": "npm ci"
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
+  "framework": null
 }
