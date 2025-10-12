@@ -41,7 +41,8 @@ export const loadEventTexts = async (eventSlug) => {
     // Valores por defecto
     return {
       title: "EventPhotos",
-      subtitle: ""
+      subtitle: "",
+      arAsset: "glasses"
     };
   }
 };
