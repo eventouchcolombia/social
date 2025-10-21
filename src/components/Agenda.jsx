@@ -10,7 +10,7 @@ export default function Agenda({ eventSlug, onClose }) {
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // 🔹 Obtener todas las agendas del evento
   const fetchAgendas = async () => {
@@ -53,7 +53,7 @@ export default function Agenda({ eventSlug, onClose }) {
       ]);
 
       if (error) throw error;
-      alert("✅ Agenda guardada correctamente");
+      setShowSuccessModal(true);
       setContent("");
       setDate("");
       fetchAgendas();
@@ -199,6 +199,28 @@ export default function Agenda({ eventSlug, onClose }) {
                 onClick={() => setShowSaveModal(false)}
               >
                 Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-70">
+          <div className="bg-white rounded-lg shadow-lg p-6 text-center w-80 border-2 border-[#753E89]">
+            <h2 className="text-md font-semibold text-[#753E89] mb-3">
+              {" "}
+              Agenda guardada
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              La agenda se guardó correctamente.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                className="px-4 py-2 bg-[#753E89] text-white rounded"
+                onClick={() => setShowSuccessModal(false)}
+              >
+                Aceptar
               </button>
             </div>
           </div>
