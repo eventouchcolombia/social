@@ -130,7 +130,7 @@ const Admin = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-4">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-linear-to-br from-gray-900 to-blue-900 px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <h1 className="text-white text-2xl font-semibold mb-2">
@@ -435,7 +435,7 @@ const Admin = () => {
 
       {/* Modal confirmación borrar */}
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-60">
           <div className="bg-white rounded-lg shadow-lg p-6 relative max-w-sm w-full text-center">
             <h2 className="text-lg font-bold text-gray-800 mb-4">
               {Array.isArray(confirmDelete)
