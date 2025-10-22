@@ -5,6 +5,7 @@ import useAuthenticationSupabase from "./AuthenticationSupabase";
 import { loadEventTexts } from "../utils/uploadAsset";
 import Modals from "../components/Modals";
 import { supabase } from "../supabaseClient";
+import { useParams } from "react-router-dom";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -19,9 +20,17 @@ const defaultTheme = {
   button: "bg-[#753E89] text-white hover:bg-purple-800",
 };
 
-const Welcome = () => {
+export default function Welcome() {
+  const { eventSlug } = useParams();
+
+  useEffect(() => {
+    if (eventSlug) {
+      localStorage.setItem("eventSlug", eventSlug);
+    }
+  }, [eventSlug]);
+
   const navigate = useNavigate();
-  const { eventSlug, getAssetUrl } = useEvent();
+  const { getAssetUrl } = useEvent();
   const { isAdmin, signInWithGoogle, session } = useAuthenticationSupabase();
   const [backgroundUrl, setBackgroundUrl] = useState(null);
   const [eventTexts, setEventTexts] = useState({
@@ -31,6 +40,7 @@ const Welcome = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const theme = themes[eventSlug] || defaultTheme;
+ 
 
   // 🔹 Cargar assets y textos del evento
   useEffect(() => {
@@ -176,6 +186,4 @@ const Welcome = () => {
       <Modals isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
-};
-
-export default Welcome;
+}
