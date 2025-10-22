@@ -21,6 +21,8 @@ function App() {
         {/* raíz: redirige al slug guardado en localStorage */}
         <Route path="/" element={<RedirectToEventLocal />} />
         <Route path="/:eventSlug" element={<Welcome />} />
+        <Route path="/:eventSlug/admin" element={<Admin />} />
+        <Route path="/superadmin" element={<SuperAdmin />} />
 
         {/* Rutas protegidas agrupadas */}
         <Route
@@ -33,8 +35,6 @@ function App() {
           <Route path="/:eventSlug/photo" element={<Photo />} />
           <Route path="/:eventSlug/choose" element={<Choose />} />
           <Route path="/:eventSlug/gallery" element={<Gallery />} />
-          <Route path="/superadmin" element={<SuperAdmin />} />
-          <Route path="/:eventSlug/admin" element={<Admin />} />
         </Route>
 
         {/* ruta fallback: cualquier ruta no existente redirige al último slug guardado */}
