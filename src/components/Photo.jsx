@@ -6,7 +6,7 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import AuthenticationSupabase from "../components/AuthenticationSupabase";
-import { loadEventTexts } from "../utils/uploadAsset";
+import ARScene from "./ARScene";
 
 const Photo = () => {
   const webcamRef = useRef(null);
@@ -16,7 +16,7 @@ const Photo = () => {
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
   const [frameUrl, setFrameUrl] = useState(null);
   const { session } = AuthenticationSupabase();
-  const [arAsset, setArAsset] = useState("glasses"); // 🔹 Estado para el asset de AR
+  const [arSystem, setArSystem] = useState(null);
 
   const user = session?.user;
 
@@ -29,25 +29,9 @@ const Photo = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventSlug]);
 
-  useEffect(() => {
-    const loadARConfig = async () => {
-      const texts = await loadEventTexts(eventSlug);
-      setArAsset(texts.arAsset || "glasses");
-    };
-    loadARConfig();
-  }, [eventSlug]);
-
-  useEffect(() => {
-    const scene = document.querySelector("a-scene");
-    if (scene) {
-      scene.addEventListener("loaded", () => {
-        const system = scene.systems["mindar-face-system"];
-        if (system) {
-          system.start();
-        }
-      });
-    }
-  }, []);
+  const handleARReady = (system) => {
+    setArSystem(system);
+  };
 
   // Solo captura la foto (NO sube todavía)
   const capturePhoto = () => {
@@ -55,12 +39,8 @@ const Photo = () => {
     const imageSrc = webcamRef.current.getScreenshot();
     setCapturedImage(imageSrc);
     // Detener AR para que las gafas se congelen
-    const scene = document.querySelector("a-scene");
-    if (scene) {
-      const system = scene.systems["mindar-face-system"];
-      if (system) {
-        system.stop();
-      }
+    if (arSystem) {
+      arSystem.stop();
     }
   };
 
@@ -68,12 +48,8 @@ const Photo = () => {
   const retakePhoto = () => {
     setCapturedImage(null);
     // Reiniciar AR
-    const scene = document.querySelector("a-scene");
-    if (scene) {
-      const system = scene.systems["mindar-face-system"];
-      if (system) {
-        system.start();
-      }
+    if (arSystem) {
+      arSystem.start();
     }
   };
 
@@ -91,20 +67,13 @@ const Photo = () => {
   };
 
   // Combina la foto capturada con el marco usando canvas y la sube
-  // 👇 Reemplaza SOLO tu publishPhoto con esta versión
   const publishPhoto = async () => {
     if (!capturedImage || uploading) return;
 
     setUploading(true);
     try {
       // 1) Capturar la escena AR directamente desde el canvas de A-Frame
-      const arScene = document.querySelector("a-scene");
-      if (!arScene) {
-        console.error("AR scene not found");
-        setUploading(false);
-        return;
-      }
-      const arCanvas = arScene.canvas || arScene.renderer?.domElement;
+      const arCanvas = ARScene.getCanvas();
       if (!arCanvas) {
         console.error("AR canvas not available");
         setUploading(false);
@@ -141,7 +110,7 @@ const Photo = () => {
 
       // 5) Cargar la imagen AR
       const arImg = new Image();
-    arImg.crossOrigin = "anonymous";
+      arImg.crossOrigin = "anonymous";
       arImg.src = arDataUrl;
       await new Promise((res) => (arImg.onload = res));
 
@@ -192,18 +161,18 @@ const Photo = () => {
       // 9) Exportar y subir a Firebase
       const finalDataUrl = canvas.toDataURL("image/png");
       const photoRef = ref(storage, getStoragePath(`${Date.now()}.png`));
-       console.log("Usuario actual:", user);
+      console.log("Usuario actual:", user);
       const metadata = {
-      customMetadata: {
-        email: user?.email || "",
-        uid: user?.id || "",
-        name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
-        avatar: user?.user_metadata?.avatar_url || ""
-      },
-    };
+        customMetadata: {
+          email: user?.email || "",
+          uid: user?.id || "",
+          name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
+          avatar: user?.user_metadata?.avatar_url || ""
+        },
+      };
 
-    console.log("Metadata a subir:", metadata);
-      await uploadString(photoRef, finalDataUrl, "data_url",metadata);
+      console.log("Metadata a subir:", metadata);
+      await uploadString(photoRef, finalDataUrl, "data_url", metadata);
 
       console.log("📸 Foto subida:", {
         path: photoRef.fullPath,
@@ -227,19 +196,6 @@ const Photo = () => {
       className="fixed inset-0 flex items-center justify-center bg-black"
       style={{ zIndex: 1000 }}
     >
-      {/* Estilos para ocultar el video de MindAR y hacer transparente el canvas AR */}
-      <style>{`
-        .ar-scene video {
-          display: none !important;
-        }
-        .ar-scene canvas {
-          background: transparent !important;
-        }
-        .ar-scene a-scene {
-          background: transparent !important;
-        }
-      `}</style>
-
       {/* Botón de regresar */}
       <div className="absolute top-0 left-2 flex flex-col items-center z-20">
         <button
@@ -294,36 +250,12 @@ const Photo = () => {
         )}
       </div>
 
-      {/* AR Scene superpuesto */}
-      <div className="ar-scene absolute inset-0 w-full h-full" style={{ zIndex: 10, pointerEvents: 'none' }}>
-        <a-scene
-          mindar-face="autoStart: false"
-          embedded
-          color-space="sRGB"
-          renderer="colorManagement: true, physicallyCorrectLights: true, preserveDrawingBuffer: true, alpha: true"
-          vr-mode-ui="enabled: false"
-          device-orientation-permission-ui="enabled: false"
-          style={{ background: 'transparent' }}
-        >
-          <a-assets>
-            <a-asset-item id="glasses" src="/assets/glasses/scene.gltf"></a-asset-item>
-            <a-asset-item id="hat" src="/assets/hat/scene.gltf"></a-asset-item>
-            <a-asset-item id="mustashe" src="/assets/mustashe/scene.gltf"></a-asset-item>
-          </a-assets>
-          <a-entity mindar-face-target="anchorIndex: 168">
-            {arAsset === 'glasses' && (
-              <a-gltf-model rotation="0 0 0" position="0 0 -0.05" scale="0.135 0.135 0.135" src="#glasses"></a-gltf-model>
-            )}
-            {arAsset === 'hat' && (
-              <a-gltf-model rotation="0 0 0" position="0 0.25 -0.45" scale="1.3 1.3 1.3" src="#hat"></a-gltf-model>
-            )}
-            {arAsset === 'mustashe' && (
-              <a-gltf-model rotation="0 0 0" position="0 -0.37 -0.05" scale="0.001 0.001 0.001" src="#mustashe"></a-gltf-model>
-            )}
-          </a-entity>
-          <a-camera active="false" position="0 0 0"></a-camera>
-        </a-scene>
-      </div>
+      {/* AR Scene component */}
+      <ARScene
+        eventSlug={eventSlug}
+        isActive={!capturedImage}
+        onSceneReady={handleARReady}
+      />
 
       {/* Botones principales */}
       <div className="absolute bottom-2 left-0 w-full flex justify-center items-center z-20">
@@ -347,9 +279,6 @@ const Photo = () => {
                 alt="Repetir"
                 className="w-20 h-18 mt-[-10px] hover:opacity-80 transition"
               />
-              {/* <span className="text-black mt-0 text-xl font-semibold">
-                Repetir
-              </span> */}
             </div>
 
             <div
@@ -363,9 +292,6 @@ const Photo = () => {
                   uploading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               />
-              {/* <span className="text-black mt-0 text-xl font-semibold">
-                {uploading ? "Publicando..." : "Publicar"}
-              </span> */}
             </div>
           </div>
         )}
