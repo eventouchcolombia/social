@@ -8,8 +8,10 @@ const ProtectedRoute = ({ children }) => {
   // Mostrar loader mientras se verifica la sesión
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
-        <div className="bg-white p-4 rounded-lg border-2 border-[#753E89] shadow">Cargando...</div>
+     <div className="fixed inset-0 flex items-center justify-center bg-white/90 z-50">
+        <div className="  bg-white/80 p-4 rounded-lg  border-[#753E89] shadow flex items-center justify-center">
+          <img src="/carga.gif" alt="Cargando..." className="w-15 h-15" />
+        </div>
       </div>
     );
   }
