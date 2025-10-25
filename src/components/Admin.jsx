@@ -3,7 +3,8 @@ import { storage } from "../firebase/firebase";
 import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
 import Agenda from "./Agenda";
-import { Camera, Users, Settings, Images, Share2, Eye,Calendar } from "lucide-react";
+import Perfil from "./Perfil";
+import { Camera, Users, Settings, Images, Share2, Eye, Calendar, Menu } from "lucide-react";
 import {
   ref,
   listAll,
@@ -36,6 +37,7 @@ const Admin = () => {
   const [usersList, setUsersList] = useState([]);
   const [showUsersModal, setShowUsersModal] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
@@ -201,7 +203,14 @@ const Admin = () => {
     <div className="px-4 py-6 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="flex justify-between items-center mb-18">
-        <h1 className="text-md font-bold text-gray-900">{userName}</h1>
+        <div className="flex items-center gap-3">
+          <Menu 
+            className="w-6 h-6 text-gray-900 cursor-pointer hover:text-[#753E89] transition"
+            onClick={() => setShowProfileModal(true)}
+            title="Menú de perfil"
+          />
+          <h1 className="text-md font-bold text-gray-900">{userName}</h1>
+        </div>
         <img
           src="/Log_Out.png"
           alt="Cerrar sesión"
@@ -376,9 +385,14 @@ const Admin = () => {
           </div>
         </div>
       )}
-       {/* mostrar el modal Agenda */}
+      {/* mostrar el modal Agenda */}
       {showAgenda && (
         <Agenda eventSlug={eventSlug} onClose={() => setShowAgenda(false)} />
+      )}
+
+      {/* Modal perfil */}
+      {showProfileModal && (
+        <Perfil onClose={() => setShowProfileModal(false)} userEmail={user?.email} />
       )}
 
       {/* Modal galería completa */}
@@ -428,7 +442,8 @@ const Admin = () => {
               </div>
             ) : (
               <p className="text-sm text-gray-500">No hay fotos aún.</p>
-            )}
+            )
+            }
           </div>
         </div>
       )}
