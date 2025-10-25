@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import AuthenticationSupabase from "../components/AuthenticationSupabase";
 import { loadEventTexts } from "../utils/uploadAsset";
+import { useEventStatus } from "../hooks/useEventStatus";
+import EventInactive from "./EventInactive";
 
 const Photo = () => {
   const webcamRef = useRef(null);
@@ -14,6 +16,7 @@ const Photo = () => {
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
+  const { isActive, loading: statusLoading } = useEventStatus(eventSlug);
   const [frameUrl, setFrameUrl] = useState(null);
   const { session } = AuthenticationSupabase();
   const [arAsset, setArAsset] = useState("glasses"); // 🔹 Estado para el asset de AR
@@ -94,6 +97,12 @@ const Photo = () => {
   // 👇 Reemplaza SOLO tu publishPhoto con esta versión
   const publishPhoto = async () => {
     if (!capturedImage || uploading) return;
+
+    // Verificar nuevamente antes de subir
+    if (isActive === false) {
+      alert("Este evento ha sido desactivado. No se pueden subir más fotos.");
+      return;
+    }
 
     setUploading(true);
     try {
@@ -221,6 +230,20 @@ const Photo = () => {
       setUploading(false);
     }
   };
+
+  // Mostrar mensaje de carga mientras verifica el estado
+  if (statusLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black">
+        <div className="text-white text-xl">Verificando evento...</div>
+      </div>
+    );
+  }
+
+  // Si el evento está desactivado, mostrar pantalla de evento inactivo
+  if (isActive === false) {
+    return <EventInactive eventSlug={eventSlug} />;
+  }
 
   return (
     <div
