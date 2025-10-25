@@ -85,7 +85,7 @@ const Perfil = ({ onClose, userEmail }) => {
     try {
       const { data, error } = await supabase
         .from("admins")
-        .select("event_slug")
+        .select("id, event_slug, is_active")
         .eq("email", userEmail.toLowerCase().trim());
 
       if (error) throw error;
@@ -95,6 +95,35 @@ const Perfil = ({ onClose, userEmail }) => {
       showMessage("Error cargando eventos", "error");
     } finally {
       setLoadingEvents(false);
+    }
+  };
+
+  // Toggle activar/desactivar evento
+  const toggleEventStatus = async (eventId, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from("admins")
+        .update({ is_active: !currentStatus })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      // Actualizar el estado local
+      setUserEvents(prev => 
+        prev.map(event => 
+          event.id === eventId 
+            ? { ...event, is_active: !currentStatus }
+            : event
+        )
+      );
+
+      showMessage(
+        `Evento ${!currentStatus ? 'activado' : 'desactivado'} exitosamente`,
+        "success"
+      );
+    } catch (error) {
+      console.error("❌ Error actualizando evento:", error);
+      showMessage("Error actualizando el estado del evento", "error");
     }
   };
 
@@ -205,17 +234,48 @@ const Perfil = ({ onClose, userEmail }) => {
             ) : userEvents.length > 0 ? (
               <ul className="space-y-2">
                 {userEvents.map((event) => (
-                  <li key={event.event_slug}>
-                    <button
-                      onClick={() => {
-                        navigate(`/${event.event_slug}/admin`);
-                        onClose();
-                      }}
-                      className="w-full text-left px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-[#753E89] hover:text-white hover:border-[#753E89] transition group"
-                    >
-                      <span className="text-sm font-medium">{event.event_slug}</span>
-                      <span className="ml-2 text-xs text-gray-400 group-hover:text-white">→</span>
-                    </button>
+                  <li key={event.event_slug} className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => {
+                          navigate(`/${event.event_slug}/admin`);
+                          onClose();
+                        }}
+                        className="flex-1 text-left px-4 py-3 hover:bg-[#753E89] hover:text-white transition group"
+                      >
+                        <span className="text-sm font-medium">{event.event_slug}</span>
+                        <span className="ml-2 text-xs text-gray-400 group-hover:text-white">→</span>
+                      </button>
+                      
+                      {/* Toggle Switch */}
+                      <div className="px-3 flex items-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleEventStatus(event.id, event.is_active);
+                          }}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                            event.is_active ? 'bg-[#753E89]' : 'bg-gray-300'
+                          }`}
+                          title={event.is_active ? 'Desactivar evento' : 'Activar evento'}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              event.is_active ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Estado visual */}
+                    <div className={`px-4 py-1 text-xs ${
+                      event.is_active 
+                        ? 'bg-green-50 text-green-700' 
+                        : 'bg-red-50 text-red-700'
+                    }`}>
+                      {event.is_active ? '✓ Evento activo' : '✕ Evento desactivado'}
+                    </div>
                   </li>
                 ))}
               </ul>
