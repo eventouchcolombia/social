@@ -7,8 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import AuthenticationSupabase from "../components/AuthenticationSupabase";
 import { loadEventTexts } from "../utils/uploadAsset";
-import { useEventStatus } from "../hooks/useEventStatus";
-import EventInactive from "./EventInactive";
+import { supabase } from "../supabaseClient";
 
 const Photo = () => {
   const webcamRef = useRef(null);
@@ -16,10 +15,9 @@ const Photo = () => {
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
-  const { isActive, loading: statusLoading } = useEventStatus(eventSlug);
   const [frameUrl, setFrameUrl] = useState(null);
   const { session } = AuthenticationSupabase();
-  const [arAsset, setArAsset] = useState("glasses"); // 🔹 Estado para el asset de AR
+  const [arAsset, setArAsset] = useState("glasses");
 
   const user = session?.user;
 
@@ -52,12 +50,10 @@ const Photo = () => {
     }
   }, []);
 
-  // Solo captura la foto (NO sube todavía)
   const capturePhoto = () => {
     if (!webcamRef.current) return;
     const imageSrc = webcamRef.current.getScreenshot();
     setCapturedImage(imageSrc);
-    // Detener AR para que las gafas se congelen
     const scene = document.querySelector("a-scene");
     if (scene) {
       const system = scene.systems["mindar-face-system"];
@@ -67,10 +63,8 @@ const Photo = () => {
     }
   };
 
-  // Repetir foto
   const retakePhoto = () => {
     setCapturedImage(null);
-    // Reiniciar AR
     const scene = document.querySelector("a-scene");
     if (scene) {
       const system = scene.systems["mindar-face-system"];
@@ -93,19 +87,26 @@ const Photo = () => {
     });
   };
 
-  // Combina la foto capturada con el marco usando canvas y la sube
-  // 👇 Reemplaza SOLO tu publishPhoto con esta versión
   const publishPhoto = async () => {
     if (!capturedImage || uploading) return;
 
-    // Verificar nuevamente antes de subir
-    if (isActive === false) {
-      alert("Este evento ha sido desactivado. No se pueden subir más fotos.");
-      return;
-    }
-
     setUploading(true);
     try {
+      // Verificar si el evento está activo antes de subir
+      const { data: eventData, error: eventError } = await supabase
+        .from("admins")
+        .select("is_active")
+        .eq("event_slug", eventSlug)
+        .single();
+
+      if (eventError) {
+        console.error("Error verificando evento:", eventError);
+      } else if (eventData && eventData.is_active === false) {
+        alert("Este evento ha sido desactivado. No se pueden subir más fotos.");
+        setUploading(false);
+        return;
+      }
+
       // 1) Capturar la escena AR directamente desde el canvas de A-Frame
       const arScene = document.querySelector("a-scene");
       if (!arScene) {
@@ -136,36 +137,32 @@ const Photo = () => {
         frameImg = await loadImage(frameSrc);
       }
 
-      // 3) Preparar canvas intermedio con la vista exacta (webcam + AR)
-      //    usando la resolución original de la foto capturada
+      // 3) Preparar canvas intermedio
       const viewCanvas = document.createElement("canvas");
       const viewCtx = viewCanvas.getContext("2d");
 
       // 4) Cargar la foto capturada
       const baseImg = new Image();
-      baseImg.src = capturedImage; // dataURL desde react-webcam
+      baseImg.src = capturedImage;
       await new Promise((res) => (baseImg.onload = res));
       viewCanvas.width = baseImg.width;
       viewCanvas.height = baseImg.height;
 
       // 5) Cargar la imagen AR
       const arImg = new Image();
-    arImg.crossOrigin = "anonymous";
+      arImg.crossOrigin = "anonymous";
       arImg.src = arDataUrl;
       await new Promise((res) => (arImg.onload = res));
 
-      // 6) Componer la vista tal cual se muestra en pantalla
-      // Foto (mirrored) + capa AR en la misma resolución
+      // 6) Componer la vista
       viewCtx.save();
       viewCtx.translate(viewCanvas.width, 0);
       viewCtx.scale(-1, 1);
       viewCtx.drawImage(baseImg, 0, 0, viewCanvas.width, viewCanvas.height);
       viewCtx.restore();
-
-      // MindAR ya pinta la capa alineada en el canvas original, solo la escalamos si difiere
       viewCtx.drawImage(arImg, 0, 0, viewCanvas.width, viewCanvas.height);
 
-      // 7) Crear el canvas final con el tamaño del marco
+      // 7) Crear el canvas final
       const canvas = document.createElement("canvas");
       canvas.width = frameImg.width || 1080;
       canvas.height = frameImg.height || 1920;
@@ -174,10 +171,7 @@ const Photo = () => {
       const drawCover = (image) => {
         const imgAspect = image.width / image.height;
         const canvasAspect = canvas.width / canvas.height;
-        let drawWidth;
-        let drawHeight;
-        let drawX;
-        let drawY;
+        let drawWidth, drawHeight, drawX, drawY;
 
         if (imgAspect > canvasAspect) {
           drawHeight = canvas.height;
@@ -194,33 +188,24 @@ const Photo = () => {
         ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
       };
 
-      // 8) Dibujar la composición y luego el marco
+      // 8) Dibujar composición y marco
       drawCover(viewCanvas);
       ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
 
-      // 9) Exportar y subir a Firebase
+      // 9) Exportar y subir
       const finalDataUrl = canvas.toDataURL("image/png");
       const photoRef = ref(storage, getStoragePath(`${Date.now()}.png`));
-       console.log("Usuario actual:", user);
       const metadata = {
-      customMetadata: {
-        email: user?.email || "",
-        uid: user?.id || "",
-        name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
-        avatar: user?.user_metadata?.avatar_url || ""
-      },
-    };
+        customMetadata: {
+          email: user?.email || "",
+          uid: user?.id || "",
+          name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
+          avatar: user?.user_metadata?.avatar_url || ""
+        },
+      };
 
-    console.log("Metadata a subir:", metadata);
-      await uploadString(photoRef, finalDataUrl, "data_url",metadata);
+      await uploadString(photoRef, finalDataUrl, "data_url", metadata);
 
-      console.log("📸 Foto subida:", {
-        path: photoRef.fullPath,
-        uid: user?.id,
-        email: user?.email,
-      });
-
-      // Ir a la galería
       navigate(`/${eventSlug}/gallery`);
     } catch (error) {
       console.error("❌ Error al subir la foto:", error);
@@ -231,26 +216,11 @@ const Photo = () => {
     }
   };
 
-  // Mostrar mensaje de carga mientras verifica el estado
-  if (statusLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black">
-        <div className="text-white text-xl">Verificando evento...</div>
-      </div>
-    );
-  }
-
-  // Si el evento está desactivado, mostrar pantalla de evento inactivo
-  if (isActive === false) {
-    return <EventInactive eventSlug={eventSlug} />;
-  }
-
   return (
     <div
       className="fixed inset-0 flex items-center justify-center bg-black"
       style={{ zIndex: 1000 }}
     >
-      {/* Estilos para ocultar el video de MindAR y hacer transparente el canvas AR */}
       <style>{`
         .ar-scene video {
           display: none !important;
@@ -263,28 +233,23 @@ const Photo = () => {
         }
       `}</style>
 
-      {/* Botón de regresar */}
       <div className="absolute top-0 left-2 flex flex-col items-center z-20">
         <button
           onClick={() => navigate(`/${eventSlug}/choose`)}
-          className="w-12 h-12   flex items-center justify-center"
+          className="w-12 h-12 flex items-center justify-center"
         >
           <img src="/back.png" alt="Regresar" className="w-9 h-8" />
         </button>
       </div>
 
-      {/* Cámara o foto ocupando toda la pantalla con marco superpuesto */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center">
-        {/* Foto o cámara */}
         {!capturedImage ? (
           <Webcam
             ref={webcamRef}
             audio={false}
             screenshotFormat="image/png"
             className="w-full h-full object-cover"
-            videoConstraints={{
-              facingMode: "user",
-            }}
+            videoConstraints={{ facingMode: "user" }}
             style={{
               width: "100vw",
               height: "100vh",
@@ -307,7 +272,6 @@ const Photo = () => {
             }}
           />
         )}
-        {/* Marco superpuesto */}
         {frameUrl && (
           <img
             src={frameUrl}
@@ -317,7 +281,6 @@ const Photo = () => {
         )}
       </div>
 
-      {/* AR Scene superpuesto */}
       <div className="ar-scene absolute inset-0 w-full h-full" style={{ zIndex: 10, pointerEvents: 'none' }}>
         <a-scene
           mindar-face="autoStart: false"
@@ -348,7 +311,6 @@ const Photo = () => {
         </a-scene>
       </div>
 
-      {/* Botones principales */}
       <div className="absolute bottom-2 left-0 w-full flex justify-center items-center z-20">
         {!capturedImage ? (
           <div className="flex flex-col items-center">
@@ -370,11 +332,7 @@ const Photo = () => {
                 alt="Repetir"
                 className="w-20 h-18 mt-[-10px] hover:opacity-80 transition"
               />
-              {/* <span className="text-black mt-0 text-xl font-semibold">
-                Repetir
-              </span> */}
             </div>
-
             <div
               className="flex flex-col items-center cursor-pointer"
               onClick={publishPhoto}
@@ -386,9 +344,6 @@ const Photo = () => {
                   uploading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               />
-              {/* <span className="text-black mt-0 text-xl font-semibold">
-                {uploading ? "Publicando..." : "Publicar"}
-              </span> */}
             </div>
           </div>
         )}
