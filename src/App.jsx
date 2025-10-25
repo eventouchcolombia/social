@@ -13,13 +13,14 @@ import Admin from "./components/Admin";
 import SuperAdmin from "./components/SuperAdmin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RedirectToEventLocal from "./components/RedirectEventLocal";
+import Begin from "./components/Begin";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* raíz: redirige al slug guardado en localStorage */}
-        <Route path="/" element={<RedirectToEventLocal />} />
+        {/* ahora Begin es la pantalla de inicio; Welcome se monta en /:eventSlug */}
+        <Route path="/" element={<Begin />} />
         <Route path="/:eventSlug" element={<Welcome />} />
         <Route path="/:eventSlug/admin" element={<Admin />} />
         <Route path="/superadmin" element={<SuperAdmin />} />
