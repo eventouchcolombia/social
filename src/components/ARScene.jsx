@@ -106,7 +106,7 @@ const ARScene = ({ eventSlug, isActive = true, onSceneReady }) => {
               <a-gltf-model rotation="0 0 0" position="0 -0.37 -0.05" scale="0.001 0.001 0.001" src="#mustashe"></a-gltf-model>
             )}
           </a-entity>
-          <a-camera active="false" position="0 0 0"></a-camera>
+          <a-camera active="false" position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
         </a-scene>
       </div>
     </>

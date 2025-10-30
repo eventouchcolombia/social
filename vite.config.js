@@ -5,7 +5,9 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), basicSsl()],
+  plugins: [react(), tailwindcss()],
+  // descomentar para usar la camara en modo developer en el celular con https 
+  // plugins: [react(), tailwindcss(), basicSsl()],
   server: {
     host: true,
     port: 5174,
