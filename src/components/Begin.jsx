@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import  { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient"; // asegúrate de tener esto configurado
+import { supabase } from "../supabaseClient";
+import useAuthenticationSupabase from "./AuthenticationSupabase";
 
 // eslint-disable-next-line no-unused-vars
 const Begin = ({ onCreate }) => {
@@ -9,16 +10,105 @@ const Begin = ({ onCreate }) => {
   const [eventSlug, setEventSlug] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showNotFoundModal, setShowNotFoundModal] = useState(false);
+  const [authStarted, setAuthStarted] = useState(false);
 
-  const handleCreate = () => {
-    // abrir modal para solicitar el nombre del evento (creador/admin)
-    setShowCreateModal(true);
+  const { session, isAdmin, loading, signInWithGoogle } = useAuthenticationSupabase();
+
+  // 👇 Función: busca en la tabla 'admins' por email y devuelve la fila
+  const fetchEventForEmail = async (email) => {
+    if (!email) {
+      console.log("fetchEventForEmail: no se proporcionó email");
+      return null;
+    }
+
+    try {
+      console.log(`🔎 [fetchEventForEmail] Buscando admin por email: ${email}`);
+      const { data, error } = await supabase
+        .from("admins")
+        .select("*")
+        .eq("email", email)
+        .limit(1);
+
+      if (error) {
+        console.error("❌ [fetchEventForEmail] Error al consultar admins:", error);
+        return null;
+      }
+
+      console.log("✅ [fetchEventForEmail] Resultado raw:", data);
+
+      if (!data || data.length === 0) {
+        console.log("ℹ️ [fetchEventForEmail] No se encontró fila en 'admins' para ese email");
+        return null;
+      }
+
+      const row = data[0];
+      console.log("📌 [fetchEventForEmail] Fila encontrada:", {
+        id: row.id,
+        uuid: row.uuid,
+        email: row.email,
+        event_slug: row.event_slug,
+        is_active: row.is_active,
+        created_at: row.created_at,
+      });
+
+      return row;
+    } catch (err) {
+      console.error("⚠️ [fetchEventForEmail] Excepción:", err);
+      return null;
+    }
   };
 
+  useEffect(() => {
+    console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", { session, isAdmin });
+
+    if (!session) {
+      console.log("⏳ [useEffect Begin] No hay sesión todavía...");
+      return;
+    }
+
+    (async () => {
+      const email = session.user?.email;
+      console.log("🧾 [useEffect Begin] Email de sesión:", email);
+
+      const adminRow = await fetchEventForEmail(email);
+
+      if (isAdmin === true) {
+        if (adminRow && adminRow.event_slug) {
+          if (adminRow.is_active === false) {
+            console.warn("⚠️ [useEffect Begin] Evento encontrado pero marcado como inactivo:", adminRow.event_slug);
+            // comportamiento opcional: navegar a página informativa o evitar redirección
+            return;
+          }
+          console.log("🚀 [useEffect Begin] Usuario admin confirmado. Redirigiendo al evento desde admins.event_slug:", adminRow.event_slug);
+          navigate(`/${adminRow.event_slug}/admin`);
+        } else {
+          console.log("⚠️ [useEffect Begin] isAdmin true pero no hay fila admin. Usando fallback con email para navegar.");
+          navigate(`/${email.split("@")[0]}/admin`);
+        }
+      } else if (isAdmin === false) {
+        console.log("❌ [useEffect Begin] Usuario no es admin, sin redirección.");
+      } else {
+        console.log("ℹ️ [useEffect Begin] isAdmin aún indefinido:", isAdmin);
+      }
+    })();
+  }, [session, isAdmin, navigate]);
+
+
+
+  // 🟣 Maneja el click del botón Google
+ const handleGoogleLogin = async () => {
+  setAuthStarted(true);
+  console.log("🚀 Iniciando login con Google...");
+  await signInWithGoogle();
+};
+
+
+
+
+  // ✅ Lógica para crear o asistir a evento
   const handleCreateConfirm = async () => {
     const slug = eventSlug.trim().toLowerCase();
     if (!slug) {
-      // si no ingresó nada mostrar modal de no encontrado / contacto
       setShowCreateModal(false);
       setShowNotFoundModal(true);
       return;
@@ -32,16 +122,14 @@ const Begin = ({ onCreate }) => {
 
       if (error) {
         console.error("Error buscando evento (create):", error);
-        alert("Hubo un error al buscar el evento. Revisa la consola.");
+        alert("Hubo un error al buscar el evento.");
         return;
       }
 
       if (!data || data.length === 0) {
-        // no existe -> mostrar modal de no encontrado con instrucción de contacto
         setShowCreateModal(false);
         setShowNotFoundModal(true);
       } else {
-        // existe -> navegar a /:slug/admin
         navigate(`/${data[0].event_slug}/admin`);
         setShowCreateModal(false);
         setEventSlug("");
@@ -53,7 +141,6 @@ const Begin = ({ onCreate }) => {
   };
 
   const handleAttendClick = () => {
-    // abre el modal
     setShowModal(true);
   };
 
@@ -64,26 +151,19 @@ const Begin = ({ onCreate }) => {
     }
 
     const slug = eventSlug.trim().toLowerCase();
-    console.log("🔍 Buscando evento exacto con slug:", slug);
-
     const { data, error } = await supabase
       .from("admins")
       .select("*")
       .eq("event_slug", slug);
 
     if (error) {
-      console.error("❌ Error en la consulta:", error);
       alert("Hubo un error al buscar el evento");
       return;
     }
 
-    console.log("📦 Resultado de la consulta:", data);
-
     if (!data || data.length === 0) {
-      console.warn("⚠️ El evento no existe en la tabla 'admins'");
       alert("El evento no existe");
     } else {
-      console.log("✅ Evento encontrado:", data[0].event_slug);
       navigate(`/${data[0].event_slug}`);
     }
 
@@ -91,6 +171,18 @@ const Begin = ({ onCreate }) => {
     setEventSlug("");
   };
 
+  // ⏳ Mostrar "Cargando..." solo si se presionó Iniciar sesión
+  if (authStarted && loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#753E89]/20">
+        <h1 className="text-2xl font-semibold text-[#753E89] animate-pulse">
+          Verificando autenticación...
+        </h1>
+      </div>
+    );
+  }
+
+  // ===================== UI PRINCIPAL =====================
   return (
     <div className="relative min-h-screen flex flex-col justify-between items-center px-4 py-8">
       <img
@@ -112,12 +204,11 @@ const Begin = ({ onCreate }) => {
         <div className="w-[110%] max-w-xl bg-white/40 rounded-t-4xl p-8 shadow-lg flex flex-col items-center">
           <div className="w-full flex flex-col sm:flex-row gap-4 items-center justify-center">
             <button
-              type="button"
-              onClick={handleCreate}
-              className="w-full sm:w-1/2 py-3 rounded-full text-white text-xl
-                         bg-[#753E89] hover:bg-[#5e3270] shadow-md"
+              onClick={handleGoogleLogin}
+              className="w-full sm:w-1/2 flex justify-center items-center gap-2 py-3 rounded-full text-black text-xl bg-white hover:bg-gray-100 shadow-md transition"
             >
-              Crea tu evento
+              <img src="/google.png" alt="Google" className="w-6 h-6" />
+              Inicia sesión con Google
             </button>
 
             <button
@@ -132,7 +223,7 @@ const Begin = ({ onCreate }) => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal ingreso a evento */}
       {showModal && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
           <div className="bg-white rounded-2xl p-6 w-80 shadow-lg flex flex-col items-center">
@@ -164,12 +255,12 @@ const Begin = ({ onCreate }) => {
         </div>
       )}
 
-      {/* Modal Crear evento: solicitar nombre para acceder a /:slug/admin */}
+      {/* Modal crear evento */}
       {showCreateModal && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
           <div className="bg-white rounded-2xl p-6 w-80 shadow-lg flex flex-col items-center">
             <h2 className="text-xl font-semibold mb-4 text-[#753E89]">
-           Crea tu evento con el nombre asignado
+              Crea tu evento con el nombre asignado
             </h2>
             <input
               type="text"
@@ -199,7 +290,7 @@ const Begin = ({ onCreate }) => {
         </div>
       )}
 
-      {/* Modal evento no encontrado / contacto */}
+      {/* Modal evento no encontrado */}
       {showNotFoundModal && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
           <div className="bg-white rounded-2xl p-6 w-80 shadow-lg text-center">

@@ -9,7 +9,7 @@ const AuthenticationSupabase = () => {
 
   // === Verificar si el usuario es admin ===
 // AuthenticationSupabase.jsx
-const checkIfAdmin = async (user, eventSlug) => {
+const checkIfAdmin = async (user) => {
   try {
     if (!user?.email) {
       setIsAdmin(false);
@@ -20,9 +20,8 @@ const checkIfAdmin = async (user, eventSlug) => {
 
     const { data: admin, error } = await supabase
       .from("admins")
-      .select("id, email, event_slug")
+      .select("id, email")
       .eq("email", email)
-      .eq("event_slug", eventSlug)  // 🔹 validar también por slug
       .maybeSingle();
 
     if (error) {
@@ -51,8 +50,8 @@ const checkIfAdmin = async (user, eventSlug) => {
 
       if (currentSession?.user) {
         // 🔹 Obtén el slug actual de la URL
-        const slug = window.location.pathname.split("/")[1]; // ej: /happybirth/admin → "happybirth"
-        await checkIfAdmin(currentSession.user, slug);
+        // const slug = window.location.pathname.split("/")[1]; // ej: /happybirth/admin → "happybirth"
+        await checkIfAdmin(currentSession.user);
       }
 
       unsub = supabase.auth.onAuthStateChange(async (event, sessionObj) => {
@@ -60,12 +59,12 @@ const checkIfAdmin = async (user, eventSlug) => {
         setSession(ses);
 
         if (event === "SIGNED_IN" && ses?.user) {
-          const slug = window.location.pathname.split("/")[1];
-          await checkIfAdmin(ses.user, slug);
+          await checkIfAdmin(ses.user);
         }
         if (event === "SIGNED_OUT") {
           setIsAdmin(false);
           setSession(null);
+          setLoading(true); // evita mostrar UI privada durante la transición
         }
         setLoading(false);
       });
@@ -110,10 +109,29 @@ const checkIfAdmin = async (user, eventSlug) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setIsAdmin(false);
-    setSession(null);
+    try {
+      // Oculta inmediatamente la UI de admin y marca loading
+      setIsAdmin(false);
+      setSession(null);
+      setLoading(true);
+
+      // Realiza el sign out (no esperamos a que React actualice el state)
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("❌ Error al cerrar sesión:", error);
+        // si falla, deja loading en false para que UI pueda reaccionar
+        setLoading(false);
+        return;
+      }
+
+      // Redirige al root; use replace para no dejar la ruta anterior en el historial
+      window.location.replace("/");
+    } catch (err) {
+      console.error("❌ Error al cerrar sesión:", err);
+      setLoading(false);
+    }
   };
+  // ...existing code...
 
    const getSession = async () => {
         return supabase.auth.getSession();

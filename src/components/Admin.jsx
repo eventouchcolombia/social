@@ -4,7 +4,16 @@ import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
 import Agenda from "./Agenda";
 import Perfil from "./Perfil";
-import { Camera, Users, Settings, Images, Share2, Eye, Calendar, Menu } from "lucide-react";
+import {
+  Camera,
+  Users,
+  Settings,
+  Images,
+  Share2,
+  Eye,
+  Calendar,
+  Menu,
+} from "lucide-react";
 import {
   ref,
   listAll,
@@ -18,8 +27,7 @@ import { useEvent } from "../hooks/useEvent";
 import { supabase } from "../supabaseClient";
 
 const Admin = () => {
-  const { session, isAdmin, loading, signInWithGoogle, signOut } =
-    useAuthenticationSupabase();
+  const { session, isAdmin, loading, signOut } = useAuthenticationSupabase();
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
 
   const [photos, setPhotos] = useState([]);
@@ -38,6 +46,29 @@ const Admin = () => {
   const [showUsersModal, setShowUsersModal] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  useEffect(() => {
+    if (session && isAdmin) {
+      console.log(
+        `✅ [ADMIN DETECTADO] El usuario ${session.user?.email} tiene permisos de administrador para el evento "${eventSlug}"`
+      );
+    } else if (session && !isAdmin) {
+      console.log(
+        `⚠️ [NO ADMIN] El usuario ${session.user?.email} no tiene permisos de administrador.`
+      );
+    } else if (!session) {
+      console.log("ℹ️ No hay sesión activa aún.");
+    }
+  }, [session, isAdmin, eventSlug]);
+
+  useEffect(() => {
+    if (isAdmin === true && session) {
+      console.log("✅ [ADMIN CONFIRMADO]");
+      console.log("Correo del admin:", session.user?.email);
+      console.log("Event Slug actual:", eventSlug);
+      console.log("Estado completo ->", { isAdmin, session });
+    }
+  }, [isAdmin, session, eventSlug]);
 
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
@@ -132,7 +163,7 @@ const Admin = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-linear-to-br from-gray-900 to-blue-900 px-4">
+      <div className="flex flex-col justify-center items-center min-h-screen  px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <h1 className="text-white text-2xl font-semibold mb-2">
@@ -154,22 +185,19 @@ const Admin = () => {
           backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none",
         }}
       >
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="relative z-10 text-center px-4">
-          <h1 className="text-3xl font-bold text-center text-white mb-4">
-            Panel Admin - {eventSlug}
-          </h1>
-          <p className="text-white/80 mb-8 text-sm sm:text-base">
-            Inicia sesión para acceder al panel de administración
-          </p>
+        <div className="absolute inset-0 bg-[url('/Mobile.png')]"></div>
+        <div className="absolute inset-0 bg-[url('/Mobile.png')] bg-cover bg-center"></div>
 
-          <button
-            onClick={signInWithGoogle}
-            className="px-6 py-3 bg-white/90 text-black font-bold rounded-lg flex items-center gap-2 shadow-lg hover:bg-white transition mx-auto"
-          >
-            <img src="/google.png" alt="Google" className="w-6 h-6" />
-            Iniciar sesión con Google
-          </button>
+        <div className="relative z-10 text-center px-4 flex flex-col items-center justify-center min-h-screen">
+          <h1 className="text-2xl font-bold text-center text-white mb-4">
+            Cerrando Admin {eventSlug}
+          </h1>
+
+          <img
+            src="/loading.gif"
+            alt="Cargando..."
+            className="w-16 h-16 mt-4"
+          />
         </div>
       </div>
     );
@@ -204,7 +232,7 @@ const Admin = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-18">
         <div className="flex items-center gap-3">
-          <Menu 
+          <Menu
             className="w-6 h-6 text-gray-900 cursor-pointer hover:text-[#753E89] transition"
             onClick={() => setShowProfileModal(true)}
             title="Menú de perfil"
@@ -392,7 +420,10 @@ const Admin = () => {
 
       {/* Modal perfil */}
       {showProfileModal && (
-        <Perfil onClose={() => setShowProfileModal(false)} userEmail={user?.email} />
+        <Perfil
+          onClose={() => setShowProfileModal(false)}
+          userEmail={user?.email}
+        />
       )}
 
       {/* Modal galería completa */}
@@ -442,8 +473,7 @@ const Admin = () => {
               </div>
             ) : (
               <p className="text-sm text-gray-500">No hay fotos aún.</p>
-            )
-            }
+            )}
           </div>
         </div>
       )}
