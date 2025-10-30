@@ -3,6 +3,7 @@ import { useEvent } from "../hooks/useEvent";
 import { useEffect, useState } from "react";
 import { Camera, Image as ImageIcon } from "lucide-react";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
+import { supabase } from "../supabaseClient";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -25,6 +26,9 @@ const Choose = () => {
   const { eventSlug, getAssetUrl } = useEvent();
 
   const [backgroundUrl, setBackgroundUrl] = useState(null);
+  const [agenda, setAgenda] = useState([]);
+
+
 
   // Selecciona el tema según la ruta, o usa el default
   const theme = themes[eventSlug] || defaultTheme;
@@ -37,6 +41,28 @@ const Choose = () => {
     loadBackground();
   }, [eventSlug, getAssetUrl]);
 
+ // 📦 Cargar TODAS las agendas desde Supabase
+useEffect(() => {
+  const loadAgendas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("event_agenda")
+        .select("content, date")
+        .eq("event_slug", eventSlug)
+        .order("date", { ascending: true }); // 🔹 Mostrar en orden cronológico
+
+      if (error) throw error;
+      console.log("📦 Agendas cargadas desde Supabase:", data);
+      setAgenda(data || []);
+    } catch (err) {
+      console.error("❌ Error cargando agendas:", err.message);
+    }
+  };
+
+  loadAgendas();
+}, [eventSlug]);
+
+
   // 👤 Usuario actual
   const user = session?.user;
 
@@ -48,44 +74,69 @@ const Choose = () => {
         minHeight: "100dvh",
       }}
     >
-     {/* Header con usuario + logout */}
-<div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-  {/* 👤 Usuario logueado (Este ya tiene la condición user &&) */}
-  {user && (
-    <div className="flex items-center gap-2 px-3 py-1 rounded-lg ">
-      {user.user_metadata?.avatar_url && (
-        <img
-          src={user.user_metadata.avatar_url}
-          alt="avatar"
-          className="w-8 h-8 rounded-full border"
-        />
-      )}
-      <span className="text-sm font-semibold text-black">
-        {user.user_metadata?.name ||
-         user.user_metadata?.full_name ||
-         user.email}
-      </span>
-    </div>
-  )}
+      {/* Header con usuario + logout */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+        {/* 👤 Usuario logueado (Este ya tiene la condición user &&) */}
+        {user && (
+          <div className="flex items-center gap-2 px-3 py-1 rounded-lg ">
+            {user.user_metadata?.avatar_url && (
+              <img
+                src={user.user_metadata.avatar_url}
+                alt="avatar"
+                className="w-8 h-8 rounded-full border"
+              />
+            )}
+            <span className="text-sm font-semibold text-black">
+              {user.user_metadata?.name ||
+                user.user_metadata?.full_name ||
+                user.email}
+            </span>
+          </div>
+        )}
 
-  {/* 🔴 Botón cerrar sesión (AHORA CONDICIONAL) */}
-  {user && ( // 👈 NUEVA CONDICIÓN: Solo renderiza si hay usuario
-    <button
-      onClick={async () => {
-         await signOut(); // cerrar sesión en Supabase
-         navigate(`/${eventSlug}`); // redirigir al inicio
-      }}
-      className="cursor-pointer"
-    >
-      <img
-        src="/Log_Out.png"
-        alt="Cerrar sesión"
-        className="w-8 h-8
+        {/* 🔴 Botón cerrar sesión (AHORA CONDICIONAL) */}
+        {user && ( // 👈 NUEVA CONDICIÓN: Solo renderiza si hay usuario
+          <button
+            onClick={async () => {
+              await signOut(); // cerrar sesión en Supabase
+              navigate(`/${eventSlug}`); // redirigir al inicio
+            }}
+            className="cursor-pointer"
+          >
+            <img
+              src="/Log_Out.png"
+              alt="Cerrar sesión"
+              className="w-8 h-8
          rounded-lg"
-      />
-    </button>
-  )}
-</div>
+            />
+          </button>
+        )}
+      </div>
+      {/* 🧾 Texto de la agenda (flotante) */}
+   {agenda.length > 0 && (
+  <div className="absolute top-20 left-4 right-4 max-h-60 overflow-y-auto space-y-2">
+    {agenda.map((item, index) => (
+      <div
+        key={index}
+        className="bg-white rounded-xl shadow-md p-3 border border-gray-200"
+      >
+        <p className="text-sm text-gray-800">{item.content}</p>
+        {item.date && (
+          <p className="text-xs text-gray-500 mt-1 text-right">
+            {new Date(item.date).toLocaleDateString("es-ES", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+        )}
+      </div>
+    ))}
+  </div>
+)}
+
+
+
 
 
       {/* Caja inferior */}

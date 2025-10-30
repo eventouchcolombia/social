@@ -5,6 +5,7 @@ import useAuthenticationSupabase from "./AuthenticationSupabase";
 import { loadEventTexts } from "../utils/uploadAsset";
 import Modals from "../components/Modals";
 import { supabase } from "../supabaseClient";
+import { useParams } from "react-router-dom";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -19,9 +20,17 @@ const defaultTheme = {
   button: "bg-[#753E89] text-white hover:bg-purple-800",
 };
 
-const Welcome = () => {
+export default function Welcome() {
+  const { eventSlug } = useParams();
+
+  useEffect(() => {
+    if (eventSlug) {
+      localStorage.setItem("eventSlug", eventSlug);
+    }
+  }, [eventSlug]);
+
   const navigate = useNavigate();
-  const { eventSlug, getAssetUrl } = useEvent();
+  const { getAssetUrl } = useEvent();
   const { isAdmin, signInWithGoogle, session } = useAuthenticationSupabase();
   const [backgroundUrl, setBackgroundUrl] = useState(null);
   const [eventTexts, setEventTexts] = useState({
@@ -31,6 +40,7 @@ const Welcome = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const theme = themes[eventSlug] || defaultTheme;
+ 
 
   // 🔹 Cargar assets y textos del evento
   useEffect(() => {
@@ -78,6 +88,50 @@ const Welcome = () => {
       navigate(`/${eventSlug}/choose`);
     }
   }, [session, navigate, eventSlug]);
+
+    // 🔹 Registrar usuario en la tabla event_users
+  useEffect(() => {
+    const registerUser = async () => {
+      if (!session?.user || !eventSlug) return;
+
+      try {
+        // Verificar si ya está registrado
+        const { data: existing, error: selectError } = await supabase
+          .from("event_users")
+          .select("id")
+          .eq("event_slug", eventSlug)
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (selectError) throw selectError;
+
+        if (!existing) {
+          // Insertar nuevo registro
+          const { error: insertError } = await supabase.from("event_users").insert([
+            {
+              event_slug: eventSlug,
+              user_id: session.user.id,
+              email: session.user.email,
+              full_name:
+                session.user.user_metadata?.full_name ||
+                session.user.user_metadata?.name ||
+                session.user.email.split("@")[0],
+            },
+          ]);
+
+          if (insertError) throw insertError;
+          console.log("✅ Usuario registrado en event_users");
+        } else {
+          console.log("ℹ️ Usuario ya registrado");
+        }
+      } catch (err) {
+        console.error("❌ Error registrando usuario:", err.message);
+      }
+    };
+
+    registerUser();
+  }, [session, eventSlug]);
+
 
   return (
     <div
@@ -132,6 +186,4 @@ const Welcome = () => {
       <Modals isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
-};
-
-export default Welcome;
+}

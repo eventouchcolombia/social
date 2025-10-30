@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { storage } from "../firebase/firebase";
 import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
-import { Camera, Users, Settings, Images, Share2, Eye } from "lucide-react";
+import Agenda from "./Agenda";
+import Perfil from "./Perfil";
+import { Camera, Users, Settings, Images, Share2, Eye, Calendar, Menu } from "lucide-react";
 import {
   ref,
   listAll,
@@ -13,6 +15,7 @@ import {
 
 import useAuthenticationSupabase from "./AuthenticationSupabase";
 import { useEvent } from "../hooks/useEvent";
+import { supabase } from "../supabaseClient";
 
 const Admin = () => {
   const { session, isAdmin, loading, signInWithGoogle, signOut } =
@@ -30,6 +33,11 @@ const Admin = () => {
   const [showShareModal, setShowShareModal] = useState(false);
 
   const [backgroundUrl, setBackgroundUrl] = useState(null);
+  const [activeUsers, setActiveUsers] = useState(0);
+  const [usersList, setUsersList] = useState([]);
+  const [showUsersModal, setShowUsersModal] = useState(false);
+  const [showAgenda, setShowAgenda] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
@@ -99,10 +107,32 @@ const Admin = () => {
   //   }
   // };
 
-  // === UI estados previos ===
+  // === contar usuarios activos ===
+
+  useEffect(() => {
+    const fetchActiveUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("event_users")
+          .select("*", { count: "exact" })
+          .eq("event_slug", eventSlug);
+
+        if (error) throw error;
+
+        // Si quieres mostrar la cantidad:
+        setUsersList(data || []);
+        setActiveUsers(data.length || 0);
+      } catch (err) {
+        console.error("❌ Error obteniendo usuarios activos:", err.message);
+      }
+    };
+
+    fetchActiveUsers();
+  }, [eventSlug]);
+
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-4">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-linear-to-br from-gray-900 to-blue-900 px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <h1 className="text-white text-2xl font-semibold mb-2">
@@ -173,7 +203,14 @@ const Admin = () => {
     <div className="px-4 py-6 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="flex justify-between items-center mb-18">
-        <h1 className="text-md font-bold text-gray-900">{userName}</h1>
+        <div className="flex items-center gap-3">
+          <Menu 
+            className="w-6 h-6 text-gray-900 cursor-pointer hover:text-[#753E89] transition"
+            onClick={() => setShowProfileModal(true)}
+            title="Menú de perfil"
+          />
+          <h1 className="text-md font-bold text-gray-900">{userName}</h1>
+        </div>
         <img
           src="/Log_Out.png"
           alt="Cerrar sesión"
@@ -191,9 +228,12 @@ const Admin = () => {
           <p className="text-sm">Fotos totales</p>
         </div>
 
-        <div className="bg-[#753E89] rounded-xl p-4 flex flex-col justify-center items-center text-white shadow-md">
+        <div
+          className="bg-[#753E89] rounded-xl p-4 flex flex-col justify-center items-center text-white shadow-md"
+          onClick={() => setShowUsersModal(true)}
+        >
           <Users className="w-6 h-6 mb-2" />
-          <p className="text-2xl font-bold">32</p>
+          <p className="text-2xl font-bold">{activeUsers}</p>
           <p className="text-sm">Usuarios activos</p>
         </div>
       </div>
@@ -255,6 +295,18 @@ const Admin = () => {
         </div>
       </div>
 
+      {/* Vista agenda*/}
+      <div
+        className="bg-white rounded-xl shadow-xl p-4 flex items-center gap-2 mb-3 cursor-pointer hover:bg-gray-100"
+        onClick={() => setShowAgenda(true)}
+      >
+        <Calendar className="w-5 h-5 text-[#753E89] mr-2 " />
+        <div>
+          <p className="font-semibold text-sm">Agenda</p>
+          <p className="text-xs text-gray-500">haz la agenda de tu evento</p>
+        </div>
+      </div>
+
       {/* Modales */}
       {showWizard && <AssetWizard onClose={() => setShowWizard(false)} />}
       {showShareModal && (
@@ -295,6 +347,52 @@ const Admin = () => {
             </button>
           </div>
         </div>
+      )}
+      {/* 🧍 Modal de usuarios activos */}
+      {showUsersModal && (
+        <div className="fixed inset-0 bg-black/70  bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white border-2 border-[#753E89] rounded-2xl p-6 w-80 md:w-[400px] max-h-[80vh] overflow-y-auto shadow-lg">
+            <h2 className="text-xl font-bold text-center mb-4 text-[#753E89]">
+              Usuarios activos
+            </h2>
+
+            {usersList.length > 0 ? (
+              <ul className="space-y-3">
+                {usersList.map((user) => (
+                  <li
+                    key={user.id}
+                    className="border-b border-gray-200 pb-2 text-gray-800"
+                  >
+                    <p className="font-semibold">
+                      {user.full_name || "Sin nombre"}
+                    </p>
+                    <p className="text-sm text-gray-500">{user.email}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-center text-gray-500">
+                No hay usuarios registrados aún.
+              </p>
+            )}
+
+            <button
+              className="mt-6 w-full bg-[#753E89] text-white py-2 rounded-full font-semibold hover:bg-[#8a4ea0] transition"
+              onClick={() => setShowUsersModal(false)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+      {/* mostrar el modal Agenda */}
+      {showAgenda && (
+        <Agenda eventSlug={eventSlug} onClose={() => setShowAgenda(false)} />
+      )}
+
+      {/* Modal perfil */}
+      {showProfileModal && (
+        <Perfil onClose={() => setShowProfileModal(false)} userEmail={user?.email} />
       )}
 
       {/* Modal galería completa */}
@@ -344,14 +442,15 @@ const Admin = () => {
               </div>
             ) : (
               <p className="text-sm text-gray-500">No hay fotos aún.</p>
-            )}
+            )
+            }
           </div>
         </div>
       )}
 
       {/* Modal confirmación borrar */}
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-60">
           <div className="bg-white rounded-lg shadow-lg p-6 relative max-w-sm w-full text-center">
             <h2 className="text-lg font-bold text-gray-800 mb-4">
               {Array.isArray(confirmDelete)
