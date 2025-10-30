@@ -13,6 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.22.4",
     "@react-oauth/google": "^0.12.2",
     "@supabase/supabase-js": "^2.57.2",
     "@tailwindcss/vite": "^4.1.12",
@@ -32,12 +33,20 @@
     "@eslint/js": "^9.33.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-basic-ssl": "^2.1.0",
     "@vitejs/plugin-react": "^5.0.0",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
     "vite": "^7.1.2"
+  },
+    "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.22.4",
+    "@rollup/rollup-linux-x64-musl": "^4.22.4",
+    "@rollup/rollup-darwin-x64": "^4.22.4",
+    "@rollup/rollup-darwin-arm64": "^4.22.4",
+    "@rollup/rollup-win32-x64-msvc": "^4.22.4"
   },
   "overrides": {
     "canvas": "npm:noop2@2.0.0"

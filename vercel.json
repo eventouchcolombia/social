@@ -2,6 +2,6 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "rm -rf node_modules package-lock.json && npm install --legacy-peer-deps --include=optional",
   "buildCommand": "npm run build"
 }

@@ -150,23 +150,23 @@ export default function Welcome() {
       )}
 
       <div className="text-center mt-8">
-        <h1 className={`text-4xl font-bold text-white ${theme.title}`}>
+        <h1 className={`text-7xl font-bold text-white ${theme.title}`}>
           {eventTexts.title}
         </h1>
         {eventTexts.subtitle && (
-          <p className={`text-lg mt-4 ${theme.title} opacity-80`}>
+          <p className={`text-3xl mt-14 ${theme.title} opacity-80`}>
             {eventTexts.subtitle}
           </p>
         )}
       </div>
 
       <div className="bg-white/60 rounded-2xl p-4 text-center max-w-md mx-auto mt-12 mb-6">
-        <h1 className="text-sm font-semibold text-gray-800">
+        {/* <h1 className="text-sm font-semibold text-gray-800">
           ¡Bienvenido a nuestro photobooth digital!
         </h1>
         <p className="text-gray-600 mt-2">
           Captura momentos increíbles y llévatelos contigo.
-        </p>
+        </p> */}
 
         <button
           className={`mt-6 px-6 py-3 w-full font-bold rounded-full text-lg transition ${theme.button}`}
