@@ -28,8 +28,6 @@ const Choose = () => {
   const [backgroundUrl, setBackgroundUrl] = useState(null);
   const [agenda, setAgenda] = useState([]);
 
-
-
   // Selecciona el tema según la ruta, o usa el default
   const theme = themes[eventSlug] || defaultTheme;
 
@@ -41,27 +39,26 @@ const Choose = () => {
     loadBackground();
   }, [eventSlug, getAssetUrl]);
 
- // 📦 Cargar TODAS las agendas desde Supabase
-useEffect(() => {
-  const loadAgendas = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("event_agenda")
-        .select("content, date")
-        .eq("event_slug", eventSlug)
-        .order("date", { ascending: true }); // 🔹 Mostrar en orden cronológico
+  // 📦 Cargar TODAS las agendas desde Supabase
+  useEffect(() => {
+    const loadAgendas = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("event_agenda")
+          .select("content, date")
+          .eq("event_slug", eventSlug)
+          .order("date", { ascending: true }); // 🔹 Mostrar en orden cronológico
 
-      if (error) throw error;
-      console.log("📦 Agendas cargadas desde Supabase:", data);
-      setAgenda(data || []);
-    } catch (err) {
-      console.error("❌ Error cargando agendas:", err.message);
-    }
-  };
+        if (error) throw error;
+        console.log("📦 Agendas cargadas desde Supabase:", data);
+        setAgenda(data || []);
+      } catch (err) {
+        console.error("❌ Error cargando agendas:", err.message);
+      }
+    };
 
-  loadAgendas();
-}, [eventSlug]);
-
+    loadAgendas();
+  }, [eventSlug]);
 
   // 👤 Usuario actual
   const user = session?.user;
@@ -113,31 +110,27 @@ useEffect(() => {
         )}
       </div>
       {/* 🧾 Texto de la agenda (flotante) */}
-   {agenda.length > 0 && (
-  <div className="absolute top-20 left-4 right-4 max-h-60 overflow-y-auto space-y-2">
-    {agenda.map((item, index) => (
-      <div
-        key={index}
-        className="bg-white rounded-xl shadow-md p-3 border border-gray-200"
-      >
-        <p className="text-sm text-gray-800">{item.content}</p>
-        {item.date && (
-          <p className="text-xs text-gray-500 mt-1 text-right">
-            {new Date(item.date).toLocaleDateString("es-ES", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-          </p>
-        )}
-      </div>
-    ))}
-  </div>
-)}
-
-
-
-
+      {agenda.length > 0 && (
+        <div className="absolute top-20 left-4 right-4 max-h-60 overflow-y-auto space-y-2">
+          {agenda.map((item, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-xl shadow-md p-3 border border-gray-200"
+            >
+              <p className="text-sm text-gray-800">{item.content}</p>
+              {item.date && (
+                <p className="text-xs text-gray-500 mt-1 text-right">
+                  {new Date(item.date).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Caja inferior */}
       <div className="w-[109%] bg-white rounded-t-3xl shadow-lg p-4 flex flex-col mt-138">

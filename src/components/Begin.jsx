@@ -1,4 +1,4 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
@@ -12,7 +12,8 @@ const Begin = ({ onCreate }) => {
   const [showNotFoundModal, setShowNotFoundModal] = useState(false);
   const [authStarted, setAuthStarted] = useState(false);
 
-  const { session, isAdmin, loading, signInWithGoogle } = useAuthenticationSupabase();
+  const { session, isAdmin, loading, signInWithGoogle } =
+    useAuthenticationSupabase();
 
   // 👇 Función: busca en la tabla 'admins' por email y devuelve la fila
   const fetchEventForEmail = async (email) => {
@@ -30,14 +31,19 @@ const Begin = ({ onCreate }) => {
         .limit(1);
 
       if (error) {
-        console.error("❌ [fetchEventForEmail] Error al consultar admins:", error);
+        console.error(
+          "❌ [fetchEventForEmail] Error al consultar admins:",
+          error
+        );
         return null;
       }
 
       console.log("✅ [fetchEventForEmail] Resultado raw:", data);
 
       if (!data || data.length === 0) {
-        console.log("ℹ️ [fetchEventForEmail] No se encontró fila en 'admins' para ese email");
+        console.log(
+          "ℹ️ [fetchEventForEmail] No se encontró fila en 'admins' para ese email"
+        );
         return null;
       }
 
@@ -59,51 +65,62 @@ const Begin = ({ onCreate }) => {
   };
 
   useEffect(() => {
-    console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", { session, isAdmin });
+  console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", {
+    session,
+    isAdmin,
+  });
 
-    if (!session) {
-      console.log("⏳ [useEffect Begin] No hay sesión todavía...");
-      return;
-    }
+  if (!session) {
+    console.log("⏳ [useEffect Begin] No hay sesión todavía...");
+    return;
+  }
 
-    (async () => {
-      const email = session.user?.email;
-      console.log("🧾 [useEffect Begin] Email de sesión:", email);
+  (async () => {
+    const email = session.user?.email;
+    console.log("🧾 [useEffect Begin] Email de sesión:", email);
 
-      const adminRow = await fetchEventForEmail(email);
+    const adminRow = await fetchEventForEmail(email);
 
-      if (isAdmin === true) {
-        if (adminRow && adminRow.event_slug) {
-          if (adminRow.is_active === false) {
-            console.warn("⚠️ [useEffect Begin] Evento encontrado pero marcado como inactivo:", adminRow.event_slug);
-            // comportamiento opcional: navegar a página informativa o evitar redirección
-            return;
-          }
-          console.log("🚀 [useEffect Begin] Usuario admin confirmado. Redirigiendo al evento desde admins.event_slug:", adminRow.event_slug);
-          navigate(`/${adminRow.event_slug}/admin`);
-        } else {
-          console.log("⚠️ [useEffect Begin] isAdmin true pero no hay fila admin. Usando fallback con email para navegar.");
-          navigate(`/${email.split("@")[0]}/admin`);
+    // ✅ Caso 1: Usuario admin con evento válido
+    if (isAdmin === true) {
+      if (adminRow && adminRow.event_slug) {
+        if (adminRow.is_active === false) {
+          console.warn(
+            "⚠️ [useEffect Begin] Evento encontrado pero marcado como inactivo:",
+            adminRow.event_slug
+          );
+          return; // No redirige si el evento está inactivo
         }
-      } else if (isAdmin === false) {
-        console.log("❌ [useEffect Begin] Usuario no es admin, sin redirección.");
+        console.log(
+          "🚀 [useEffect Begin] Usuario admin confirmado. Redirigiendo al evento:",
+          adminRow.event_slug
+        );
+        navigate(`/${adminRow.event_slug}/admin`);
       } else {
-        console.log("ℹ️ [useEffect Begin] isAdmin aún indefinido:", isAdmin);
+        console.warn(
+          "⚠️ [useEffect Begin] Usuario admin sin evento válido. No se redirige."
+        );
       }
-    })();
-  }, [session, isAdmin, navigate]);
-
+    }
+    // ✅ Caso 2: Usuario regular (no admin)
+    else if (isAdmin === false) {
+      console.log("👤 [useEffect Begin] Usuario regular detectado. Redirigiendo a /profile");
+      navigate("/profile");
+    }
+    // ⏳ Caso 3: Estado intermedio (isAdmin aún no definido)
+    else {
+      console.log("ℹ️ [useEffect Begin] isAdmin aún indefinido:", isAdmin);
+    }
+  })();
+}, [session, isAdmin, navigate]);
 
 
   // 🟣 Maneja el click del botón Google
- const handleGoogleLogin = async () => {
-  setAuthStarted(true);
-  console.log("🚀 Iniciando login con Google...");
-  await signInWithGoogle();
-};
-
-
-
+  const handleGoogleLogin = async () => {
+    setAuthStarted(true);
+    console.log("🚀 Iniciando login con Google...");
+    await signInWithGoogle();
+  };
 
   // ✅ Lógica para crear o asistir a evento
   const handleCreateConfirm = async () => {
@@ -194,14 +211,14 @@ const Begin = ({ onCreate }) => {
 
       <header className="relative z-10 w-full flex items-center justify-center">
         <h1 className="mt-2 text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
-          PixEvent
+          EvenTouch App
         </h1>
       </header>
 
       <div className="flex-1" />
 
       <div className="absolute z-10 bottom-0 left-0 right-0 flex justify-center">
-        <div className="w-[110%] max-w-xl bg-white/40 rounded-t-4xl p-8 shadow-lg flex flex-col items-center">
+        <div className="w-[110%] h-54 bg-white/40 rounded-t-4xl p-8 shadow-lg flex flex-col items-center">
           <div className="w-full flex flex-col sm:flex-row gap-4 items-center justify-center">
             <button
               onClick={handleGoogleLogin}
@@ -210,12 +227,19 @@ const Begin = ({ onCreate }) => {
               <img src="/google.png" alt="Google" className="w-6 h-6" />
               Inicia sesión con Google
             </button>
+            
+            <span
+              onClick={() => navigate("/register")}
+              className=" mt-[-10px] text-[#753E89]  cursor-pointer hover:text-[#5e3270] transition"
+            >
+              ¿No tienes cuenta? Regístrate
+            </span>
 
             <button
               type="button"
               onClick={handleAttendClick}
-              className="w-full sm:w-1/2 py-3 rounded-full text-[#753E89] 
-                         bg-white hover:bg-[#f7eef9] transition-colors shadow-sm text-xl"
+              className="w-full sm:w-1/2 py-3 rounded-full text-white 
+                         bg-[#753E89] hover:bg-[#f7eef9] transition-colors shadow-sm text-xl"
             >
               Asiste a tu evento
             </button>

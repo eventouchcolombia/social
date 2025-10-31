@@ -9,6 +9,7 @@ const AuthenticationSupabase = () => {
 
   // === Verificar si el usuario es admin ===
 // AuthenticationSupabase.jsx
+// ✅ Nueva versión de checkIfAdmin
 const checkIfAdmin = async (user) => {
   try {
     if (!user?.email) {
@@ -18,7 +19,7 @@ const checkIfAdmin = async (user) => {
 
     const email = user.email.toLowerCase().trim();
 
-    const { data: admin, error } = await supabase
+    const { error } = await supabase
       .from("admins")
       .select("id, email")
       .eq("email", email)
@@ -30,14 +31,26 @@ const checkIfAdmin = async (user) => {
       return false;
     }
 
-    setIsAdmin(!!admin);
-    return !!admin;
+    // 🚫 Si NO es admin → cerramos sesión y redirigimos
+    // if (!admin) {
+    //   console.log("🚫 Usuario no es admin, cerrando sesión y redirigiendo...");
+    //   await supabase.auth.signOut(); // 👈 cierra sesión
+    //   setIsAdmin(false);
+    //   setSession(null);
+    //   window.location.replace("/register");
+    //   return false;
+    // }
+
+    // ✅ Si sí es admin
+    setIsAdmin(true);
+    return true;
   } catch (err) {
     console.error("❌ Error en checkIfAdmin:", err);
     setIsAdmin(false);
     return false;
   }
 };
+
 
 
   // === Inicializar sesión y escuchar cambios ===

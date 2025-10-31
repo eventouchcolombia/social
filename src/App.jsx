@@ -14,6 +14,8 @@ import SuperAdmin from "./components/SuperAdmin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RedirectToEventLocal from "./components/RedirectEventLocal";
 import Begin from "./components/Begin";
+import Regístrate from "./components/registrate";
+import PerfilUser from "./components/PerfilUser";
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
         <Route path="/:eventSlug" element={<Welcome />} />
         <Route path="/:eventSlug/admin" element={<Admin />} />
         <Route path="/superadmin" element={<SuperAdmin />} />
+        <Route path="/register" element={<Regístrate />} />
+         <Route path="/profile" element={<PerfilUser/>} />
 
         {/* Rutas protegidas agrupadas */}
         <Route
