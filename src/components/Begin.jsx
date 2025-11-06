@@ -64,56 +64,74 @@ const Begin = ({ onCreate }) => {
     }
   };
 
+  // 🔤 Convierte nombre de usuario en un slug URL-safe (ej: "Fabian Salcedo" -> "fabian-salcedo")
+  const createSlugFromName = (name) => {
+    if (!name) return "admin";
+    return name
+      .toLowerCase()
+      .trim()
+      .normalize("NFD") // elimina tildes
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-") // reemplaza espacios y símbolos por guiones
+      .replace(/(^-|-$)+/g, ""); // elimina guiones al inicio o final
+  };
+
   useEffect(() => {
-  console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", {
-    session,
-    isAdmin,
-  });
+    console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", {
+      session,
+      isAdmin,
+    });
 
-  if (!session) {
-    console.log("⏳ [useEffect Begin] No hay sesión todavía...");
-    return;
-  }
+    if (!session) {
+      console.log("⏳ [useEffect Begin] No hay sesión todavía...");
+      return;
+    }
 
-  (async () => {
-    const email = session.user?.email;
-    console.log("🧾 [useEffect Begin] Email de sesión:", email);
+    (async () => {
+      const email = session.user?.email;
+      console.log("🧾 [useEffect Begin] Email de sesión:", email);
 
-    const adminRow = await fetchEventForEmail(email);
+      const adminRow = await fetchEventForEmail(email);
 
-    // ✅ Caso 1: Usuario admin con evento válido
-    if (isAdmin === true) {
-      if (adminRow && adminRow.event_slug) {
-        if (adminRow.is_active === false) {
-          console.warn(
-            "⚠️ [useEffect Begin] Evento encontrado pero marcado como inactivo:",
+      // ✅ Caso 1: Usuario admin con evento válido
+      if (isAdmin === true) {
+        if (adminRow && adminRow.identificador) {
+          if (adminRow.is_active === false) {
+            console.warn(
+              "⚠️ [useEffect Begin] Evento encontrado pero marcado como inactivo:",
+              adminRow.identificador
+            );
+            return; // No redirige si el evento está inactivo
+          }
+          console.log(
+            "🚀 [useEffect Begin] Usuario admin confirmado. Redirigiendo al evento:",
             adminRow.event_slug
           );
-          return; // No redirige si el evento está inactivo
+          const userName =
+            session.user?.user_metadata?.full_name ||
+            session.user?.user_metadata?.name ||
+            "admin";
+          const nameSlug = createSlugFromName(userName);
+          navigate(`/${nameSlug}/admin`);
+        } else {
+          console.warn(
+            "⚠️ [useEffect Begin] Usuario admin sin evento válido. No se redirige."
+          );
         }
-        console.log(
-          "🚀 [useEffect Begin] Usuario admin confirmado. Redirigiendo al evento:",
-          adminRow.event_slug
-        );
-        navigate(`/${adminRow.event_slug}/admin`);
-      } else {
-        console.warn(
-          "⚠️ [useEffect Begin] Usuario admin sin evento válido. No se redirige."
-        );
       }
-    }
-    // ✅ Caso 2: Usuario regular (no admin)
-    else if (isAdmin === false) {
-      console.log("👤 [useEffect Begin] Usuario regular detectado. Redirigiendo a /profile");
-      navigate("/profile");
-    }
-    // ⏳ Caso 3: Estado intermedio (isAdmin aún no definido)
-    else {
-      console.log("ℹ️ [useEffect Begin] isAdmin aún indefinido:", isAdmin);
-    }
-  })();
-}, [session, isAdmin, navigate]);
-
+      // ✅ Caso 2: Usuario regular (no admin)
+      else if (isAdmin === false) {
+        console.log(
+          "👤 [useEffect Begin] Usuario regular detectado. Redirigiendo a /profile"
+        );
+        navigate("/profile");
+      }
+      // ⏳ Caso 3: Estado intermedio (isAdmin aún no definido)
+      else {
+        console.log("ℹ️ [useEffect Begin] isAdmin aún indefinido:", isAdmin);
+      }
+    })();
+  }, [session, isAdmin, navigate]);
 
   // 🟣 Maneja el click del botón Google
   const handleGoogleLogin = async () => {
@@ -227,7 +245,7 @@ const Begin = ({ onCreate }) => {
               <img src="/google.png" alt="Google" className="w-6 h-6" />
               Inicia sesión con Google
             </button>
-            
+
             <span
               onClick={() => navigate("/register")}
               className=" mt-[-10px] text-[#753E89]  cursor-pointer hover:text-[#5e3270] transition"

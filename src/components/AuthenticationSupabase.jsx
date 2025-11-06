@@ -7,41 +7,53 @@ const AuthenticationSupabase = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
+
+  
+function generateIdentifier() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let id = "";
+  for (let i = 0; i < 5; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
+  return id;
+}
+
   // === Verificar si el usuario es admin ===
 // AuthenticationSupabase.jsx
 // ✅ Nueva versión de checkIfAdmin
+
+
 const checkIfAdmin = async (user) => {
   try {
-    if (!user?.email) {
-      setIsAdmin(false);
-      return false;
-    }
-
+    if (!user?.email) return false;
     const email = user.email.toLowerCase().trim();
 
-    const { error } = await supabase
+    const { data: admin, error } = await supabase
       .from("admins")
-      .select("id, email")
+      .select("*")
       .eq("email", email)
       .maybeSingle();
 
-    if (error) {
-      console.error("❌ Error consultando admins:", error);
-      setIsAdmin(false);
+    if (error) throw error;
+
+    // Si no existe el admin, no hacemos nada aún (posiblemente usuario nuevo)
+    if (!admin) {
+      console.log("🚫 No existe admin con ese correo");
       return false;
     }
 
-    // 🚫 Si NO es admin → cerramos sesión y redirigimos
-    // if (!admin) {
-    //   console.log("🚫 Usuario no es admin, cerrando sesión y redirigiendo...");
-    //   await supabase.auth.signOut(); // 👈 cierra sesión
-    //   setIsAdmin(false);
-    //   setSession(null);
-    //   window.location.replace("/register");
-    //   return false;
-    // }
+    // Si el admin no tiene identificador aún, lo generamos y actualizamos
+    if (!admin.identificador) {
+      const nuevoId = generateIdentifier();
+      const { error: updateError } = await supabase
+        .from("admins")
+        .update({ identificador: nuevoId })
+        .eq("id", admin.id);
 
-    // ✅ Si sí es admin
+      if (updateError) console.error("❌ Error al asignar identificador:", updateError);
+      else console.log(`✅ Identificador generado: ${nuevoId}`);
+      admin.identificador = nuevoId;
+    }
+
+    // ✅ Si tiene identificador, permitimos el acceso
     setIsAdmin(true);
     return true;
   } catch (err) {
@@ -50,7 +62,6 @@ const checkIfAdmin = async (user) => {
     return false;
   }
 };
-
 
 
   // === Inicializar sesión y escuchar cambios ===
@@ -88,6 +99,7 @@ const checkIfAdmin = async (user) => {
     return () => {
       unsub?.data?.subscription?.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // === Métodos de login/logout ===
