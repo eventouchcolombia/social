@@ -53,6 +53,7 @@ const Begin = ({ onCreate }) => {
         uuid: row.uuid,
         email: row.email,
         event_slug: row.event_slug,
+        identificador: row.identificador,
         is_active: row.is_active,
         created_at: row.created_at,
       });
@@ -83,7 +84,7 @@ const Begin = ({ onCreate }) => {
 
     // ✅ Caso 1: Usuario admin con evento válido
     if (isAdmin === true) {
-      if (adminRow && adminRow.event_slug) {
+      if (adminRow && adminRow.identificador) {
         if (adminRow.is_active === false) {
           console.warn(
             "⚠️ [useEffect Begin] Evento encontrado pero marcado como inactivo:",
@@ -92,13 +93,13 @@ const Begin = ({ onCreate }) => {
           return; // No redirige si el evento está inactivo
         }
         console.log(
-          "🚀 [useEffect Begin] Usuario admin confirmado. Redirigiendo al evento:",
-          adminRow.event_slug
+          "🚀 [useEffect Begin] Usuario admin confirmado. Redirigiendo al admin:",
+          adminRow.identificador
         );
-        navigate(`/${adminRow.event_slug}/admin`);
+        navigate(`/admin/${adminRow.identificador}`);
       } else {
         console.warn(
-          "⚠️ [useEffect Begin] Usuario admin sin evento válido. No se redirige."
+          "⚠️ [useEffect Begin] Usuario admin sin identificador válido. No se redirige."
         );
       }
     }
@@ -147,7 +148,7 @@ const Begin = ({ onCreate }) => {
         setShowCreateModal(false);
         setShowNotFoundModal(true);
       } else {
-        navigate(`/${data[0].event_slug}/admin`);
+        navigate(`/admin/${data[0].identificador}`);
         setShowCreateModal(false);
         setEventSlug("");
       }

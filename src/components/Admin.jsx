@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { storage } from "../firebase/firebase";
 import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
@@ -27,8 +28,10 @@ import { useEvent } from "../hooks/useEvent";
 import { supabase } from "../supabaseClient";
 
 const Admin = () => {
+  const { identificador } = useParams();
   const { session, isAdmin, loading, signOut } = useAuthenticationSupabase();
-  const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
+  const [eventSlug, setEventSlug] = useState(null);
+  const { getAssetUrl, getStoragePath } = useEvent();
 
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -70,10 +73,43 @@ const Admin = () => {
     }
   }, [isAdmin, session, eventSlug]);
 
+  // Fetch event_slug from identificador
+  useEffect(() => {
+    const fetchEventSlug = async () => {
+      if (!identificador) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("admins")
+          .select("event_slug")
+          .eq("identificador", identificador)
+          .single();
+
+        if (error) {
+          console.error("Error fetching event_slug:", error);
+          return;
+        }
+
+        if (data) {
+          setEventSlug(data.event_slug);
+          console.log(
+            `✅ Event slug encontrado: ${data.event_slug} para identificador: ${identificador}`
+          );
+        }
+      } catch (err) {
+        console.error("Error en fetchEventSlug:", err);
+      }
+    };
+
+    fetchEventSlug();
+  }, [identificador]);
+
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
+    if (!eventSlug) return;
+
     try {
-      const listRef = ref(storage, getStoragePath());
+      const listRef = ref(storage, `photos/${eventSlug}`);
       const result = await listAll(listRef);
       const urls = await Promise.all(
         result.items.map(async (item) => ({
@@ -88,13 +124,13 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (isAdmin) fetchPhotos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (isAdmin && eventSlug) fetchPhotos();
   }, [isAdmin, eventSlug]);
 
   useEffect(() => {
     const loadBackground = async () => {
-      const url = await getAssetUrl("adminbg.png");
+      if (!eventSlug) return;
+      const url = await getAssetUrl("adminbg.png", eventSlug);
       setBackgroundUrl(url);
     };
     loadBackground();
@@ -102,8 +138,10 @@ const Admin = () => {
 
   // === eliminar foto ===
   const handleDelete = async (name) => {
+    if (!eventSlug) return;
+
     try {
-      const photoRef = ref(storage, getStoragePath(name));
+      const photoRef = ref(storage, `photos/${eventSlug}/${name}`);
       await deleteObject(photoRef);
       setPhotos((prev) => prev.filter((photo) => photo.name !== name));
       setSelectedPhoto(null);
@@ -116,8 +154,10 @@ const Admin = () => {
 
   // === descargar foto ===
   const handleDownload = async (fileName) => {
+    if (!eventSlug) return;
+
     try {
-      const fileRef = ref(storage, getStoragePath(fileName));
+      const fileRef = ref(storage, `photos/${eventSlug}/${fileName}`);
       const blob = await getBlob(fileRef);
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -161,7 +201,7 @@ const Admin = () => {
     fetchActiveUsers();
   }, [eventSlug]);
 
-  if (loading) {
+  if (loading || !eventSlug) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen  px-4">
         <div className="text-center">
@@ -170,7 +210,7 @@ const Admin = () => {
             Cargando Panel Admin
           </h1>
           <p className="text-gray-300 text-sm">
-            Verificando autenticación para {eventSlug}...
+            Verificando autenticación para {identificador}...
           </p>
         </div>
       </div>
@@ -473,7 +513,8 @@ const Admin = () => {
               </div>
             ) : (
               <p className="text-sm text-gray-500">No hay fotos aún.</p>
-            )}
+            )
+            }
           </div>
         </div>
       )}
