@@ -8,37 +8,38 @@ const AuthenticationSupabase = () => {
   const [loading, setLoading] = useState(true);
 
   // === Verificar si el usuario es admin ===
-  const checkIfAdmin = async (user) => {
-    try {
-      if (!user?.email) {
-        setIsAdmin(false);
-        return false;
-      }
-
-      const email = user.email.toLowerCase().trim();
-
-      const { data, error } = await supabase
-        .from("admins")
-        .select("id, email")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (error) {
-        console.error("❌ Error consultando admins:", error);
-        setIsAdmin(false);
-        return false;
-      }
-
-      // ✅ Si existe en la tabla admins → es admin
-      const isUserAdmin = !!data;
-      setIsAdmin(isUserAdmin);
-      return isUserAdmin;
-    } catch (err) {
-      console.error("❌ Error en checkIfAdmin:", err);
+  // === Verificar si el usuario es admin ===
+const checkIfAdmin = async (user) => {
+  try {
+    if (!user?.email) {
       setIsAdmin(false);
       return false;
     }
-  };
+
+    const email = user.email.toLowerCase().trim();
+
+    const { data, error } = await supabase
+      .from("admins")
+      .select("id, email")
+      .eq("email", email)
+      
+
+    if (error) {
+      console.error("❌ Error consultando admins:", error);
+      setIsAdmin(false);
+      return false;
+    }
+
+    // ✅ Si existe en la tabla admins → es admin
+    const isUserAdmin = !!data;
+    setIsAdmin(isUserAdmin);
+    return isUserAdmin;
+  } catch (err) {
+    console.error("❌ Error en checkIfAdmin:", err);
+    setIsAdmin(false);
+    return false;
+  }
+};
 
   // === Inicializar sesión y escuchar cambios ===
   useEffect(() => {

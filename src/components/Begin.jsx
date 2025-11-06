@@ -16,54 +16,65 @@ const Begin = ({ onCreate }) => {
     useAuthenticationSupabase();
 
   // 👇 Función: busca en la tabla 'admins' por email y devuelve la fila
-  const fetchEventForEmail = async (email) => {
-    if (!email) {
-      console.log("fetchEventForEmail: no se proporcionó email");
+ const fetchEventForEmail = async (email) => {
+  if (!email) {
+    console.log("fetchEventForEmail: no se proporcionó email");
+    return null;
+  }
+
+  try {
+    console.log(`🔎 [fetchEventForEmail] Buscando admin por email: ${email}`);
+    const { data, error } = await supabase
+      .from("admins")
+      .select("*")
+      .eq("email", email);
+
+    if (error) {
+      console.error("❌ [fetchEventForEmail] Error al consultar admins:", error);
       return null;
     }
 
-    try {
-      console.log(`🔎 [fetchEventForEmail] Buscando admin por email: ${email}`);
-      const { data, error } = await supabase
-        .from("admins")
-        .select("*")
-        .eq("email", email)
-        .limit(1);
+    console.log("✅ [fetchEventForEmail] Resultado raw:", data);
 
-      if (error) {
-        console.error(
-          "❌ [fetchEventForEmail] Error al consultar admins:",
-          error
-        );
-        return null;
-      }
-
-      console.log("✅ [fetchEventForEmail] Resultado raw:", data);
-
-      if (!data || data.length === 0) {
-        console.log(
-          "ℹ️ [fetchEventForEmail] No se encontró fila en 'admins' para ese email"
-        );
-        return null;
-      }
-
-      const row = data[0];
-      console.log("📌 [fetchEventForEmail] Fila encontrada:", {
-        id: row.id,
-        uuid: row.uuid,
-        email: row.email,
-        event_slug: row.event_slug,
-        identificador: row.identificador,
-        is_active: row.is_active,
-        created_at: row.created_at,
-      });
-
-      return row;
-    } catch (err) {
-      console.error("⚠️ [fetchEventForEmail] Excepción:", err);
+    if (!data || data.length === 0) {
+      console.log(
+        "ℹ️ [fetchEventForEmail] No se encontró fila en 'admins' para ese email"
+      );
       return null;
     }
-  };
+
+    // 🔹 Si hay más de un evento, elegimos el activo o el más reciente
+    let row;
+    if (data.length > 1) {
+      console.warn(
+        `⚠️ [fetchEventForEmail] Se encontraron ${data.length} eventos asociados al email.`
+      );
+      row =
+        data.find((r) => r.is_active) ||
+        data.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        )[0]; // el más reciente si ninguno está activo
+    } else {
+      row = data[0];
+    }
+
+    console.log("📌 [fetchEventForEmail] Fila seleccionada:", {
+      id: row.id,
+      uuid: row.uuid,
+      email: row.email,
+      event_slug: row.event_slug,
+      identificador: row.identificador,
+      is_active: row.is_active,
+      created_at: row.created_at,
+    });
+
+    return row;
+  } catch (err) {
+    console.error("⚠️ [fetchEventForEmail] Excepción:", err);
+    return null;
+  }
+};
+
 
  useEffect(() => {
   console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", {
