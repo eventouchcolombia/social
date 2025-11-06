@@ -65,14 +65,15 @@ const Begin = ({ onCreate }) => {
     }
   };
 
-  useEffect(() => {
+ useEffect(() => {
   console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", {
     session,
     isAdmin,
   });
 
-  if (!session) {
-    console.log("⏳ [useEffect Begin] No hay sesión todavía...");
+  // ⏳ Esperar a que session e isAdmin estén definidos
+  if (!session || isAdmin === undefined) {
+    console.log("⏳ Esperando que session e isAdmin estén listos...");
     return;
   }
 
@@ -82,38 +83,35 @@ const Begin = ({ onCreate }) => {
 
     const adminRow = await fetchEventForEmail(email);
 
-    // ✅ Caso 1: Usuario admin con evento válido
     if (isAdmin === true) {
+      // ✅ Admin detectado
       if (adminRow && adminRow.identificador) {
         if (adminRow.is_active === false) {
           console.warn(
-            "⚠️ [useEffect Begin] Evento encontrado pero marcado como inactivo:",
+            "⚠️ Evento inactivo, no se redirige:",
             adminRow.event_slug
           );
-          return; // No redirige si el evento está inactivo
+          return;
         }
-        console.log(
-          "🚀 [useEffect Begin] Usuario admin confirmado. Redirigiendo al admin:",
-          adminRow.identificador
-        );
-        navigate(`/admin/${adminRow.identificador}`);
+
+        const targetPath = `/admin/${adminRow.identificador}`;
+        if (window.location.pathname !== targetPath) {
+          console.log("🚀 Redirigiendo admin a:", targetPath);
+          navigate(targetPath);
+        }
       } else {
-        console.warn(
-          "⚠️ [useEffect Begin] Usuario admin sin identificador válido. No se redirige."
-        );
+        console.warn("⚠️ Admin sin identificador válido. No se redirige.");
       }
-    }
-    // ✅ Caso 2: Usuario regular (no admin)
-    else if (isAdmin === false) {
-      console.log("👤 [useEffect Begin] Usuario regular detectado. Redirigiendo a /profile");
-      navigate("/profile");
-    }
-    // ⏳ Caso 3: Estado intermedio (isAdmin aún no definido)
-    else {
-      console.log("ℹ️ [useEffect Begin] isAdmin aún indefinido:", isAdmin);
+    } else if (isAdmin === false) {
+      // 👤 Usuario regular
+      if (window.location.pathname !== "/profile") {
+        console.log("👤 Redirigiendo a /profile");
+        navigate("/profile");
+      }
     }
   })();
 }, [session, isAdmin, navigate]);
+
 
 
   // 🟣 Maneja el click del botón Google
