@@ -23,6 +23,7 @@ const SuperAdmin = () => {
   const [requests, setRequests] = useState([]);
   const [newEvent, setNewEvent] = useState({ identificador: "", eventSlug: "" });
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [expandedUsers, setExpandedUsers] = useState(new Set());
 
   useEffect(() => {
     if (isSuperAdmin) fetchRequests();
@@ -297,7 +298,7 @@ const SuperAdmin = () => {
         return;
       }
 
-      // Tomar el primer admin encontrado (todos deben tener el mismo email e identificador)
+      // Tomar el primer admin encontrado
       const existingAdmin = existingAdmins[0];
       console.log("📋 Admin seleccionado:", existingAdmin);
 
@@ -311,101 +312,45 @@ const SuperAdmin = () => {
 
       if (existingEvent && existingEvent.length > 0) {
         showMessage(
-          `Ya existe un evento con ese slug "${newEvent.eventSlug}" asignado a: ${existingEvent[0].email} (${existingEvent[0].identificador})`,
+          `Ya existe un evento con ese slug "${newEvent.eventSlug}" asignado a: ${existingEvent[0].email} (${existingEvent[0].identificador || 'sin identificador'})`,
           "error"
         );
         setIsCreatingEvent(false);
         return;
       }
 
-      // Verificar si este admin ya tiene un evento con este slug (no debería pasar, pero por seguridad)
-      const existingEventForThisAdmin = existingAdmins.find(admin => admin.event_slug === newEvent.eventSlug);
-      if (existingEventForThisAdmin) {
-        showMessage(
-          `Este administrador ya tiene asignado el evento "${newEvent.eventSlug}"`,
-          "error"
-        );
-        setIsCreatingEvent(false);
-        return;
-      }
+      // SIEMPRE crear un nuevo registro con identificador NULL para eventos
+      console.log("📝 Creando registro de evento con identificador NULL...");
+      
+      const newEventData = {
+        email: existingAdmin.email,
+        identificador: null, // ✅ IMPORTANTE: Identificador NULL para eventos
+        event_slug: newEvent.eventSlug,
+        is_active: true
+      };
+      
+      console.log("💾 Datos del nuevo registro de evento:", newEventData);
 
-      // Verificar si el admin ya tiene algún evento
-      const adminWithEvent = existingAdmins.find(admin => admin.event_slug);
+      const { error: insertError } = await supabase
+        .from("admins")
+        .insert([newEventData]);
 
-      if (adminWithEvent) {
-        // IMPORTANTE: Crear nuevo registro sin duplicar identificador
-        // Esto significa que la DB debe permitir identificadores duplicados
-        console.log("📝 Creando registro adicional para admin con evento existente...");
-        
-        // Verificar si la DB permite identificadores duplicados
-        try {
-          const newAdminData = {
-            email: existingAdmin.email,
-            identificador: existingAdmin.identificador, // Esto puede fallar si hay restricción UNIQUE
-            event_slug: newEvent.eventSlug,
-            is_active: true
-          };
-          console.log("💾 Datos del nuevo registro:", newAdminData);
-
-          const { error: insertError } = await supabase
-            .from("admins")
-            .insert([newAdminData]);
-
-          if (insertError) {
-            // Si hay error de clave duplicada, significa que la DB tiene restricción UNIQUE en identificador
-            if (insertError.code === '23505' && insertError.message.includes('admins_identificador_key')) {
-              showMessage(
-                `⚠️ Error de configuración de base de datos: La tabla 'admins' tiene una restricción UNIQUE en 'identificador' que impide que un administrador tenga múltiples eventos.\n\n🔧 Solución necesaria:\n1. Eliminar la restricción UNIQUE en la columna 'identificador'\n2. O modificar el diseño para usar una tabla separada para eventos\n\n💡 Contacta al desarrollador para resolver este problema de esquema.`,
-                "error"
-              );
-              setIsCreatingEvent(false);
-              return;
-            }
-            throw insertError;
-          }
-        } catch (constraintError) {
-          if (constraintError.code === '23505') {
-            showMessage(
-              `🚨 Problema de Base de Datos Detectado\n\nLa base de datos tiene una restricción que impide que un administrador tenga múltiples eventos con el mismo identificador.\n\n🔧 Acciones requeridas:\n• Eliminar la restricción UNIQUE en la columna 'identificador'\n• Permitir identificadores duplicados para múltiples eventos\n\n💬 Error técnico: ${constraintError.message}`,
-              "error"
-            );
-            setIsCreatingEvent(false);
-            return;
-          }
-          throw constraintError;
-        }
-      } else {
-        // Si no tiene evento, actualizar el registro existente
-        console.log("📝 Actualizando admin sin evento...");
-        const { error: updateError } = await supabase
-          .from("admins")
-          .update({ event_slug: newEvent.eventSlug })
-          .eq("id", existingAdmin.id);
-
-        if (updateError) throw updateError;
+      if (insertError) {
+        console.error("❌ Error creando evento:", insertError);
+        throw insertError;
       }
 
       const adminUrl = `/admin/${newEvent.identificador}`;
       const eventUrl = `/${newEvent.eventSlug}`;
-      const actionType = adminWithEvent ? "creado como evento adicional" : "asignado como primer evento";
 
-      const successMessage = `✅ Evento ${actionType} exitosamente!\n\n📋 Información:\n• Administrador: ${existingAdmin.email}\n• Identificador: ${newEvent.identificador}\n• Event Slug: ${newEvent.eventSlug}${adminWithEvent ? `\n• Evento anterior: ${adminWithEvent.event_slug}` : ""}\n\n🔗 Enlaces:\n• Panel Admin: ${adminUrl}\n• Evento: ${eventUrl}\n\n💡 El evento se ha vinculado correctamente al identificador "${newEvent.identificador}"`;
+      const successMessage = `✅ Evento creado exitosamente!\n\n📋 Información:\n• Administrador: ${existingAdmin.email}\n• Identificador Admin: ${newEvent.identificador}\n• Event Slug: ${newEvent.eventSlug}\n• Tipo: Evento independiente (sin identificador)\n\n🔗 Enlaces:\n• Panel Admin: ${adminUrl}\n• Evento: ${eventUrl}\n\n💡 El evento se ha creado como registro independiente vinculado al email del administrador.`;
 
       showMessage(successMessage, "success");
       setNewEvent({ identificador: "", eventSlug: "" });
       await fetchAdmins(); // Recargar la lista
     } catch (error) {
       console.error("❌ Error asignando evento:", error);
-      
-      // Mensaje específico para errores de constraint
-      if (error.code === '23505' && error.message.includes('identificador')) {
-        showMessage(
-          `🔧 Error de Base de Datos: La tabla tiene una restricción UNIQUE en 'identificador' que debe ser eliminada para permitir múltiples eventos por administrador.\n\nError: ${error.message}`,
-          "error"
-        );
-      } else {
-        showMessage(`Error asignando el evento: ${error.message}`, "error");
-      }
+      showMessage(`Error creando el evento: ${error.message}`, "error");
     } finally {
       setIsCreatingEvent(false);
     }
@@ -575,7 +520,7 @@ const SuperAdmin = () => {
                 </button>
               </div>
             </div>
-            <input
+            {/* <input
               type="text"
               placeholder="Event slug (opcional, ej: boda-maria-juan)"
               value={newAdmin.eventSlug}
@@ -588,7 +533,7 @@ const SuperAdmin = () => {
               className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 border border-white/30 focus:border-blue-400 focus:outline-none text-sm sm:text-base"
               pattern="^[a-z0-9-]*$"
               title="Solo letras minúsculas, números y guiones (opcional)"
-            />
+            /> */}
             <button
               type="submit"
               disabled={isCreating}
@@ -714,10 +659,10 @@ const SuperAdmin = () => {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
             <div className="flex-1">
               <h2 className="text-xl sm:text-2xl font-semibold text-white">
-                Registros de Administradores ({admins.length} total)
+                Registros de Administradores ({admins.length} registros)
               </h2>
               <p className="text-gray-400 text-xs sm:text-sm">
-                Incluye registros legacy sin identificador y nuevos registros con identificador
+                Agrupados por usuario - Expandir para ver eventos de cada administrador
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -744,10 +689,10 @@ const SuperAdmin = () => {
                   
                   console.log("📊 Análisis:");
                   console.log("  - Con identificador:", withId.length, withId);
-                  console.log("  - Sin identificador (legacy):", withoutId.length, withoutId);
+                  console.log("  - Sin identificador (eventos):", withoutId.length, withoutId);
                   console.log("  - Con eventos:", withEvents.length, withEvents);
                   
-                  alert(`Análisis completo:\n- Total: ${allData?.length || 0}\n- Con ID: ${withId.length}\n- Legacy: ${withoutId.length}\n- Con eventos: ${withEvents.length}\n\nVer consola para detalles.`);
+                  alert(`Análisis completo:\n- Total: ${allData?.length || 0}\n- Con ID: ${withId.length}\n- Sin ID (eventos): ${withoutId.length}\n- Con eventos: ${withEvents.length}\n\nVer consola para detalles.`);
                 }}
                 className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm w-full sm:w-auto"
               >
@@ -760,257 +705,251 @@ const SuperAdmin = () => {
             <p className="text-gray-400">🔄 Cargando administradores...</p>
           ) : admins.length === 0 ? (
             <p className="text-gray-400">No hay registros en la base de datos.</p>
-          ) : (
-            <>
-              {/* Mobile Card Layout */}
-              <div className="block lg:hidden space-y-4">
-                {admins.map((admin) => (
-                  <div
-                    key={admin.id}
-                    className={`rounded-lg p-4 border ${
-                      admin.isLegacy 
-                        ? "bg-orange-500/10 border-orange-500/30" 
-                        : "bg-white/5 border-white/10"
-                    }`}
-                  >
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-white font-semibold text-lg">
-                          {admin.isLegacy ? (
-                            <span className="flex items-center gap-2">
-                              <span className="text-orange-400">⚠️</span>
-                              {admin.identificador}
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-2">
-                              <span className="text-blue-400">👤</span>
-                              {admin.identificador}
-                            </span>
-                          )}
-                        </h3>
-                        {!admin.is_active && (
-                          <span className="text-red-400 text-xs px-2 py-1 bg-red-500/20 rounded">
-                            Inactivo
-                          </span>
-                        )}
-                        {admin.isLegacy && (
-                          <span className="text-orange-400 text-xs px-2 py-1 bg-orange-500/20 rounded">
-                            Legacy
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-300 text-sm">
-                        📧 {admin.email}
-                      </p>
-                      <p className="text-gray-400 text-xs mt-1">
-                        {admin.event_slug ? (
-                          <span className="text-green-400">🎯 Evento: {admin.event_slug}</span>
-                        ) : (
-                          <span className="text-yellow-400">⚠️ Sin evento asignado</span>
-                        )}
-                      </p>
-                    </div>
+          ) : (() => {
+            // Agrupar por email
+            const adminsByEmail = admins.reduce((acc, admin) => {
+              const email = admin.email;
+              if (!acc[email]) {
+                acc[email] = {
+                  email: email,
+                  adminRecord: null, // Registro con identificador
+                  events: [] // Registros de eventos (sin identificador)
+                };
+              }
+              
+              if (admin.identificador && !admin.isLegacy) {
+                // Es un registro de admin (con identificador)
+                acc[email].adminRecord = admin;
+              } else {
+                // Es un registro de evento (sin identificador o legacy)
+                acc[email].events.push(admin);
+              }
+              
+              return acc;
+            }, {});
 
-                    <div className="flex gap-2 flex-wrap">
-                      {!admin.isLegacy && (
-                        <a
-                          href={`/admin/${admin.identificador}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition text-center flex-1"
-                          title="Ver panel admin"
-                        >
-                          📊 Panel
-                        </a>
-                      )}
-                      {admin.event_slug && (
-                        <a
-                          href={`/${admin.event_slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition text-center flex-1"
-                          title="Ver evento público"
-                        >
-                          🎉 Evento
-                        </a>
-                      )}
-                      <button
-                        onClick={() => deleteAdmin(admin.id, admin.email, admin.identificador)}
-                        className="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
-                        title="Eliminar este registro"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            const adminEmails = Object.keys(adminsByEmail);
 
-              {/* Desktop Table Layout */}
-              <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-white/20">
-                      <th className="text-gray-300 py-3 px-4 font-semibold">Tipo / Identificador</th>
-                      <th className="text-gray-300 py-3 px-4 font-semibold">Email</th>
-                      <th className="text-gray-300 py-3 px-4 font-semibold">Evento Asignado</th>
-                      <th className="text-gray-300 py-3 px-4 font-semibold">Estado</th>
-                      <th className="text-gray-300 py-3 px-4 font-semibold">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {admins.map((admin) => (
-                      <tr
-                        key={admin.id}
-                        className={`border-b border-white/10 hover:bg-white/5 transition-colors ${
-                          admin.isLegacy ? "bg-orange-500/5" : ""
-                        }`}
-                      >
-                        <td className="text-white py-3 px-4 font-semibold">
-                          <div className="flex items-center gap-2">
-                            {admin.isLegacy ? (
-                              <>
-                                <span className="text-orange-400" title="Registro legacy sin identificador">⚠️</span>
-                                <span className="text-orange-300">{admin.identificador}</span>
-                                <span className="text-orange-400 text-xs px-2 py-1 bg-orange-500/20 rounded">
-                                  Legacy
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="text-blue-400">👤</span>
-                                <span>{admin.identificador}</span>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                        <td className="text-gray-300 py-3 px-4">
-                          <div className="flex items-center gap-1">
-                            <span className="text-gray-500">📧</span>
-                            {admin.email}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          {admin.event_slug ? (
+            const toggleUser = (email) => {
+              const newExpanded = new Set(expandedUsers);
+              if (newExpanded.has(email)) {
+                newExpanded.delete(email);
+              } else {
+                newExpanded.add(email);
+              }
+              setExpandedUsers(newExpanded);
+            };
+
+            return (
+              <>
+                <div className="space-y-2">
+                  {adminEmails.map((email) => {
+                    const userData = adminsByEmail[email];
+                    const isExpanded = expandedUsers.has(email);
+                    const hasAdminAccess = userData.adminRecord !== null;
+                    const eventCount = userData.events.length;
+                    
+                    return (
+                      <div key={email} className="border border-white/20 rounded-lg overflow-hidden">
+                        {/* Header del usuario */}
+                        <div 
+                          className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
+                          onClick={() => toggleUser(email)}
+                        >
+                          <div className="flex items-center gap-3 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-green-500">🎯</span>
-                              <span className="text-green-300 font-medium">{admin.event_slug}</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="text-yellow-500">⚠️</span>
-                              <span className="text-yellow-400 italic">Sin evento</span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-3 py-1 text-xs rounded-full font-medium flex items-center gap-1 w-fit ${
-                                admin.is_active
-                                  ? "bg-green-600/20 text-green-300 border border-green-500/30"
-                                  : "bg-red-600/20 text-red-300 border border-red-500/30"
-                              }`}
-                            >
-                              <span className={admin.is_active ? "text-green-500" : "text-red-500"}>
-                                ●
+                              <span className={`text-lg ${isExpanded ? 'transform rotate-90' : ''} transition-transform`}>
+                                ▶️
                               </span>
-                              {admin.is_active ? "Activo" : "Inactivo"}
-                            </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-blue-400">👤</span>
+                                <span className="text-white font-medium">{email}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {hasAdminAccess && (
+                                <span className="text-green-400 text-xs px-2 py-1 bg-green-500/20 rounded flex items-center gap-1">
+                                  🔑 Admin: {userData.adminRecord.identificador}
+                                </span>
+                              )}
+                              {eventCount > 0 && (
+                                <span className="text-blue-400 text-xs px-2 py-1 bg-blue-500/20 rounded flex items-center gap-1">
+                                  🎯 {eventCount} evento{eventCount !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                              {!hasAdminAccess && eventCount === 0 && (
+                                <span className="text-yellow-400 text-xs px-2 py-1 bg-yellow-500/20 rounded">
+                                  ⚠️ Sin configurar
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex gap-2 flex-wrap">
-                            {!admin.isLegacy && (
-                              <a
-                                href={`/admin/${admin.identificador}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition flex items-center gap-1"
-                                title="Ver panel administrativo"
-                              >
-                                📊 Panel
-                              </a>
-                            )}
-                            {admin.event_slug && (
-                              <a
-                                href={`/${admin.event_slug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition flex items-center gap-1"
-                                title="Ver evento público"
-                              >
-                                🎉 Evento
-                              </a>
-                            )}
-                            <button
-                              onClick={() =>
-                                deleteAdmin(admin.id, admin.email, admin.identificador)
-                              }
-                              className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition flex items-center gap-1"
-                              title={`Eliminar registro: ${admin.event_slug || 'sin evento'}`}
-                            >
-                              🗑️ Eliminar
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
 
-              {/* Enhanced Summary Section */}
-              <div className="mt-6 space-y-4">
-                {/* Main Stats */}
-                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                  <h3 className="text-blue-300 font-semibold mb-3 flex items-center gap-2">
-                    📊 Resumen General
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-white">{admins.length}</div>
-                      <div className="text-gray-400">Total registros</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-400">
-                        {admins.filter(admin => !admin.isLegacy).length}
+                        {/* Contenido expandible */}
+                        {isExpanded && (
+                          <div className="p-4 bg-white/5 border-t border-white/10">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                              {/* Admin Record */}
+                              <div>
+                                <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                                  🔑 Acceso Administrativo
+                                </h4>
+                                {userData.adminRecord ? (
+                                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-green-300 font-medium">
+                                        ID: {userData.adminRecord.identificador}
+                                      </span>
+                                      <span className={`text-xs px-2 py-1 rounded ${
+                                        userData.adminRecord.is_active 
+                                          ? 'bg-green-600/20 text-green-300' 
+                                          : 'bg-red-600/20 text-red-300'
+                                      }`}>
+                                        {userData.adminRecord.is_active ? 'Activo' : 'Inactivo'}
+                                      </span>
+                                    </div>
+                                    <div className="flex gap-2 flex-wrap">
+                                      <button
+                                        onClick={() => deleteAdmin(userData.adminRecord.id, email, userData.adminRecord.identificador)}
+                                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
+                                      >
+                                        🗑️ Eliminar Admin
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                                    <p className="text-yellow-300 text-sm mb-2">
+                                      Sin acceso administrativo configurado
+                                    </p>
+                                    <p className="text-yellow-200 text-xs">
+                                      Use "Crear Nuevo Administrador" para dar acceso al panel
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Events */}
+                              <div>
+                                <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                                  🎯 Eventos ({eventCount})
+                                </h4>
+                                {eventCount > 0 ? (
+                                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                                    {userData.events.map((event) => (
+                                      <div key={event.id} className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                          <span className="text-blue-300 font-medium flex items-center gap-2">
+                                            🎉 {event.event_slug || 'Sin slug'}
+                                          </span>
+                                          <span className={`text-xs px-2 py-1 rounded ${
+                                            event.is_active 
+                                              ? 'bg-green-600/20 text-green-300' 
+                                              : 'bg-red-600/20 text-red-300'
+                                          }`}>
+                                            {event.is_active ? 'Activo' : 'Inactivo'}
+                                          </span>
+                                        </div>
+                                        {event.event_slug && (
+                                          <div className="flex gap-2 flex-wrap">
+                                            <a
+                                              href={`/${event.event_slug}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition"
+                                            >
+                                              🌐 Ver Evento
+                                            </a>
+                                            <button
+                                              onClick={() => deleteAdmin(event.id, email, event.event_slug || 'evento')}
+                                              className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
+                                            >
+                                              🗑️ Eliminar Evento
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="bg-gray-500/10 border border-gray-500/30 rounded-lg p-3">
+                                    <p className="text-gray-300 text-sm mb-2">
+                                      Sin eventos asignados
+                                    </p>
+                                    <p className="text-gray-400 text-xs">
+                                      Use "Crear Evento para Administrador" para asignar eventos
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-gray-400">Con identificador</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-400">
-                        {admins.filter(admin => admin.isLegacy).length}
-                      </div>
-                      <div className="text-gray-400">Legacy (sin ID)</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-400">
-                        {admins.filter(admin => admin.event_slug).length}
-                      </div>
-                      <div className="text-gray-400">Con eventos</div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
 
-                {/* Legacy Records Alert */}
-                {admins.some(admin => admin.isLegacy) && (
-                  <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-                    <h3 className="text-orange-300 font-semibold mb-2 flex items-center gap-2">
-                      ⚠️ Registros Legacy Detectados
+                {/* Enhanced Summary Section */}
+                <div className="mt-6 space-y-4">
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <h3 className="text-blue-300 font-semibold mb-3 flex items-center gap-2">
+                      📊 Resumen por Usuarios
                     </h3>
-                    <p className="text-orange-200 text-sm mb-3">
-                      Se encontraron {admins.filter(admin => admin.isLegacy).length} registros legacy sin identificador. 
-                      Estos registros fueron creados antes de la implementación del sistema de identificadores.
-                    </p>
-                    <div className="text-xs text-orange-300">
-                      <strong>Nota:</strong> Los registros legacy no pueden acceder al panel admin, pero sus eventos siguen funcionando.
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-white">{adminEmails.length}</div>
+                        <div className="text-gray-400">Usuarios únicos</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-400">
+                          {Object.values(adminsByEmail).filter(user => user.adminRecord !== null).length}
+                        </div>
+                        <div className="text-gray-400">Con acceso admin</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-400">
+                          {Object.values(adminsByEmail).reduce((total, user) => total + user.events.length, 0)}
+                        </div>
+                        <div className="text-gray-400">Total eventos</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-400">
+                          {admins.length}
+                        </div>
+                        <div className="text-gray-400">Total registros DB</div>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </>
-          )}
+
+                  {/* Users without admin access */}
+                  {(() => {
+                    const usersWithoutAdmin = Object.values(adminsByEmail).filter(user => user.adminRecord === null);
+                    return usersWithoutAdmin.length > 0 && (
+                      <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                        <h3 className="text-yellow-300 font-semibold mb-2 flex items-center gap-2">
+                          ⚠️ Usuarios sin Acceso Administrativo
+                        </h3>
+                        <p className="text-yellow-200 text-sm mb-3">
+                          {usersWithoutAdmin.length} usuario{usersWithoutAdmin.length !== 1 ? 's' : ''} tienen eventos pero no pueden acceder al panel administrativo.
+                        </p>
+                        <div className="text-xs text-yellow-300 space-y-1">
+                          {usersWithoutAdmin.slice(0, 3).map(user => (
+                            <div key={user.email}>• {user.email} ({user.events.length} evento{user.events.length !== 1 ? 's' : ''})</div>
+                          ))}
+                          {usersWithoutAdmin.length > 3 && (
+                            <div className="text-yellow-400">... y {usersWithoutAdmin.length - 3} más</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Instructions */}
