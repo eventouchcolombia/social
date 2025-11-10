@@ -520,7 +520,7 @@ const SuperAdmin = () => {
                 </button>
               </div>
             </div>
-            {/* <input
+            <input
               type="text"
               placeholder="Event slug (opcional, ej: boda-maria-juan)"
               value={newAdmin.eventSlug}
@@ -533,7 +533,7 @@ const SuperAdmin = () => {
               className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 border border-white/30 focus:border-blue-400 focus:outline-none text-sm sm:text-base"
               pattern="^[a-z0-9-]*$"
               title="Solo letras minúsculas, números y guiones (opcional)"
-            /> */}
+            />
             <button
               type="submit"
               disabled={isCreating}

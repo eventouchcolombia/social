@@ -24,7 +24,7 @@ function App() {
         {/* ahora Begin es la pantalla de inicio; Welcome se monta en /:eventSlug */}
         <Route path="/" element={<Begin />} />
         <Route path="/:eventSlug" element={<Welcome />} />
-        <Route path="/admin/:identificador" element={<Admin />} />
+        <Route path="/admin/:identificador/:eventSlug" element={<Admin />} />
         <Route path="/superadmin" element={<SuperAdmin />} />
         <Route path="/register" element={<Register />} />
          <Route path="/profile" element={<PerfilUser/>} />

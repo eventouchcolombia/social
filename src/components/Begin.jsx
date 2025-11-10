@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
+import { a } from "framer-motion/client";
 
 // eslint-disable-next-line no-unused-vars
 const Begin = ({ onCreate }) => {
@@ -96,7 +97,7 @@ const Begin = ({ onCreate }) => {
 
     if (isAdmin === true) {
       // ✅ Admin detectado
-      if (adminRow && adminRow.identificador) {
+      if (adminRow && adminRow.identificador && adminRow.event_slug) {
         if (adminRow.is_active === false) {
           console.warn(
             "⚠️ Evento inactivo, no se redirige:",
@@ -105,7 +106,7 @@ const Begin = ({ onCreate }) => {
           return;
         }
 
-        const targetPath = `/admin/${adminRow.identificador}`;
+        const targetPath = `/admin/${adminRow.identificador}/${adminRow.event_slug}`;
         if (window.location.pathname !== targetPath) {
           console.log("🚀 Redirigiendo admin a:", targetPath);
           navigate(targetPath);
@@ -140,7 +141,15 @@ const Begin = ({ onCreate }) => {
       setShowNotFoundModal(true);
       return;
     }
-
+        if (!data || data.length === 0) {
+      setShowCreateModal(false);
+      setShowNotFoundModal(true);
+    } else {
+      // Updated: Include eventSlug in navigation
+      navigate(`/admin/${data[0].identificador}/${data[0].event_slug}`);
+      setShowCreateModal(false);
+      setEventSlug("");
+    }
     try {
       const { data, error } = await supabase
         .from("admins")

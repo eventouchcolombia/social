@@ -28,9 +28,10 @@ import { useEvent } from "../hooks/useEvent";
 import { supabase } from "../supabaseClient";
 
 const Admin = () => {
-  const { identificador } = useParams();
+  const { identificador, eventSlug } = useParams();
   const { session, isAdmin, loading, signOut } = useAuthenticationSupabase();
-  const [eventSlug, setEventSlug] = useState(null);
+  // Updated: Rename state to currentEventSlug to avoid conflict
+  const [currentEventSlug, setCurrentEventSlug] = useState(null);
   const { getAssetUrl, getStoragePath } = useEvent();
 
   const [photos, setPhotos] = useState([]);
@@ -74,42 +75,51 @@ const Admin = () => {
   }, [isAdmin, session, eventSlug]);
 
   // Fetch event_slug from identificador
+  // useEffect(() => {
+  //   const fetchEventSlug = async () => {
+  //     if (!identificador) return;
+
+  //     try {
+  //       const { data, error } = await supabase
+  //         .from("admins")
+  //         .select("event_slug")
+  //         .eq("identificador", identificador)
+  //         .single();
+
+  //       if (error) {
+  //         console.error("Error fetching event_slug:", error);
+  //         return;
+  //       }
+
+  //       if (data) {
+  //         setEventSlug(data.event_slug);
+  //         console.log(
+  //           `✅ Event slug encontrado: ${data.event_slug} para identificador: ${identificador}`
+  //         );
+  //       }
+  //     } catch (err) {
+  //       console.error("Error en fetchEventSlug:", err);
+  //     }
+  //   };
+
+  //   fetchEventSlug();
+  // }, [identificador]);
   useEffect(() => {
-    const fetchEventSlug = async () => {
-      if (!identificador) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("admins")
-          .select("event_slug")
-          .eq("identificador", identificador)
-          .single();
-
-        if (error) {
-          console.error("Error fetching event_slug:", error);
-          return;
-        }
-
-        if (data) {
-          setEventSlug(data.event_slug);
-          console.log(
-            `✅ Event slug encontrado: ${data.event_slug} para identificador: ${identificador}`
-          );
-        }
-      } catch (err) {
-        console.error("Error en fetchEventSlug:", err);
-      }
-    };
-
-    fetchEventSlug();
-  }, [identificador]);
-
+    if (eventSlug) {
+      setCurrentEventSlug(eventSlug);
+      console.log(
+        `✅ Event slug from URL: ${eventSlug} para identificador: ${identificador}`
+      );
+    }
+  }, [eventSlug, identificador]);
   // === cargar fotos solo si es admin ===
   const fetchPhotos = async () => {
-    if (!eventSlug) return;
+    // Updated: Use currentEventSlug
+    if (!currentEventSlug) return;
 
     try {
-      const listRef = ref(storage, `photos/${eventSlug}`);
+      // Updated: Use currentEventSlug
+      const listRef = ref(storage, `photos/${currentEventSlug}`);
       const result = await listAll(listRef);
       const urls = await Promise.all(
         result.items.map(async (item) => ({
@@ -124,24 +134,29 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (isAdmin && eventSlug) fetchPhotos();
-  }, [isAdmin, eventSlug]);
+    // Updated: Use currentEventSlug
+    if (isAdmin && currentEventSlug) fetchPhotos();
+  }, [isAdmin, currentEventSlug]);
 
   useEffect(() => {
     const loadBackground = async () => {
-      if (!eventSlug) return;
-      const url = await getAssetUrl("adminbg.png", eventSlug);
+      // Updated: Use currentEventSlug
+      if (!currentEventSlug) return;
+      // Updated: Use currentEventSlug
+      const url = await getAssetUrl("adminbg.png", currentEventSlug);
       setBackgroundUrl(url);
     };
     loadBackground();
-  }, [eventSlug, getAssetUrl]);
+  }, [currentEventSlug, getAssetUrl]);
 
   // === eliminar foto ===
   const handleDelete = async (name) => {
-    if (!eventSlug) return;
+    // Updated: Use currentEventSlug
+    if (!currentEventSlug) return;
 
     try {
-      const photoRef = ref(storage, `photos/${eventSlug}/${name}`);
+      // Updated: Use currentEventSlug
+      const photoRef = ref(storage, `photos/${currentEventSlug}/${name}`);
       await deleteObject(photoRef);
       setPhotos((prev) => prev.filter((photo) => photo.name !== name));
       setSelectedPhoto(null);
@@ -154,10 +169,12 @@ const Admin = () => {
 
   // === descargar foto ===
   const handleDownload = async (fileName) => {
-    if (!eventSlug) return;
+    // Updated: Use currentEventSlug
+    if (!currentEventSlug) return;
 
     try {
-      const fileRef = ref(storage, `photos/${eventSlug}/${fileName}`);
+      // Updated: Use currentEventSlug
+      const fileRef = ref(storage, `photos/${currentEventSlug}/${fileName}`);
       const blob = await getBlob(fileRef);
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -185,8 +202,9 @@ const Admin = () => {
       try {
         const { data, error } = await supabase
           .from("event_users")
+          // Updated: Use currentEventSlug
           .select("*", { count: "exact" })
-          .eq("event_slug", eventSlug);
+          .eq("event_slug", currentEventSlug);
 
         if (error) throw error;
 
@@ -199,9 +217,10 @@ const Admin = () => {
     };
 
     fetchActiveUsers();
-  }, [eventSlug]);
+  }, [currentEventSlug]);
 
-  if (loading || !eventSlug) {
+  // Updated: Use currentEventSlug
+  if (loading || !currentEventSlug) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen  px-4">
         <div className="text-center">
@@ -354,7 +373,8 @@ const Admin = () => {
       {/* Vista previa */}
       <div
         className="bg-white rounded-xl shadow-xl p-4 flex items-center gap-2 mb-3 cursor-pointer hover:bg-gray-100"
-        onClick={() => window.open(`/${eventSlug}`, "_blank")}
+        // Updated: Use currentEventSlug
+        onClick={() => window.open(`/${currentEventSlug}`, "_blank")}
       >
         <Eye className="w-5 h-5 text-[#753E89] mr-2 " />
         <div>
@@ -379,7 +399,8 @@ const Admin = () => {
       {showWizard && <AssetWizard onClose={() => setShowWizard(false)} />}
       {showShareModal && (
         <ShareEvent
-          eventSlug={eventSlug}
+          // Updated: Use currentEventSlug
+          eventSlug={currentEventSlug}
           onClose={() => setShowShareModal(false)}
         />
       )}
@@ -455,7 +476,11 @@ const Admin = () => {
       )}
       {/* mostrar el modal Agenda */}
       {showAgenda && (
-        <Agenda eventSlug={eventSlug} onClose={() => setShowAgenda(false)} />
+        <Agenda 
+          // Updated: Use currentEventSlug
+          eventSlug={currentEventSlug} 
+          onClose={() => setShowAgenda(false)} 
+        />
       )}
 
       {/* Modal perfil */}

@@ -49,13 +49,36 @@ const Perfil = ({ onClose, userEmail }) => {
         setIsCreating(false);
         return;
       }
+    let identificador = null;
+    try {
+      const { data: adminData, error: adminError } = await supabase
+        .from("admins")
+        .select("identificador")
+        .eq("email", userEmail.toLowerCase().trim())
+        .neq("identificador", null)
+        .limit(1)
+        .single();
 
+      if (adminError && adminError.code !== 'PGRST116') {
+        console.error("Error fetching identificador:", adminError);
+      } else if (adminData) {
+        identificador = adminData.identificador;
+      }
+    } catch (err) {
+      console.error("Error fetching identificador:", err);
+    }
+
+    // Si no hay identificador existente, usa un valor por defecto
+    if (!identificador) {
+      identificador = userEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
       // Crear el registro en la tabla admins
       const { error } = await supabase
         .from("admins")
         .insert([{
           email: userEmail.toLowerCase().trim(),
-          event_slug: newEvent.eventSlug
+          event_slug: newEvent.eventSlug,
+          identificador: identificador
         }]);
 
       if (error) throw error;
@@ -85,7 +108,7 @@ const Perfil = ({ onClose, userEmail }) => {
     try {
       const { data, error } = await supabase
         .from("admins")
-        .select("id, event_slug, is_active")
+        .select("id, event_slug, is_active, identificador")
         .eq("email", userEmail.toLowerCase().trim());
 
       if (error) throw error;
@@ -238,7 +261,7 @@ const Perfil = ({ onClose, userEmail }) => {
                     <div className="flex items-center">
                       <button
                         onClick={() => {
-                          navigate(`/${event.event_slug}/admin`);
+                          navigate(`/admin/${event.identificador}/${event.event_slug}`);
                           onClose();
                         }}
                         className="flex-1 text-left px-4 py-3 hover:bg-[#753E89] hover:text-white transition group"
