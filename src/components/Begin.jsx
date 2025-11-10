@@ -1,7 +1,9 @@
+/* eslint-disable no-undef */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
+//import { a } from "framer-motion/client";
 
 // eslint-disable-next-line no-unused-vars
 const Begin = ({ onCreate }) => {
@@ -148,7 +150,16 @@ const Begin = ({ onCreate }) => {
       setShowNotFoundModal(true);
       return;
     }
-
+         
+        if (!data || data.length === 0) {
+      setShowCreateModal(false);
+      setShowNotFoundModal(true);
+    } else {
+      // Updated: Include eventSlug in navigation
+      navigate(`/admin/${data[0].identificador}/${data[0].event_slug}`);
+      setShowCreateModal(false);
+      setEventSlug("");
+    }
     try {
       const { data, error } = await supabase
         .from("admins")
