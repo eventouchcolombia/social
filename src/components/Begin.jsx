@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
-import { a } from "framer-motion/client";
+//import { a } from "framer-motion/client";
 
 // eslint-disable-next-line no-unused-vars
 const Begin = ({ onCreate }) => {
@@ -141,11 +141,13 @@ const Begin = ({ onCreate }) => {
       setShowNotFoundModal(true);
       return;
     }
+        // eslint-disable-next-line no-undef
         if (!data || data.length === 0) {
       setShowCreateModal(false);
       setShowNotFoundModal(true);
     } else {
       // Updated: Include eventSlug in navigation
+      // eslint-disable-next-line no-undef
       navigate(`/admin/${data[0].identificador}/${data[0].event_slug}`);
       setShowCreateModal(false);
       setEventSlug("");
