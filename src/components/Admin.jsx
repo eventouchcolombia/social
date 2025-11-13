@@ -32,6 +32,7 @@ const Admin = () => {
   const { session, isAdmin, loading, signOut } = useAuthenticationSupabase();
   // Updated: Rename state to currentEventSlug to avoid conflict
   const [currentEventSlug, setCurrentEventSlug] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const { getAssetUrl, getStoragePath } = useEvent();
 
   const [photos, setPhotos] = useState([]);
@@ -136,6 +137,7 @@ const Admin = () => {
   useEffect(() => {
     // Updated: Use currentEventSlug
     if (isAdmin && currentEventSlug) fetchPhotos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, currentEventSlug]);
 
   useEffect(() => {
@@ -220,7 +222,7 @@ const Admin = () => {
   }, [currentEventSlug]);
 
   // Updated: Use currentEventSlug
-  if (loading || !currentEventSlug) {
+  if (loading || !currentEventSlug ) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen  px-4">
         <div className="text-center">

@@ -4,42 +4,39 @@ import { supabase } from "../supabaseClient";
 
 const AuthenticationSupabase = () => {
   const [session, setSession] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(null); // 🧩 antes estaba en false
+  const [isAdmin, setIsAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // === Verificar si el usuario es admin ===
-  // === Verificar si el usuario es admin ===
-const checkIfAdmin = async (user) => {
-  try {
-    if (!user?.email) {
+  const checkIfAdmin = async (user) => {
+    try {
+      if (!user?.email) {
+        setIsAdmin(false);
+        return false;
+      }
+
+      const email = user.email.toLowerCase().trim();
+
+      const { data, error } = await supabase
+        .from("admins")
+        .select("id, email")
+        .eq("email", email);
+
+      if (error) {
+        console.error("❌ Error consultando admins:", error);
+        setIsAdmin(false);
+        return false;
+      }
+
+      const isUserAdmin = data && data.length > 0;
+      setIsAdmin(isUserAdmin);
+      return isUserAdmin;
+    } catch (err) {
+      console.error("❌ Error en checkIfAdmin:", err);
       setIsAdmin(false);
       return false;
     }
-
-    const email = user.email.toLowerCase().trim();
-
-    const { data, error } = await supabase
-      .from("admins")
-      .select("id, email")
-      .eq("email", email)
-      
-
-    if (error) {
-      console.error("❌ Error consultando admins:", error);
-      setIsAdmin(false);
-      return false;
-    }
-
-    // ✅ Si existe en la tabla admins → es admin
-    const isUserAdmin = !!data;
-    setIsAdmin(isUserAdmin);
-    return isUserAdmin;
-  } catch (err) {
-    console.error("❌ Error en checkIfAdmin:", err);
-    setIsAdmin(false);
-    return false;
-  }
-};
+  };
 
   // === Inicializar sesión y escuchar cambios ===
   useEffect(() => {
@@ -77,6 +74,10 @@ const checkIfAdmin = async (user) => {
       );
 
       unsub = listener;
+
+      // 🔁 Activar auto-refresh nativo de Supabase
+      supabase.auth.startAutoRefresh();
+
       setLoading(false);
     };
 
@@ -84,8 +85,63 @@ const checkIfAdmin = async (user) => {
 
     return () => {
       unsub?.subscription?.unsubscribe();
+      supabase.auth.stopAutoRefresh();
     };
   }, []);
+
+  // === Refrescar sesión manual cada 5 minutos ===
+useEffect(() => {
+  console.log("🕒 useEffect activo — iniciando cron cada 5 minutos");
+
+  const refreshSession = async () => {
+    console.log("⏰ Ejecutando refreshSession:", new Date().toLocaleTimeString());
+    // eslint-disable-next-line no-unused-vars
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error) console.warn("⚠️ Error al refrescar sesión:", error.message);
+  };
+
+ const interval = setInterval(refreshSession, 5 * 60 * 1000); // cada 1 minuto
+
+  refreshSession();
+
+  return () => {
+    clearInterval(interval);
+    console.log("🧹 useEffect desmontado — cron detenido");
+  };
+}, []);
+
+// === Validar si el usuario ya existe en auth.users ===
+const checkIfUserExists = async (email) => {
+  try {
+    if (!email) return false;
+
+    // Intentamos loguear con contraseña vacía para forzar error
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: "fakepassword"
+    });
+
+    // Si el error es "Invalid login credentials", el usuario sí existe
+    if (error?.message?.includes("Invalid login credentials")) {
+      console.log("✅ El usuario ya existe:", email);
+      return true;
+    }
+
+    // Si el error es "User not found", el usuario no existe
+    if (error?.message?.includes("User not found")) {
+      console.log("🆕 El usuario no existe:", email);
+      return false;
+    }
+
+    console.warn("⚠️ Otro error:", error?.message);
+    return false;
+  } catch (err) {
+    console.error("❌ Error en checkIfUserExists:", err);
+    return false;
+  }
+};
+
+
 
   // === Métodos de login/logout ===
   const signInWithGoogle = async () => {
@@ -116,20 +172,35 @@ const checkIfAdmin = async (user) => {
 
   const signOut = async () => {
     try {
+      console.log("🚪 Cerrando sesión...");
       setIsAdmin(false);
       setSession(null);
       setLoading(true);
 
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("❌ Error al cerrar sesión:", error);
-        setLoading(false);
+      // 🧩 Verificar si hay sesión activa
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        console.warn("⚠️ No hay sesión activa, limpieza manual forzada.");
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace("/");
         return;
       }
 
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.warn("⚠️ Supabase signOut falló o el token expiró:", error.message);
+      }
+
+      localStorage.clear();
+      sessionStorage.clear();
       window.location.replace("/");
     } catch (err) {
-      console.error("❌ Error al cerrar sesión:", err);
+      console.error("❌ Error general al cerrar sesión:", err);
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.replace("/");
+    } finally {
       setLoading(false);
     }
   };
@@ -138,7 +209,7 @@ const checkIfAdmin = async (user) => {
     return supabase.auth.getSession();
   };
 
-  return { session, isAdmin, loading, signInWithGoogle, signOut, getSession };
+  return { session, isAdmin, loading, signInWithGoogle, signOut, getSession, checkIfUserExists };
 };
 
 export default AuthenticationSupabase;
