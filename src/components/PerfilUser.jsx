@@ -55,9 +55,7 @@ const PerfilUser = () => {
   if (loading) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center bg-[url('/Mobile.png')] bg-cover bg-center text-white p-6">
-        <h2 className="text-xl font-semibold animate-pulse">
-          Comprobando sesión...
-        </h2>
+       <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mx-auto mb-4"></div>
       </div>
     );
   }
