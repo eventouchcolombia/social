@@ -222,21 +222,17 @@ const Admin = () => {
   }, [currentEventSlug]);
 
   // Updated: Use currentEventSlug
-  if (loading || !currentEventSlug ) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-screen  px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <h1 className="text-white text-2xl font-semibold mb-2">
-            Cargando Panel Admin
-          </h1>
-          <p className="text-gray-300 text-sm">
-            Verificando autenticación para {identificador}...
-          </p>
-        </div>
+ if (loading || !currentEventSlug) {
+  return (
+    <div className="flex flex-col justify-center items-center min-h-screen bg-[url('/Mobile.png')] bg-cover bg-center bg-no-repeat px-4">
+      <div >
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mx-auto mb-4"></div>
+      
+        
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (!session) {
     return (
@@ -249,17 +245,11 @@ const Admin = () => {
         <div className="absolute inset-0 bg-[url('/Mobile.png')]"></div>
         <div className="absolute inset-0 bg-[url('/Mobile.png')] bg-cover bg-center"></div>
 
-        <div className="relative z-10 text-center px-4 flex flex-col items-center justify-center min-h-screen">
-          <h1 className="text-2xl font-bold text-center text-white mb-4">
-            Cerrando Admin {eventSlug}
-          </h1>
-
-          <img
-            src="/loading.gif"
-            alt="Cargando..."
-            className="w-16 h-16 mt-4"
-          />
-        </div>
+        <div >
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mx-auto mb-4"></div>
+      
+        
+      </div>
       </div>
     );
   }

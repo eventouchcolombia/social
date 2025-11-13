@@ -17,114 +17,114 @@ const Begin = ({ onCreate }) => {
     useAuthenticationSupabase();
 
   // 👇 Función: busca en la tabla 'admins' por email y devuelve la fila
- const fetchEventForEmail = async (email) => {
-  if (!email) {
-    console.log("fetchEventForEmail: no se proporcionó email");
-    return null;
-  }
-
-  try {
-    console.log(`🔎 [fetchEventForEmail] Buscando admin por email: ${email}`);
-    const { data, error } = await supabase
-      .from("admins")
-      .select("*")
-      .eq("email", email);
-
-    if (error) {
-      console.error("❌ [fetchEventForEmail] Error al consultar admins:", error);
+  const fetchEventForEmail = async (email) => {
+    if (!email) {
+      console.log("fetchEventForEmail: no se proporcionó email");
       return null;
     }
 
-    console.log("✅ [fetchEventForEmail] Resultado raw:", data);
+    try {
+      console.log(`🔎 [fetchEventForEmail] Buscando admin por email: ${email}`);
+      const { data, error } = await supabase
+        .from("admins")
+        .select("*")
+        .eq("email", email);
 
-    if (!data || data.length === 0) {
-      console.log(
-        "ℹ️ [fetchEventForEmail] No se encontró fila en 'admins' para ese email"
-      );
+      if (error) {
+        console.error(
+          "❌ [fetchEventForEmail] Error al consultar admins:",
+          error
+        );
+        return null;
+      }
+
+      console.log("✅ [fetchEventForEmail] Resultado raw:", data);
+
+      if (!data || data.length === 0) {
+        console.log(
+          "ℹ️ [fetchEventForEmail] No se encontró fila en 'admins' para ese email"
+        );
+        return null;
+      }
+
+      // 🔹 Si hay más de un evento, elegimos el activo o el más reciente
+      let row;
+      if (data.length > 1) {
+        console.warn(
+          `⚠️ [fetchEventForEmail] Se encontraron ${data.length} eventos asociados al email.`
+        );
+        row =
+          data.find((r) => r.is_active) ||
+          data.sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          )[0]; // el más reciente si ninguno está activo
+      } else {
+        row = data[0];
+      }
+
+      console.log("📌 [fetchEventForEmail] Fila seleccionada:", {
+        id: row.id,
+        uuid: row.uuid,
+        email: row.email,
+        event_slug: row.event_slug,
+        identificador: row.identificador,
+        is_active: row.is_active,
+        created_at: row.created_at,
+      });
+
+      return row;
+    } catch (err) {
+      console.error("⚠️ [fetchEventForEmail] Excepción:", err);
       return null;
     }
+  };
 
-    // 🔹 Si hay más de un evento, elegimos el activo o el más reciente
-    let row;
-    if (data.length > 1) {
-      console.warn(
-        `⚠️ [fetchEventForEmail] Se encontraron ${data.length} eventos asociados al email.`
-      );
-      row =
-        data.find((r) => r.is_active) ||
-        data.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        )[0]; // el más reciente si ninguno está activo
-    } else {
-      row = data[0];
-    }
-
-    console.log("📌 [fetchEventForEmail] Fila seleccionada:", {
-      id: row.id,
-      uuid: row.uuid,
-      email: row.email,
-      event_slug: row.event_slug,
-      identificador: row.identificador,
-      is_active: row.is_active,
-      created_at: row.created_at,
+  useEffect(() => {
+    console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", {
+      session,
+      isAdmin,
     });
 
-    return row;
-  } catch (err) {
-    console.error("⚠️ [fetchEventForEmail] Excepción:", err);
-    return null;
-  }
-};
-
-
- useEffect(() => {
-  console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", {
-    session,
-    isAdmin,
-  });
-
-  // ⏳ Esperar a que session e isAdmin estén definidos
-  if (!session || isAdmin === undefined) {
-    console.log("⏳ Esperando que session e isAdmin estén listos...");
-    return;
-  }
-
-  (async () => {
-    const email = session.user?.email;
-    console.log("🧾 [useEffect Begin] Email de sesión:", email);
-
-    const adminRow = await fetchEventForEmail(email);
-
-    if (isAdmin === true) {
-      // ✅ Admin detectado
-      if (adminRow && adminRow.identificador && adminRow.event_slug) {
-        if (adminRow.is_active === false) {
-          console.warn(
-            "⚠️ Evento inactivo, no se redirige:",
-            adminRow.event_slug
-          );
-          return;
-        }
-
-        const targetPath = `/admin/${adminRow.identificador}/${adminRow.event_slug}`;
-        if (window.location.pathname !== targetPath) {
-          console.log("🚀 Redirigiendo admin a:", targetPath);
-          navigate(targetPath);
-        }
-      } else {
-        console.warn("⚠️ Admin sin identificador válido. No se redirige.");
-      }
-    } else if (isAdmin === false) {
-      // 👤 Usuario regular
-      if (window.location.pathname !== "/profile") {
-        console.log("👤 Redirigiendo a /profile");
-        navigate("/profile");
-      }
+    // ⏳ Esperar a que session e isAdmin estén definidos
+    if (!session || isAdmin === undefined) {
+      console.log("⏳ Esperando que session e isAdmin estén listos...");
+      return;
     }
-  })();
-}, [session, isAdmin, navigate]);
 
+    (async () => {
+      const email = session.user?.email;
+      console.log("🧾 [useEffect Begin] Email de sesión:", email);
 
+      const adminRow = await fetchEventForEmail(email);
+
+      if (isAdmin === true) {
+        // ✅ Admin detectado
+        if (adminRow && adminRow.identificador && adminRow.event_slug) {
+          if (adminRow.is_active === false) {
+            console.warn(
+              "⚠️ Evento inactivo, no se redirige:",
+              adminRow.event_slug
+            );
+            return;
+          }
+
+          const targetPath = `/admin/${adminRow.identificador}/${adminRow.event_slug}`;
+          if (window.location.pathname !== targetPath) {
+            console.log("🚀 Redirigiendo admin a:", targetPath);
+            navigate(targetPath);
+          }
+        } else {
+          console.warn("⚠️ Admin sin identificador válido. No se redirige.");
+        }
+      } else if (isAdmin === false) {
+        // 👤 Usuario regular
+        if (window.location.pathname !== "/profile") {
+          console.log("👤 Redirigiendo a /profile");
+          navigate("/profile");
+        }
+      }
+    })();
+  }, [session, isAdmin, navigate]);
 
   // 🟣 Maneja el click del botón Google
   const handleGoogleLogin = async () => {
@@ -141,8 +141,8 @@ const Begin = ({ onCreate }) => {
       setShowNotFoundModal(true);
       return;
     }
-        // eslint-disable-next-line no-undef
-        if (!data || data.length === 0) {
+    // eslint-disable-next-line no-undef
+    if (!data || data.length === 0) {
       setShowCreateModal(false);
       setShowNotFoundModal(true);
     } else {
@@ -212,10 +212,8 @@ const Begin = ({ onCreate }) => {
   // ⏳ Mostrar "Cargando..." solo si se presionó Iniciar sesión
   if (authStarted && loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#753E89]/20">
-        <h1 className="text-2xl font-semibold text-[#753E89] animate-pulse">
-          Verificando autenticación...
-        </h1>
+      <div className="flex flex-col justify-center items-center min-h-screen bg-[url('/Mobile.png')] bg-cover bg-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mb-4"></div>
       </div>
     );
   }
@@ -248,7 +246,7 @@ const Begin = ({ onCreate }) => {
               <img src="/google.png" alt="Google" className="w-6 h-6" />
               Inicia sesión con Google
             </button>
-            
+
             <span
               onClick={() => navigate("/register")}
               className=" mt-[-10px] text-[#753E89]  cursor-pointer hover:text-[#5e3270] transition"
