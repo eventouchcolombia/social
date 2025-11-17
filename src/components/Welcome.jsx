@@ -36,7 +36,10 @@ export default function Welcome() {
   const [eventTexts, setEventTexts] = useState({
     title: "EventPhotos",
     subtitle: "",
+    font: "Montserrat",
+    primaryColor: "#753E89",
   });
+  const [isLoading, setIsLoading] = useState(true); // 🔹 Estado de carga
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const theme = themes[eventSlug] || defaultTheme;
@@ -49,7 +52,13 @@ export default function Welcome() {
       setBackgroundUrl(url || "/Mobile.png");
 
       const texts = await loadEventTexts(eventSlug);
-      setEventTexts(texts);
+      setEventTexts({
+        title: texts.title || "EventPhotos",
+        subtitle: texts.subtitle || "",
+        font: texts.font || "Montserrat",
+        primaryColor: texts.primaryColor || "#753E89",
+      });
+      setIsLoading(false); // 🔹 Marcar como cargado
     };
     loadAssets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,27 +159,28 @@ export default function Welcome() {
       )}
 
       <div className="text-center mt-8">
-        <h1 className={`text-7xl font-bold text-white ${theme.title}`}>
+        <h1 
+          className={`text-7xl font-bold text-white ${theme.title}`}
+          style={{ fontFamily: eventTexts.font }}
+        >
           {eventTexts.title}
         </h1>
         {eventTexts.subtitle && (
-          <p className={`text-3xl mt-14 ${theme.title} opacity-80`}>
+          <p 
+            className={`text-3xl mt-14 ${theme.title} opacity-80`}
+            style={{ fontFamily: eventTexts.font }}
+          >
             {eventTexts.subtitle}
           </p>
         )}
       </div>
 
       <div className="bg-white/60 rounded-2xl p-4 text-center max-w-md mx-auto mt-12 mb-6">
-        {/* <h1 className="text-sm font-semibold text-gray-800">
-          ¡Bienvenido a nuestro photobooth digital!
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Captura momentos increíbles y llévatelos contigo.
-        </p> */}
-
         <button
-          className={`mt-6 px-6 py-3 w-full font-bold rounded-full text-lg transition ${theme.button}`}
+          className={`mt-6 px-6 py-3 w-full font-bold rounded-full text-lg transition hover:opacity-90 text-white ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          style={{ backgroundColor: eventTexts.primaryColor }}
           onClick={handleStart}
+          disabled={isLoading}
         >
           Comenzar
         </button>

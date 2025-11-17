@@ -21,12 +21,14 @@ const defaultTheme = {
 };
 
 const Choose = () => {
-  const { signOut, session } = useAuthenticationSupabase(); // 👈 traemos la sesión completa
+  const { signOut, session } = useAuthenticationSupabase();
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl } = useEvent();
 
   const [backgroundUrl, setBackgroundUrl] = useState(null);
   const [agenda, setAgenda] = useState([]);
+  const [primaryColor, setPrimaryColor] = useState("#753E89");
+  const [isLoading, setIsLoading] = useState(true); // 🔹 Estado de carga
 
   // Selecciona el tema según la ruta, o usa el default
   const theme = themes[eventSlug] || defaultTheme;
@@ -34,7 +36,12 @@ const Choose = () => {
   useEffect(() => {
     const loadBackground = async () => {
       const url = await getAssetUrl("bgchosee.png");
-      setBackgroundUrl(url || "/Mobile.png"); // fallback local desde public
+      setBackgroundUrl(url || "/Mobile.png");
+
+      const { loadEventTexts } = await import("../utils/uploadAsset");
+      const texts = await loadEventTexts(eventSlug);
+      setPrimaryColor(texts.primaryColor || "#753E89");
+      setIsLoading(false); // 🔹 Marcar como cargado
     };
     loadBackground();
   }, [eventSlug, getAssetUrl]);
@@ -141,7 +148,8 @@ const Choose = () => {
         <div className="grid grid-cols-2 gap-4 w-full">
           <button
             onClick={() => navigate(`/${eventSlug}/photo`)}
-            className={`flex flex-col items-center justify-center gap-2 p-6 rounded-xl font-semibold shadow-md hover:bg-purple-800 transition ${theme.button}`}
+            className={`flex flex-col items-center justify-center gap-2 p-6 rounded-xl font-semibold shadow-md hover:opacity-90 transition text-white ${isLoading ? 'invisible' : 'visible'}`}
+            style={{ backgroundColor: primaryColor }}
           >
             <Camera size={28} />
             <span>Tomar foto</span>
@@ -149,7 +157,11 @@ const Choose = () => {
 
           <button
             onClick={() => navigate(`/${eventSlug}/gallery`)}
-            className="flex flex-col items-center justify-center gap-2 p-6 rounded-xl bg-purple-100 text-[#753E89] font-semibold shadow-md hover:bg-purple-200 transition"
+            className={`flex flex-col items-center justify-center gap-2 p-6 rounded-xl font-semibold shadow-md hover:opacity-90 transition ${isLoading ? 'invisible' : 'visible'}`}
+            style={{
+              backgroundColor: `${primaryColor}20`,
+              color: primaryColor,
+            }}
           >
             <ImageIcon size={28} />
             <span>Ver galería</span>

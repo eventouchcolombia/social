@@ -31,9 +31,11 @@ const SkeletonGrid = () => (
 const Gallery = () => {
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [selectedPhotos, setSelectedPhotos] = useState([]); // 🔹 Para selección múltiple
+  const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [backgroundUrl, setBackgroundUrl] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [primaryColor, setPrimaryColor] = useState("#753E89");
+  const [isColorLoaded, setIsColorLoaded] = useState(false); // 🔹 Estado específico para color
 
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl, getStoragePath } = useEvent();
@@ -95,8 +97,16 @@ const Gallery = () => {
         if (mounted) {
           setBackgroundUrl(bg || "/bggallerylocal.png");
         }
+
+        const { loadEventTexts } = await import("../utils/uploadAsset");
+        const texts = await loadEventTexts(eventSlug);
+        if (mounted) {
+          setPrimaryColor(texts.primaryColor || "#753E89");
+          setIsColorLoaded(true); // 🔹 Marcar color como cargado
+        }
       } catch (err) {
-        console.warn("No se pudo cargar bggallery.png", err);
+        console.warn("No se pudo cargar assets", err);
+        if (mounted) setIsColorLoaded(true);
       }
     })();
     return () => {
@@ -315,7 +325,8 @@ const Gallery = () => {
         <div className="fixed bottom-0 left-0 w-full py-6 flex flex-col items-center gap-3 z-50">
           <button
             onClick={() => navigate(`/${eventSlug}/photo`)}
-            className="w-3/4 px-6 py-3 bg-[#753E89] text-white font-semibold rounded-full shadow hover:bg-blue-700 transition"
+            className={`w-3/4 px-6 py-3 text-white font-semibold rounded-full shadow hover:opacity-90 transition ${!isColorLoaded ? 'invisible' : 'visible'}`}
+            style={{ backgroundColor: primaryColor }}
           >
             Tomar foto
           </button>
@@ -325,7 +336,11 @@ const Gallery = () => {
               navigate(`/${eventSlug}/choose`);
               window.location.reload();
             }}
-            className="w-3/4 px-6 py-3 bg-gray-200 text-[#753E89] font-semibold rounded-full shadow hover:bg-gray-300 transition"
+            className={`w-3/4 px-6 py-3 font-semibold rounded-full shadow hover:opacity-90 transition ${!isColorLoaded ? 'invisible' : 'visible'}`}
+            style={{
+              backgroundColor: `${primaryColor}20`,
+              color: primaryColor,
+            }}
           >
             Volver
           </button>
