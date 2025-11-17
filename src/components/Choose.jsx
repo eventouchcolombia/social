@@ -140,7 +140,7 @@ const Choose = () => {
       )}
 
       {/* Caja inferior */}
-      <div className="w-[109%] bg-white rounded-t-3xl shadow-lg p-4 flex flex-col mt-138">
+      <div className="w-[109%] bg-white/70 rounded-t-3xl shadow-lg p-4 flex flex-col mt-138">
         <h1 className="text-lg text-left font-bold mb-6 text-black">
           ¿Qué quieres hacer?
         </h1>
