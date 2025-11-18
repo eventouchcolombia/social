@@ -238,7 +238,7 @@ const Begin = ({ onCreate }) => {
 
       <div className="absolute z-10 bottom-0 left-0 right-0 flex justify-center">
         <div className="w-[110%] h-54 bg-white/40 rounded-t-4xl p-8 shadow-lg flex flex-col items-center">
-          <div className="w-full flex flex-col sm:flex-row gap-4 items-center justify-center">
+          <div className="w-full flex flex-col  gap-4 items-center justify-center">
             <button
               onClick={handleGoogleLogin}
               className="w-full sm:w-1/2 flex justify-center items-center gap-2 py-3 rounded-full text-black text-xl bg-white hover:bg-gray-100 shadow-md transition"
