@@ -269,7 +269,7 @@ const Photo = () => {
       </div>
     </div>
   ) : (
-    <div className="flex gap-24 mb-[-20px] ">
+    <div className="flex gap-24 mb-[-40px] ">
       
       {/* Repetir */}
       <div
@@ -279,7 +279,7 @@ const Photo = () => {
         <img
           src="/repetir.png"
           alt="Repetir"
-          className="w-20 h-20 hover:opacity-80 transition"
+          className="w-20 h-18 hover:opacity-80 transition"
         />
       </div>
 
@@ -291,7 +291,7 @@ const Photo = () => {
         <img
           src="/publicar.png"
           alt="Publicar"
-          className={`w-20 h-20 hover:opacity-80 transition ${
+          className={`w-20 h-22 hover:opacity-80 transition ${
             uploading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         />
