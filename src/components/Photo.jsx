@@ -258,44 +258,49 @@ const Photo = () => {
       />
 
       {/* Botones principales */}
-      <div className="absolute bottom-2 left-0 w-full flex justify-center items-center z-20">
-        {!capturedImage ? (
-          <div className="flex flex-col items-center">
-            <div
-              onClick={capturePhoto}
-              className="w-22 h-22 rounded-full border-6 mb-8 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
-            >
-              <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
-            </div>
-          </div>
-        ) : (
-          <div className="flex gap-24 mb-8">
-            <div
-              className="flex flex-col items-center cursor-pointer"
-              onClick={retakePhoto}
-            >
-              <img
-                src="/repetir.png"
-                alt="Repetir"
-                className="w-20 h-18 mt-[-10px] hover:opacity-80 transition"
-              />
-            </div>
-
-            <div
-              className="flex flex-col items-center cursor-pointer"
-              onClick={publishPhoto}
-            >
-              <img
-                src="/publicar.png"
-                alt="Publicar"
-                className={`w-15 h-13 hover:opacity-80 transition ${
-                  uploading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              />
-            </div>
-          </div>
-        )}
+      <div className="absolute bottom-6 left-0  w-full flex justify-center items-center z-20">
+  {!capturedImage ? (
+    <div className="flex flex-col items-center ">
+      <div
+        onClick={capturePhoto}
+        className="w-22 h-22 rounded-full border-6 mb-8 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
+      >
+        <img src="/shutter.png" alt="Tomar foto" className="w-20 h-20" />
       </div>
+    </div>
+  ) : (
+    <div className="flex gap-24 mb-[-20px] ">
+      
+      {/* Repetir */}
+      <div
+        className="flex flex-col items-center cursor-pointer"
+        onClick={retakePhoto}
+      >
+        <img
+          src="/repetir.png"
+          alt="Repetir"
+          className="w-20 h-20 hover:opacity-80 transition"
+        />
+      </div>
+
+      {/* Publicar */}
+      <div
+        className="flex flex-col items-center cursor-pointer"
+        onClick={publishPhoto}
+      >
+        <img
+          src="/publicar.png"
+          alt="Publicar"
+          className={`w-20 h-20 hover:opacity-80 transition ${
+            uploading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        />
+      </div>
+
+    </div>
+  )}
+</div>
+
     </div>
   );
 };
