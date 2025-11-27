@@ -38,11 +38,22 @@ const PhotosAdmin = ({ eventSlug, onClose, onPhotosUpdate }) => {
         result.items.map(async (item) => {
           try {
             const metadata = await getMetadata(item);
+            
+            // 🔍 LOG COMPLETO DE METADATOS - Revisa la consola del navegador
+            console.log("=== METADATOS COMPLETOS ===");
+            console.log("Archivo:", item.name);
+            console.log("Metadata completo:", metadata);
+            console.log("Custom Metadata:", metadata.customMetadata);
+            console.log("Todas las propiedades:", Object.keys(metadata));
+            console.log("========================");
+            
             return {
               name: item.name,
               url: await getDownloadURL(item),
               email: metadata.customMetadata?.email || "Desconocido",
-              alias: metadata.customMetadata?.alias || "Sin alias",
+              userName: metadata.customMetadata?.name || "Sin nombre",
+              avatar: metadata.customMetadata?.avatar || null,
+              uid: metadata.customMetadata?.uid || null,
               timestamp: metadata.timeCreated,
               date: new Date(metadata.timeCreated).toLocaleDateString("es-ES"),
             };
@@ -52,7 +63,9 @@ const PhotosAdmin = ({ eventSlug, onClose, onPhotosUpdate }) => {
               name: item.name,
               url: await getDownloadURL(item),
               email: "Desconocido",
-              alias: "Sin alias",
+              userName: "Sin nombre",
+              avatar: null,
+              uid: null,
               timestamp: new Date().toISOString(),
               date: new Date().toLocaleDateString("es-ES"),
             };
@@ -87,7 +100,7 @@ const PhotosAdmin = ({ eventSlug, onClose, onPhotosUpdate }) => {
       result = result.filter(
         (photo) =>
           photo.email.toLowerCase().includes(keyword) ||
-          photo.alias.toLowerCase().includes(keyword)
+          photo.userName.toLowerCase().includes(keyword)
       );
     }
 
@@ -209,9 +222,9 @@ const PhotosAdmin = ({ eventSlug, onClose, onPhotosUpdate }) => {
             placeholder="Buscar por palabra clave"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 bg-[#f9f3fb] text-[#753E89] rounded-full placeholder-[#753E89]/60 focus:outline-none focus:ring-2 focus:ring-[#753E89]"
+            className="w-full pl-5 pr-10 py-2 bg-[#f9f3fb] text-[#753E89] rounded-full placeholder-[#753E89]/60 focus:outline-none focus:ring-2 focus:ring-[#753E89]"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#753E89] w-5 h-5" />
+            {/* <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#753E89] w-5 h-5" /> */}
             <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
             <Search className="text-[#753E89] w-5 h-5" />
             </button>
@@ -327,7 +340,7 @@ const PhotosAdmin = ({ eventSlug, onClose, onPhotosUpdate }) => {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-gray-800 truncate">
-                      {photo.alias}
+                      {photo.userName}
                     </p>
                     <p className="text-xs text-gray-500 truncate">
                       {photo.email}
@@ -432,7 +445,7 @@ const PhotosAdmin = ({ eventSlug, onClose, onPhotosUpdate }) => {
 
         {/* Info overlay */}
         <div className="absolute bottom-4 left-4 bg-black/70 text-white p-3 rounded-lg">
-          <p className="font-semibold">{selectedPhoto.alias}</p>
+          <p className="font-semibold">{selectedPhoto.userName}</p>
           <p className="text-sm text-gray-300">{selectedPhoto.email}</p>
           <p className="text-xs text-gray-400">{selectedPhoto.date}</p>
         </div>
