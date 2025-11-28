@@ -1,6 +1,8 @@
 /* eslint-disable no-undef */
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { ref, listAll, getDownloadURL } from "firebase/storage"; // Firebase Storage imports
+import { storage } from "../firebaseConfig"; // Ensure this import exists and points to your Firebase setup
 import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
 import Agenda from "./Agenda";
@@ -72,13 +74,30 @@ const Admin = () => {
     }
   }, [eventSlug, identificador]);
   // === cargar fotos solo si es admin ===
+  // const fetchPhotos = async () => {
+  //   // Updated: Use currentEventSlug
+  //   if (!currentEventSlug) return;
+
+  //   try {
+  //     // Updated: Use currentEventSlug
+  //     const listRef = ref(storage, `photos/${currentEventSlug}`);
+  //     const result = await listAll(listRef);
+  //     const urls = await Promise.all(
+  //       result.items.map(async (item) => ({
+  //         name: item.name,
+  //         url: await getDownloadURL(item),
+  //       }))
+  //     );
+  //     setPhotos(urls.reverse());
+  //   } catch (error) {
+  //     console.error("❌ Error cargando fotos:", error);
+  //   }
+  // };
   const fetchPhotos = async () => {
-    // Updated: Use currentEventSlug
     if (!currentEventSlug) return;
 
     try {
-      // Updated: Use currentEventSlug
-      const listRef = ref(storage, `photos/${currentEventSlug}`);
+      const listRef = ref(storage, `photos/${currentEventSlug}`); // Ensure `storage` is defined
       const result = await listAll(listRef);
       const urls = await Promise.all(
         result.items.map(async (item) => ({
@@ -86,16 +105,50 @@ const Admin = () => {
           url: await getDownloadURL(item),
         }))
       );
-      setPhotos(urls.reverse());
+      setPhotosCount(urls.length); // Update photos count
     } catch (error) {
       console.error("❌ Error cargando fotos:", error);
     }
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      if (!currentEventSlug || !isAdmin) return;
+
+      try {
+        // Cargar fotos
+        const listRef = ref(storage, `photos/${currentEventSlug}`);
+        const result = await listAll(listRef);
+        const urls = await Promise.all(
+          result.items.map(async (item) => ({
+            name: item.name,
+            url: await getDownloadURL(item),
+          }))
+        );
+        setPhotosCount(urls.length); // Actualizar el número de fotos
+
+        // Cargar usuarios activos
+        const { data, error } = await supabase
+          .from("event_users")
+          .select("*", { count: "exact" })
+          .eq("event_slug", currentEventSlug);
+
+        if (error) throw error;
+
+        setUsersList(data || []);
+        setActiveUsers(data.length || 0); // Actualizar el número de usuarios activos
+      } catch (error) {
+        console.error("❌ Error cargando datos:", error);
+      }
+    };
+
+    fetchData();
+  }, [currentEventSlug, isAdmin]);
+
+  useEffect(() => {
     // Updated: Use currentEventSlug
     if (isAdmin && currentEventSlug) fetchPhotos();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, currentEventSlug]);
 
   useEffect(() => {
@@ -107,38 +160,36 @@ const Admin = () => {
     loadBackground();
   }, [currentEventSlug, getAssetUrl]);
 
-  useEffect(() => {
-    const fetchActiveUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("event_users")
-          .select("*", { count: "exact" })
-          .eq("event_slug", currentEventSlug);
+  // useEffect(() => {
+  //   const fetchActiveUsers = async () => {
+  //     try {
+  //       const { data, error } = await supabase
+  //         .from("event_users")
+  //         .select("*", { count: "exact" })
+  //         .eq("event_slug", currentEventSlug);
 
-        if (error) throw error;
+  //       if (error) throw error;
 
-        setUsersList(data || []);
-        setActiveUsers(data.length || 0);
-      } catch (err) {
-        console.error("❌ Error obteniendo usuarios activos:", err.message);
-      }
-    };
+  //       setUsersList(data || []);
+  //       setActiveUsers(data.length || 0);
+  //     } catch (err) {
+  //       console.error("❌ Error obteniendo usuarios activos:", err.message);
+  //     }
+  //   };
 
-    fetchActiveUsers();
-  }, [currentEventSlug]);
+  //   fetchActiveUsers();
+  // }, [currentEventSlug]);
 
   // Updated: Use currentEventSlug
- if (loading || !currentEventSlug) {
-  return (
-    <div className="flex flex-col justify-center items-center min-h-screen bg-[url('/Mobile.png')] bg-cover bg-center bg-no-repeat px-4">
-      <div >
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mx-auto mb-4"></div>
-      
-        
+  if (loading || !currentEventSlug) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen bg-[url('/Mobile.png')] bg-cover bg-center bg-no-repeat px-4">
+        <div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mx-auto mb-4"></div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   if (!session) {
     return (
@@ -151,11 +202,9 @@ const Admin = () => {
         <div className="absolute inset-0 bg-[url('/Mobile.png')]"></div>
         <div className="absolute inset-0 bg-[url('/Mobile.png')] bg-cover bg-center"></div>
 
-        <div >
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mx-auto mb-4"></div>
-      
-        
-      </div>
+        <div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mx-auto mb-4"></div>
+        </div>
       </div>
     );
   }
