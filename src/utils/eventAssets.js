@@ -1,3 +1,6 @@
+import { ref, getDownloadURL } from "firebase/storage"; // Asegúrate de importar `ref`
+import { storage } from "../firebase/firebase"; // Importar la configuración de Firebase
+
 /**
  * Utilidades para gestión de assets de eventos
  */
@@ -160,4 +163,21 @@ export const checkEventAssets = async (eventSlug, getAssetUrl) => {
     missingOptional: optionalAssets.filter(asset => !status[asset]),
     isFullyConfigured: requiredExist
   };
+};
+
+/**
+ * Descarga un archivo desde Firebase Storage
+ * @param {string} path - La ruta del archivo en Firebase Storage
+ * @returns {Promise<string>} URL del archivo descargado
+ */
+export const downloadFileFromFirebase = async (path) => {
+  try {
+    const fileRef = ref(storage, path); // Usar `ref` correctamente
+    const url = await getDownloadURL(fileRef);
+    console.log(`✅ Archivo descargado: ${url}`);
+    return url;
+  } catch (error) {
+    console.error(`❌ Error descargando archivo desde Firebase: ${path}`, error);
+    throw error;
+  }
 };

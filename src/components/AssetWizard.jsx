@@ -1,28 +1,16 @@
 import { useState, useEffect } from "react";
 import { uploadAsset, loadEventTexts } from "../utils/uploadAsset";
+import { downloadFileFromFirebase } from "../utils/eventAssets"; // Importar la función para descargar archivos
 import { useEvent } from "../hooks/useEvent";
 import { motion } from "framer-motion";
-import { Upload, X, Palette, ImageIcon, Type } from "lucide-react";
+import { Upload, X, Palette, ImageIcon, Type, Info } from "lucide-react"; // Importar icono para el enlace
 
-const AssetWizard = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState("imagenes");
-  const { eventSlug } = useEvent();
-  const [files, setFiles] = useState({
-    background: null,
-    marco: null,
-    bgchosee: null,
-    bggallery: null,
-    adminbg: null, 
-  });
-  const [eventTexts, setEventTexts] = useState({});
-  const [uploading, setUploading] = useState(false);
-  const [selectedFont, setSelectedFont] = useState("Montserrat");
-
-const TabButton = ({ id, label, icon }) => (
+// Definir el componente TabButton correctamente
+const TabButton = ({ id, label, icon, activeTab, setActiveTab }) => (
   <button
     onClick={() => setActiveTab(id)}
     className={`
-      flex items-center gap-2  py-2 border-b-2 transition
+      flex items-center gap-2 py-2 border-b-2 transition
       ${activeTab === id ? "border-[#753E89] text-[#753E89]" : "border-transparent text-gray-500"}
       whitespace-nowrap
       max-w-[110px]
@@ -35,27 +23,39 @@ const TabButton = ({ id, label, icon }) => (
   </button>
 );
 
+const AssetWizard = ({ onClose }) => {
+  const [activeTab, setActiveTab] = useState("imagenes");
+  const { eventSlug } = useEvent();
+  const [files, setFiles] = useState({
+    background: null,
+    marco: null,
+    bgchosee: null,
+    bggallery: null,
+    adminbg: null,
+  });
+  const [eventTexts, setEventTexts] = useState({});
+  const [uploading, setUploading] = useState(false);
+  const [selectedFont, setSelectedFont] = useState("Montserrat");
+  const [showInstructions, setShowInstructions] = useState(false); // Estado para controlar el pop-up
 
-
-  const fontOptions = [
-  { name: "Montserrat", preview: "Este es solo un texto de prueba para la app" },
-  { name: "Inter", preview: "Este es solo un texto de prueba para la app" },
-  { name: "Roboto", preview: "Este es solo un texto de prueba para la app" },
-  { name: "Poppins", preview: "Este es solo un texto de prueba para la app" },
-  { name: "Lato", preview: "Este es solo un texto de prueba para la app" }
-];
-
-
-  // Cargar textos existentes al abrir el wizard
+  // Cargar imágenes previamente subidas al abrir el wizard
   useEffect(() => {
-    const loadExistingTexts = async () => {
-      const texts = await loadEventTexts(eventSlug);
-      setEventTexts(texts);
-      if (texts.font) {
-        setSelectedFont(texts.font);
+    const loadUploadedImages = async () => {
+      const updatedFiles = {};
+      for (const key of Object.keys(files)) {
+        try {
+          console.log(`🔄 Intentando cargar imagen para: ${key}`); // Log de depuración
+          const url = await downloadFileFromFirebase(`assets/${eventSlug}/${key}.png`);
+          console.log(`✅ URL cargada para ${key}: ${url}`); // Log de depuración
+          updatedFiles[key] = { preview: url }; // Actualizar el estado con la URL de la imagen
+        } catch (error) {
+          console.warn(`⚠️ No se pudo cargar la imagen para ${key}:`, error);
+        }
       }
+      console.log("📂 Estado actualizado de archivos:", updatedFiles); // Log de depuración
+      setFiles((prev) => ({ ...prev, ...updatedFiles }));
     };
-    loadExistingTexts();
+    loadUploadedImages();
   }, [eventSlug]);
 
   const handleFile = (type, f) => {
@@ -71,19 +71,19 @@ const TabButton = ({ id, label, icon }) => (
   const handleUpload = async () => {
     try {
       setUploading(true);
-      
+
       // Subir archivos de imagen
       for (const [key, value] of Object.entries(files)) {
         if (value?.file) {
           await uploadAsset(value.file, `assets/${eventSlug}/${key}.png`);
         }
       }
-      
+
       // Subir textos del evento como archivo JSON
-      const textsBlob = new Blob([JSON.stringify(eventTexts)], { type: 'application/json' });
-      const textsFile = new File([textsBlob], 'event-texts.json', { type: 'application/json' });
+      const textsBlob = new Blob([JSON.stringify(eventTexts)], { type: "application/json" });
+      const textsFile = new File([textsBlob], "event-texts.json", { type: "application/json" });
       await uploadAsset(textsFile, `assets/${eventSlug}/event-texts.json`);
-      
+
       setUploading(false);
       alert("✅ Assets y configuración subidos correctamente");
       onClose();
@@ -100,15 +100,18 @@ const TabButton = ({ id, label, icon }) => (
         e.preventDefault();
         handleFile(key, e.dataTransfer.files[0]);
       }}
-      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-4 sm:p-6 w-full max-w-[180px] h-[140px] sm:h-[160px] cursor-pointer hover:border-blue-500 transition"
+      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-4 sm:p-6 w-full max-w-[180px] h-[180px] sm:h-[200px] cursor-pointer hover:border-blue-500 transition"
       onClick={() => document.getElementById(key).click()}
     >
       {files[key]?.preview ? (
-        <img
-          src={files[key].preview}
-          alt={label}
-          className="w-full h-full object-contain rounded-xl"
-        />
+        <>
+          <img
+            src={files[key].preview}
+            alt={label}
+            className="w-full h-full object-contain rounded-xl"
+          />
+          <p className="mt-2 text-sm text-gray-600 text-center">{label}</p> {/* Mostrar el texto */}
+        </>
       ) : (
         <div className="flex flex-col items-center text-gray-500">
           <Upload className="w-6 h-6 mb-2" />
@@ -123,7 +126,6 @@ const TabButton = ({ id, label, icon }) => (
       />
     </div>
   );
-
 
   const tabs = [
     { id: "colores", label: "Colores", icon: <Palette size={16} /> },
@@ -150,12 +152,20 @@ const TabButton = ({ id, label, icon }) => (
           Configurar Assets
         </h2>
 
-        <div className="  border-b border-gray-200 mb-6 flex gap-6"> 
+        <div className="border-b border-gray-200 mb-6 flex gap-6">
           {tabs.map((t) => (
-            <TabButton key={t.id} id={t.id} label={t.label} icon={t.icon} />
+            <TabButton
+              key={t.id}
+              id={t.id}
+              label={t.label}
+              icon={t.icon}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
           ))}
         </div>
 
+        {/* Renderizar contenido según la pestaña activa */}
         {activeTab === "colores" && (
           <div className="mb-8 bg-gray-50 rounded-xl p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Color Principal de Botones</h3>
@@ -168,42 +178,41 @@ const TabButton = ({ id, label, icon }) => (
                   <input
                     type="color"
                     value={eventTexts.primaryColor || "#753E89"}
-                    onChange={(e) => setEventTexts(prev => ({ ...prev, primaryColor: e.target.value }))
+                    onChange={(e) =>
+                      setEventTexts((prev) => ({ ...prev, primaryColor: e.target.value }))
                     }
                     className="w-20 h-20 rounded-lg cursor-pointer border-2 border-gray-300"
                   />
                   <div className="flex-1">
                     <p className="text-sm text-gray-600 mb-2">Color seleccionado:</p>
-                    <div 
-                      className="w-full h-12 rounded-lg border-2 border-gray-300 flex items-center justify-center  font-semibold"
-                      
+                    <div
+                      className="w-full h-12 rounded-lg border-2 border-gray-300 flex items-center justify-center font-semibold"
                     >
                       {eventTexts.primaryColor || "#753E89"}
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-6">
                 <p className="text-sm font-medium text-gray-600 mb-3">Vista previa de botones:</p>
                 <div className="flex flex-col space-y-3">
-                  <button 
-                    className="w-full  md:w-1/3 px-6 py-3 text-white font-semibold rounded-full transition"
+                  <button
+                    className="w-full md:w-1/3 px-6 py-3 text-white font-semibold rounded-full transition"
                     style={{ backgroundColor: eventTexts.primaryColor || "#753E89" }}
                   >
                     Botón Principal
                   </button>
-                <button
-                  className="w-full md:w-1/3 px-6 py-3 text-white font-semibold rounded-xl transition"
-                  style={{
-                    backgroundColor: eventTexts.primaryColor
-                      ? eventTexts.primaryColor + "B3" // B3 = 70% opacidad en hex
-                      : "rgba(117,62,137,0.7)"
-                  }}
-                >
-                  Botón Secundario
-                </button>
-
+                  <button
+                    className="w-full md:w-1/3 px-6 py-3 text-white font-semibold rounded-xl transition"
+                    style={{
+                      backgroundColor: eventTexts.primaryColor
+                        ? eventTexts.primaryColor + "B3" // B3 = 70% opacidad en hex
+                        : "rgba(117,62,137,0.7)",
+                    }}
+                  >
+                    Botón Secundario
+                  </button>
                 </div>
               </div>
             </div>
@@ -211,115 +220,96 @@ const TabButton = ({ id, label, icon }) => (
         )}
 
         {activeTab === "tipografias" && (
-          <div> 
-          <div className="text-gray-700">
-            
-                    <div className="mb-8 bg-gray-50 rounded-xl p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Textos del Evento</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">
-                Título del Evento
-              </label>
-              <input
-                type="text"
-                value={eventTexts.title}
-                onChange={(e) => setEventTexts(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Ej: Boda María & Juan"
-                style={{ fontFamily: selectedFont }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">
-                Leyenda/Subtítulo (opcional)
-              </label>
-              <input
-                type="text"
-                value={eventTexts.subtitle}
-                onChange={(e) => setEventTexts(prev => ({ ...prev, subtitle: e.target.value }))}
-                placeholder="Ej: Celebremos juntos este momento especial"
-                style={{ fontFamily: selectedFont }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              />
-            </div>
-          </div>
-        </div>
-          </div>
           <div className="mb-8 bg-gray-50 rounded-xl p-4 sm:p-6">
-  <h3 className="text-lg font-semibold text-gray-700 mb-4">Tipografía Principal</h3>
-
-  <div className="space-y-4">
-    {fontOptions.map((font) => (
-      <button
-        key={font.name}
-        onClick={() => {
-          setSelectedFont(font.name);
-          setEventTexts(prev => ({ ...prev, font: font.name }));
-        }}
-        className={`
-          w-full text-left p-4 rounded-xl border transition
-          ${selectedFont === font.name 
-            ? "border-[#753E89] bg-white shadow-sm"
-            : "border-gray-200 bg-gray-100"
-          }
-        `}
-      >
-        <p className="font-semibold text-gray-800" style={{ fontFamily: font.name }}>
-          {font.name}
-        </p>
-        <p className="text-sm text-gray-600" style={{ fontFamily: font.name }}>
-          {font.preview}
-        </p>
-      </button>
-    ))}
-  </div>
-</div>
-
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">Tipografía Principal</h3>
+            <div className="space-y-4">
+              {[
+                { name: "Montserrat", preview: "Texto de ejemplo con Montserrat" },
+                { name: "Inter", preview: "Texto de ejemplo con Inter" },
+                { name: "Roboto", preview: "Texto de ejemplo con Roboto" },
+                { name: "Poppins", preview: "Texto de ejemplo con Poppins" },
+                { name: "Lato", preview: "Texto de ejemplo con Lato" },
+              ].map((font) => (
+                <button
+                  key={font.name}
+                  onClick={() => {
+                    setSelectedFont(font.name);
+                    setEventTexts((prev) => ({ ...prev, font: font.name }));
+                  }}
+                  className={`w-full text-left p-4 rounded-xl border transition ${
+                    selectedFont === font.name
+                      ? "border-[#753E89] bg-white shadow-sm"
+                      : "border-gray-200 bg-gray-100"
+                  }`}
+                >
+                  <p className="font-semibold text-gray-800" style={{ fontFamily: font.name }}>
+                    {font.name}
+                  </p>
+                  <p className="text-sm text-gray-600" style={{ fontFamily: font.name }}>
+                    {font.preview}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
-          
         )}
 
         {activeTab === "imagenes" && (
-        <>
-        
+          <>
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">Imágenes del Evento</h3>
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-sm text-gray-600">
+                  Sube las imágenes necesarias para personalizar tu evento.
+                </p>
+                <button
+                  onClick={() => setShowInstructions(true)} // Mostrar el pop-up
+                  className="flex items-center gap-2 text-sm text-blue-500 hover:underline"
+                >
+                  <Info size={16} />
+                  Ver instrucciones
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+                {renderDropZone("Background", "background")}
+                {renderDropZone("Marco", "marco")}
+                {renderDropZone("Background Choose", "bgchosee")}
+                {renderDropZone("Background Galería", "bggallery")}
+                {renderDropZone("Admin Background", "adminbg")}
+              </div>
+            </div>
+          </>
+        )}
 
-
-        {/* Configuración de Realidad Aumentada */}
-        <div className="mb-8 bg-gray-50 rounded-xl p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Realidad Aumentada</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">
-                Seleccionar Asset de AR
-              </label>
-              <select
-                value={eventTexts.arAsset}
-                onChange={(e) => setEventTexts(prev => ({ ...prev, arAsset: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              >
-                <option value="none">Ninguno</option>
-                <option value="glasses">Gafas</option>
-                <option value="hat">Sombrero</option>
-                <option value="mustashe">Bigote</option>
-              </select>
+        {/* Pop-up de instrucciones */}
+        {showInstructions && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Instrucciones para subir imágenes</h3>
+              <ul className="list-disc list-inside text-sm text-gray-600 space-y-2">
+                <li>Los formatos permitidos son <strong>PNG</strong> y <strong>JPG</strong>.</li>
+                <li>El tamaño máximo de cada archivo es de <strong>5 MB</strong>.</li>
+                <li>Las dimensiones recomendadas son:
+                  <ul className="list-disc list-inside ml-4">
+                    <li><strong>Background:</strong> 1920x1080 px</li>
+                    <li><strong>Marco:</strong> 1080x1920 px</li>
+                    <li><strong>Galería:</strong> 800x600 px</li>
+                  </ul>
+                </li>
+                <li>Asegúrate de que las imágenes no estén comprimidas para mantener la calidad.</li>
+                <li>Se recomiendan imagenes verticales </li>
+              </ul>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowInstructions(false)} // Cerrar el pop-up
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Grid de zonas */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Imágenes del Evento</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
-            {renderDropZone("Background", "background")}
-            {renderDropZone("Marco", "marco")}
-            {renderDropZone("Background Choose", "bgchosee")}
-            {renderDropZone("Background Galería", "bggallery")}
-            {renderDropZone("Admin Background", "adminbg")} {/* 🔹 Nuevo */}
-          </div>
-        </div>
-        </>
-      )}
+        )}
 
         {/* Botones */}
         <div className="mt-8 flex flex-col sm:flex-row justify-end gap-3">
