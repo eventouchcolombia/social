@@ -186,15 +186,15 @@ const TabButton = ({ id, label, icon }) => (
               
               <div className="mt-6">
                 <p className="text-sm font-medium text-gray-600 mb-3">Vista previa de botones:</p>
-                <div className="space-y-3">
+                <div className="flex flex-col space-y-3">
                   <button 
-                    className="w-full px-6 py-3 text-white font-semibold rounded-full transition"
+                    className="w-full  md:w-1/3 px-6 py-3 text-white font-semibold rounded-full transition"
                     style={{ backgroundColor: eventTexts.primaryColor || "#753E89" }}
                   >
                     Botón Principal
                   </button>
                 <button
-                  className="w-full px-6 py-3 text-white font-semibold rounded-xl transition"
+                  className="w-full md:w-1/3 px-6 py-3 text-white font-semibold rounded-xl transition"
                   style={{
                     backgroundColor: eventTexts.primaryColor
                       ? eventTexts.primaryColor + "B3" // B3 = 70% opacidad en hex
