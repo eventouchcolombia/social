@@ -35,66 +35,48 @@ const Perfil = ({ onClose, userEmail }) => {
     }
 
     setIsCreating(true);
-    try {
-      // Verificar si ya existe un admin para este evento
-      const { data: existing } = await supabase
-        .from("admins")
-        .select("id")
-        .eq("event_slug", newEvent.eventSlug)
-        .eq("email", userEmail.toLowerCase().trim())
-        .single();
+  try {
+    // Obtener el admin_id del usuario actual
+    const { data: adminData, error: adminError } = await supabase
+      .from("admins")
+      .select("id")
+      .eq("email", userEmail.toLowerCase().trim())
+      .neq("identificador", null)
+      .single();
 
-      if (existing) {
-        showMessage("Ya existe un admin con ese email para este evento", "error");
-        setIsCreating(false);
-        return;
-      }
-    let identificador = null;
-    try {
-      const { data: adminData, error: adminError } = await supabase
-        .from("admins")
-        .select("identificador")
-        .eq("email", userEmail.toLowerCase().trim())
-        .neq("identificador", null)
-        .limit(1)
-        .single();
-
-      if (adminError && adminError.code !== 'PGRST116') {
-        console.error("Error fetching identificador:", adminError);
-      } else if (adminData) {
-        identificador = adminData.identificador;
-      }
-    } catch (err) {
-      console.error("Error fetching identificador:", err);
+    if (adminError || !adminData) {
+      showMessage("Necesitas ser administrador para crear eventos", "error");
+      return;
     }
 
-    // Si no hay identificador existente, usa un valor por defecto
-    if (!identificador) {
-      identificador = userEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Verificar si ya existe el evento
+    const { data: existing } = await supabase
+      .from("events")
+      .select("id")
+      .eq("event_slug", newEvent.eventSlug)
+      .single();
+
+    if (existing) {
+      showMessage("Ya existe un evento con ese nombre", "error");
+      return;
     }
-      // Crear el registro en la tabla admins
-      const { error } = await supabase
-        .from("admins")
-        .insert([{
-          email: userEmail.toLowerCase().trim(),
-          event_slug: newEvent.eventSlug,
-          identificador: identificador
-        }]);
 
-      if (error) throw error;
+    // Crear el evento
+    const { error } = await supabase
+      .from("events")
+      .insert([{
+        event_slug: newEvent.eventSlug,
+        admin_id: adminData.id,
+        admin_email: userEmail.toLowerCase().trim(),
+        is_active: true
+      }]);
 
-      // Mostrar instrucciones de setup
-      const instructions = getEventAssetInstructions(newEvent.eventSlug);
-      const instructionsWithEmail = instructions.instructions.map(inst => 
-        inst.replace('[EMAIL_DEL_ADMIN]', userEmail)
-      );
-      
-      const instructionText = `✅ Evento "${newEvent.eventSlug}" creado exitosamente!\n\n📋 Próximos pasos:\n${instructionsWithEmail.join('\n')}\n\n� Panel Admin: ${instructions.adminUrl}\n🌐 Evento: ${instructions.eventUrl}`;
-      
-      showMessage(instructionText, "success");
-      setNewEvent({ eventSlug: "" });
+    if (error) throw error;
 
-    } catch (error) {
+    const instructions = getEventAssetInstructions(newEvent.eventSlug);
+    showMessage(`✅ Evento "${newEvent.eventSlug}" creado exitosamente!\n\n${instructions.instructions.join('\n')}`, "success");
+    setNewEvent({ eventSlug: "" });
+  } catch (error) {
       console.error("❌ Error creando evento:", error);
       showMessage("Error creando el evento", "error");
     } finally {
@@ -103,29 +85,37 @@ const Perfil = ({ onClose, userEmail }) => {
   };
 
   // Cargar eventos del usuario
-  const fetchUserEvents = async () => {
-    setLoadingEvents(true);
-    try {
-      const { data, error } = await supabase
-        .from("admins")
-        .select("id, event_slug, is_active, identificador")
-        .eq("email", userEmail.toLowerCase().trim());
+const fetchUserEvents = async () => {
+  setLoadingEvents(true);
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select(`
+        id, 
+        event_slug, 
+        is_active, 
+        admin_id,
+        created_at,
+        admins!inner(identificador)
+      `)
+      .eq("admin_email", userEmail.toLowerCase().trim())
+      .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUserEvents(data || []);
-    } catch (error) {
-      console.error("❌ Error cargando eventos:", error);
-      showMessage("Error cargando eventos", "error");
-    } finally {
-      setLoadingEvents(false);
-    }
-  };
+    if (error) throw error;
+    setUserEvents(data || []);
+  } catch (error) {
+    console.error("❌ Error cargando eventos:", error);
+    showMessage("Error cargando eventos", "error");
+  } finally {
+    setLoadingEvents(false);
+  }
+};
 
   // Toggle activar/desactivar evento
   const toggleEventStatus = async (eventId, currentStatus) => {
     try {
       const { error } = await supabase
-        .from("admins")
+        .from("events")
         .update({ is_active: !currentStatus })
         .eq("id", eventId);
 
@@ -261,7 +251,7 @@ const Perfil = ({ onClose, userEmail }) => {
                     <div className="flex items-center">
                       <button
                         onClick={() => {
-                          navigate(`/admin/${event.identificador}/${event.event_slug}`);
+                          navigate(`/admin/${event.admins.identificador}/${event.event_slug}`);
                           onClose();
                         }}
                         className="flex-1 text-left px-4 py-3 hover:bg-[#753E89] hover:text-white transition group"

@@ -14,10 +14,12 @@ const SuperAdmin = () => {
     useAuthenticationSupabase();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [admins, setAdmins] = useState([]);
-  const [newAdmin, setNewAdmin] = useState({ email: "", identificador: "", eventSlug: "" });
+  const [events, setEvents] = useState([]);
+  const [newAdmin, setNewAdmin] = useState({ email: "", identificador: ""});
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loadingAdmins, setLoadingAdmins] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedEventSlug, setSelectedEventSlug] = useState("");
   const [requests, setRequests] = useState([]);
@@ -96,11 +98,52 @@ const SuperAdmin = () => {
     }
   };
 
+  // ...existing code...
+
+// Cargar eventos
+const fetchEvents = async () => {
+  try {
+    setLoadingEvents(true);
+    console.log("🔍 Cargando eventos desde Supabase...");
+
+    const { data, error } = await supabase
+      .from("events")
+      .select(`
+        id,
+        event_slug,
+        admin_email,
+        is_active,
+        created_at,
+        admin_id
+      `)
+      .order('created_at', { ascending: false });
+
+    console.log("📊 Eventos encontrados:", { data, error });
+
+    if (error) {
+      console.error("❌ Error en consulta:", error);
+      throw error;
+    }
+
+    setEvents(data || []);
+    console.log(`📊 ${data?.length || 0} eventos cargados`);
+
+  } catch (error) {
+    console.error("❌ Error cargando eventos:", error);
+    showMessage("Error cargando eventos: " + error.message, "error");
+    setEvents([]);
+  } finally {
+    setLoadingEvents(false);
+  }
+};
+
+// ...existing code...
   useEffect(() => {
     console.log("🔄 useEffect ejecutado - isSuperAdmin:", isSuperAdmin);
     if (isSuperAdmin) {
       console.log("✅ Llamando a fetchAdmins...");
       fetchAdmins();
+      fetchEvents();
     }
   }, [isSuperAdmin]);
 
@@ -209,24 +252,8 @@ const SuperAdmin = () => {
       }
 
       // Si se proporciona un event_slug, verificar que no esté en uso
-      if (newAdmin.eventSlug && newAdmin.eventSlug.trim()) {
-        console.log("🔍 Verificando event_slug existente...");
-        const { data: existingEvent, error: eventCheckError } = await supabase
-          .from("admins")
-          .select("id")
-          .eq("event_slug", newAdmin.eventSlug.trim());
+    
 
-        console.log("🎯 Resultado verificación event_slug:", { existingEvent, eventCheckError });
-
-        if (existingEvent && existingEvent.length > 0) {
-          showMessage(
-            "Ya existe un evento con ese slug",
-            "error"
-          );
-          setIsCreating(false);
-          return;
-        }
-      }
 
       // Crear el registro en la tabla admins
       const adminData = {
@@ -235,10 +262,7 @@ const SuperAdmin = () => {
         is_active: true
       };
 
-      // Solo agregar event_slug si se proporcionó
-      if (newAdmin.eventSlug && newAdmin.eventSlug.trim()) {
-        adminData.event_slug = newAdmin.eventSlug.trim();
-      }
+
 
       console.log("💾 Insertando datos en la base de datos:", adminData);
       const { data: insertedData, error: insertError } = await supabase
@@ -269,92 +293,74 @@ const SuperAdmin = () => {
     }
   };
 
-  // Crear evento para administrador existente
-  const createEventForAdmin = async (e) => {
-    e.preventDefault();
-    if (!newEvent.identificador || !newEvent.eventSlug) {
-      showMessage("Por favor completa identificador y event slug", "error");
+
+
+// Crear evento para administrador existente
+const createEventForAdmin = async (e) => {
+  e.preventDefault();
+  if (!newEvent.identificador || !newEvent.eventSlug) {
+    showMessage("Por favor completa identificador y event slug", "error");
+    return;
+  }
+
+  setIsCreatingEvent(true);
+  try {
+    console.log("🚀 Iniciando creación de evento:", newEvent);
+
+    // Verificar que existe el administrador
+    const { data: existingAdmin, error: adminError } = await supabase
+      .from("admins")
+      .select("id, email, identificador")
+      .eq("identificador", newEvent.identificador)
+      .neq("identificador", null)
+      .single();
+
+    if (adminError || !existingAdmin) {
+      showMessage("No se encontró un administrador con ese identificador", "error");
       return;
     }
 
-    setIsCreatingEvent(true);
-    try {
-      console.log("🚀 Iniciando creación de evento:", newEvent);
+    // Verificar que el event_slug no esté en uso
+    const { data: existingEvent } = await supabase
+      .from("events") // ✅ Usar tabla events
+      .select("id")
+      .eq("event_slug", newEvent.eventSlug)
+      .single();
 
-      // Verificar que existe el administrador con ese identificador
-      const { data: existingAdmins, error: adminError } = await supabase
-        .from("admins")
-        .select("id, email, event_slug, identificador")
-        .eq("identificador", newEvent.identificador);
-
-      console.log("👤 Administradores encontrados:", { existingAdmins, adminError });
-
-      if (adminError || !existingAdmins || existingAdmins.length === 0) {
-        showMessage(
-          "No se encontró un administrador con ese identificador",
-          "error"
-        );
-        setIsCreatingEvent(false);
-        return;
-      }
-
-      // Tomar el primer admin encontrado
-      const existingAdmin = existingAdmins[0];
-      console.log("📋 Admin seleccionado:", existingAdmin);
-
-      // Verificar que el event_slug no esté en uso globalmente
-      const { data: existingEvent, error: eventCheckError } = await supabase
-        .from("admins")
-        .select("id, identificador, email")
-        .eq("event_slug", newEvent.eventSlug);
-
-      console.log("🎯 Eventos existentes con ese slug:", { existingEvent, eventCheckError });
-
-      if (existingEvent && existingEvent.length > 0) {
-        showMessage(
-          `Ya existe un evento con ese slug "${newEvent.eventSlug}" asignado a: ${existingEvent[0].email} (${existingEvent[0].identificador || 'sin identificador'})`,
-          "error"
-        );
-        setIsCreatingEvent(false);
-        return;
-      }
-
-      // SIEMPRE crear un nuevo registro con identificador NULL para eventos
-      console.log("📝 Creando registro de evento con identificador NULL...");
-      
-      const newEventData = {
-        email: existingAdmin.email,
-        identificador: null, // ✅ IMPORTANTE: Identificador NULL para eventos
-        event_slug: newEvent.eventSlug,
-        is_active: true
-      };
-      
-      console.log("💾 Datos del nuevo registro de evento:", newEventData);
-
-      const { error: insertError } = await supabase
-        .from("admins")
-        .insert([newEventData]);
-
-      if (insertError) {
-        console.error("❌ Error creando evento:", insertError);
-        throw insertError;
-      }
-
-      const adminUrl = `/admin/${newEvent.identificador}`;
-      const eventUrl = `/${newEvent.eventSlug}`;
-
-      const successMessage = `✅ Evento creado exitosamente!\n\n📋 Información:\n• Administrador: ${existingAdmin.email}\n• Identificador Admin: ${newEvent.identificador}\n• Event Slug: ${newEvent.eventSlug}\n• Tipo: Evento independiente (sin identificador)\n\n🔗 Enlaces:\n• Panel Admin: ${adminUrl}\n• Evento: ${eventUrl}\n\n💡 El evento se ha creado como registro independiente vinculado al email del administrador.`;
-
-      showMessage(successMessage, "success");
-      setNewEvent({ identificador: "", eventSlug: "" });
-      await fetchAdmins(); // Recargar la lista
-    } catch (error) {
-      console.error("❌ Error asignando evento:", error);
-      showMessage(`Error creando el evento: ${error.message}`, "error");
-    } finally {
-      setIsCreatingEvent(false);
+    if (existingEvent) {
+      showMessage(`Ya existe un evento con ese slug "${newEvent.eventSlug}"`, "error");
+      return;
     }
-  };
+
+    // Crear el evento en tabla events
+    const { error: insertError } = await supabase
+      .from("events") // ✅ Usar tabla events
+      .insert([{
+        event_slug: newEvent.eventSlug,
+        admin_id: existingAdmin.id,
+        admin_email: existingAdmin.email,
+        is_active: true
+      }]);
+
+    if (insertError) throw insertError;
+
+    const adminUrl = `/admin/${newEvent.identificador}`;
+    const eventUrl = `/${newEvent.eventSlug}`;
+
+    const successMessage = `✅ Evento creado exitosamente!\n\n📋 Información:\n• Administrador: ${existingAdmin.email}\n• Identificador Admin: ${newEvent.identificador}\n• Event Slug: ${newEvent.eventSlug}\n\n🔗 Enlaces:\n• Panel Admin: ${adminUrl}\n• Evento: ${eventUrl}`;
+
+    showMessage(successMessage, "success");
+    setNewEvent({ identificador: "", eventSlug: "" });
+    await fetchEvents(); // ✅ Recargar eventos
+  } catch (error) {
+    console.error("❌ Error creando evento:", error);
+    showMessage(`Error creando el evento: ${error.message}`, "error");
+  } finally {
+    setIsCreatingEvent(false);
+  }
+};
+
+
 
   // Eliminar administrador
   const deleteAdmin = async (id, email, identificador) => {
@@ -373,6 +379,7 @@ const SuperAdmin = () => {
     }
   };
 
+
   // Loading state
   if (loading) {
     return (
@@ -382,6 +389,24 @@ const SuperAdmin = () => {
     );
   }
 
+  // Eliminar evento
+const deleteEvent = async (eventId, eventSlug) => {
+  if (!confirm(`¿Estás seguro de eliminar el evento "${eventSlug}"?`)) return;
+
+  try {
+    const { error } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", eventId);
+
+    if (error) throw error;
+    showMessage(`Evento "${eventSlug}" eliminado exitosamente`, "success");
+    await fetchEvents();
+  } catch (error) {
+    console.error("❌ Error eliminando evento:", error);
+    showMessage("Error eliminando el evento", "error");
+  }
+};
   // No authenticated
   if (!session) {
     return (
@@ -520,7 +545,7 @@ const SuperAdmin = () => {
                 </button>
               </div>
             </div>
-            <input
+            {/* <input
               type="text"
               placeholder="Event slug (opcional, ej: boda-maria-juan)"
               value={newAdmin.eventSlug}
@@ -533,7 +558,7 @@ const SuperAdmin = () => {
               className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 border border-white/30 focus:border-blue-400 focus:outline-none text-sm sm:text-base"
               pattern="^[a-z0-9-]*$"
               title="Solo letras minúsculas, números y guiones (opcional)"
-            />
+            /> */}
             <button
               type="submit"
               disabled={isCreating}
@@ -667,11 +692,14 @@ const SuperAdmin = () => {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
-                onClick={fetchAdmins}
-                disabled={loadingAdmins}
+                  onClick={() => {
+                    fetchAdmins();
+                    fetchEvents(); // ✅ AGREGAR
+                  }}
+                disabled={loadingAdmins || loadingEvents}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm disabled:bg-blue-800 disabled:cursor-not-allowed w-full sm:w-auto"
               >
-                {loadingAdmins ? "🔄 Cargando..." : "🔄 Refrescar"}
+                {loadingAdmins || loadingEvents ? "🔄 Cargando..." : "🔄 Refrescar"}
               </button>
               <button
                 onClick={async () => {
@@ -707,28 +735,33 @@ const SuperAdmin = () => {
             <p className="text-gray-400">No hay registros en la base de datos.</p>
           ) : (() => {
             // Agrupar por email
-            const adminsByEmail = admins.reduce((acc, admin) => {
-              const email = admin.email;
-              if (!acc[email]) {
-                acc[email] = {
-                  email: email,
-                  adminRecord: null, // Registro con identificador
-                  events: [] // Registros de eventos (sin identificador)
-                };
-              }
-              
-              if (admin.identificador && !admin.isLegacy) {
-                // Es un registro de admin (con identificador)
-                acc[email].adminRecord = admin;
-              } else {
-                // Es un registro de evento (sin identificador o legacy)
-                acc[email].events.push(admin);
-              }
-              
-              return acc;
-            }, {});
+const adminsByEmail = admins.reduce((acc, admin) => {
+  const email = admin.email;
+  if (!acc[email]) {
+    acc[email] = {
+      email: email,
+      adminRecord: admin,
+      events: []
+    };
+  }
+  return acc;
+}, {});
 
-            const adminEmails = Object.keys(adminsByEmail);
+// Agregar eventos a cada admin
+events.forEach(event => {
+  if (adminsByEmail[event.admin_email]) {
+    adminsByEmail[event.admin_email].events.push(event);
+  } else {
+    // Admin sin registro en tabla admins pero con eventos
+    adminsByEmail[event.admin_email] = {
+      email: event.admin_email,
+      adminRecord: null,
+      events: [event]
+    };
+  }
+});
+
+const adminEmails = Object.keys(adminsByEmail);
 
             const toggleUser = (email) => {
               const newExpanded = new Set(expandedUsers);

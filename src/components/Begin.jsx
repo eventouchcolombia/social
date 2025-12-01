@@ -17,67 +17,58 @@ const Begin = ({ onCreate }) => {
     useAuthenticationSupabase();
 
   // 👇 Función: busca en la tabla 'admins' por email y devuelve la fila
-  const fetchEventForEmail = async (email) => {
-    if (!email) {
-      console.log("fetchEventForEmail: no se proporcionó email");
+  const fetchEventForEmail = async (userEmail) => {
+  try {
+    console.log(`🔍 [fetchEventForEmail] Buscando eventos para: ${userEmail}`);
+    
+    // PASO 1: Buscar admin en tabla admins
+    const { data: adminData, error: adminError } = await supabase
+      .from("admins")
+      .select("id, email, identificador, is_active")
+      .eq("email", userEmail.toLowerCase().trim())
+      .neq("identificador", null); // Solo admins reales
+    
+    console.log("✅ [fetchEventForEmail] Admin encontrado:", adminData);
+    
+    if (adminError || !adminData || adminData.length === 0) {
+      console.log("❌ No se encontró administrador para este email");
       return null;
     }
-
-    try {
-      console.log(`🔎 [fetchEventForEmail] Buscando admin por email: ${email}`);
-      const { data, error } = await supabase
-        .from("admins")
-        .select("*")
-        .eq("email", email);
-
-      if (error) {
-        console.error(
-          "❌ [fetchEventForEmail] Error al consultar admins:",
-          error
-        );
-        return null;
-      }
-
-      console.log("✅ [fetchEventForEmail] Resultado raw:", data);
-
-      if (!data || data.length === 0) {
-        console.log(
-          "ℹ️ [fetchEventForEmail] No se encontró fila en 'admins' para ese email"
-        );
-        return null;
-      }
-
-      // 🔹 Si hay más de un evento, elegimos el activo o el más reciente
-      let row;
-      if (data.length > 1) {
-        console.warn(
-          `⚠️ [fetchEventForEmail] Se encontraron ${data.length} eventos asociados al email.`
-        );
-        row =
-          data.find((r) => r.is_active) ||
-          data.sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
-          )[0]; // el más reciente si ninguno está activo
-      } else {
-        row = data[0];
-      }
-
-      console.log("📌 [fetchEventForEmail] Fila seleccionada:", {
-        id: row.id,
-        uuid: row.uuid,
-        email: row.email,
-        event_slug: row.event_slug,
-        identificador: row.identificador,
-        is_active: row.is_active,
-        created_at: row.created_at,
-      });
-
-      return row;
-    } catch (err) {
-      console.error("⚠️ [fetchEventForEmail] Excepción:", err);
+    
+    const admin = adminData[0];
+    const { data: eventsData, error: eventsError } = await supabase
+      .from("events")
+      .select("id, event_slug, admin_id, admin_email, is_active")
+      .eq("admin_email", userEmail.toLowerCase().trim())
+      .eq("is_active", true);
+    
+    console.log("✅ [fetchEventForEmail] Eventos encontrados:", eventsData);
+    
+    if (eventsError || !eventsData || eventsData.length === 0) {
+      console.log("❌ No se encontraron eventos activos para este admin");
       return null;
     }
-  };
+    
+    // PASO 3: Retornar admin con su primer evento
+    const firstEvent = eventsData[0];
+    
+    const result = {
+      id: admin.id,
+      email: admin.email,
+      identificador: admin.identificador,
+      is_active: admin.is_active,
+      event_slug: firstEvent.event_slug, // ✅ Desde tabla events
+      eventCount: eventsData.length
+    };
+    
+    console.log("📌 [fetchEventForEmail] Resultado final:", result);
+    return result;
+    
+  } catch (error) {
+    console.error("❌ Error en fetchEventForEmail:", error);
+    return null;
+  }
+};
 
   useEffect(() => {
     console.log("🌀 [useEffect Begin] Detectando sesión/isAdmin:", {
@@ -94,6 +85,15 @@ const Begin = ({ onCreate }) => {
     (async () => {
       const email = session.user?.email;
       console.log("🧾 [useEffect Begin] Email de sesión:", email);
+
+      // Check for pending event slug first
+      const pendingEventSlug = localStorage.getItem('pendingEventSlug');
+      if (pendingEventSlug) {
+        localStorage.removeItem('pendingEventSlug');
+        console.log("🎪 Redirigiendo a evento pendiente:", pendingEventSlug);
+        navigate(`/${pendingEventSlug}`);
+        return;
+      }
 
       const adminRow = await fetchEventForEmail(email);
 
@@ -134,49 +134,50 @@ const Begin = ({ onCreate }) => {
   };
 
   // ✅ Lógica para crear o asistir a evento
-  const handleCreateConfirm = async () => {
-    const slug = eventSlug.trim().toLowerCase();
-    if (!slug) {
-      setShowCreateModal(false);
-      setShowNotFoundModal(true);
+const handleCreateConfirm = async () => {
+  const slug = eventSlug.trim().toLowerCase();
+  if (!slug) {
+    setShowCreateModal(false);
+    setShowNotFoundModal(true);
+    return;
+  }
+
+  try {
+    // ✅ Buscar en tabla events con JOIN
+    const { data, error } = await supabase
+      .from("events")
+      .select(`
+        id,
+        event_slug,
+        admin_id,
+        admin_email,
+        is_active,
+        admins!inner(identificador)
+      `)
+      .eq("event_slug", slug)
+      .eq("is_active", true);
+
+    if (error) {
+      console.error("Error buscando evento (create):", error);
+      alert("Hubo un error al buscar el evento.");
       return;
     }
-    // eslint-disable-next-line no-undef
+     // ✅ Lógica DESPUÉS de la consulta
     if (!data || data.length === 0) {
       setShowCreateModal(false);
       setShowNotFoundModal(true);
     } else {
-      // Updated: Include eventSlug in navigation
-      // eslint-disable-next-line no-undef
-      navigate(`/admin/${data[0].identificador}/${data[0].event_slug}`);
+      // ✅ Navegar directamente al evento encontrado
+      navigate(`/${data[0].event_slug}`); // Para asistir al evento
       setShowCreateModal(false);
       setEventSlug("");
     }
-    try {
-      const { data, error } = await supabase
-        .from("admins")
-        .select("*")
-        .eq("event_slug", slug);
+  } catch (err) {
+    console.error("Exception en handleCreateConfirm:", err);
+    alert("Error inesperado. Revisa la consola.");
+  }
+};
 
-      if (error) {
-        console.error("Error buscando evento (create):", error);
-        alert("Hubo un error al buscar el evento.");
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        setShowCreateModal(false);
-        setShowNotFoundModal(true);
-      } else {
-        navigate(`/admin/${data[0].identificador}`);
-        setShowCreateModal(false);
-        setEventSlug("");
-      }
-    } catch (err) {
-      console.error("Exception en handleCreateConfirm:", err);
-      alert("Error inesperado. Revisa la consola.");
-    }
-  };
 
   const handleAttendClick = () => {
     setShowModal(true);
@@ -190,9 +191,10 @@ const Begin = ({ onCreate }) => {
 
     const slug = eventSlug.trim().toLowerCase();
     const { data, error } = await supabase
-      .from("admins")
-      .select("*")
-      .eq("event_slug", slug);
+    .from("events")
+    .select("*")
+    .eq("event_slug", slug)
+    .eq("is_active", true);
 
     if (error) {
       alert("Hubo un error al buscar el evento");
@@ -200,13 +202,15 @@ const Begin = ({ onCreate }) => {
     }
 
     if (!data || data.length === 0) {
-      alert("El evento no existe");
+      alert("El evento no existe o fue desactivado");
     } else {
-      navigate(`/${data[0].event_slug}`);
+      // Store the event slug for after authentication
+      localStorage.setItem('pendingEventSlug', data[0].event_slug);
+      setShowModal(false);
+      setEventSlug("");
+      // Redirect to Google login instead of directly to event
+      await signInWithGoogle();
     }
-
-    setShowModal(false);
-    setEventSlug("");
   };
 
   // ⏳ Mostrar "Cargando..." solo si se presionó Iniciar sesión
