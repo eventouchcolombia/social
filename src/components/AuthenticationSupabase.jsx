@@ -90,58 +90,78 @@ const AuthenticationSupabase = () => {
   }, []);
 
   // === Refrescar sesión manual cada 5 minutos ===
-useEffect(() => {
-  console.log("🕒 useEffect activo — iniciando cron cada 5 minutos");
+  useEffect(() => {
+    console.log("🕒 useEffect activo — iniciando cron cada 5 minutos");
 
-  const refreshSession = async () => {
-    console.log("⏰ Ejecutando refreshSession:", new Date().toLocaleTimeString());
-    // eslint-disable-next-line no-unused-vars
-    const { data, error } = await supabase.auth.refreshSession();
-    if (error) console.warn("⚠️ Error al refrescar sesión:", error.message);
-  };
+    const refreshSession = async () => {
+      console.log(
+        "⏰ Ejecutando refreshSession:",
+        new Date().toLocaleTimeString()
+      );
+      // eslint-disable-next-line no-unused-vars
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) console.warn("⚠️ Error al refrescar sesión:", error.message);
+    };
 
- const interval = setInterval(refreshSession, 5 * 60 * 1000); // cada 1 minuto
+    const interval = setInterval(refreshSession, 5 * 60 * 1000); // cada 1 minuto
 
-  refreshSession();
+    refreshSession();
 
-  return () => {
-    clearInterval(interval);
-    console.log("🧹 useEffect desmontado — cron detenido");
-  };
-}, []);
+    return () => {
+      clearInterval(interval);
+      console.log("🧹 useEffect desmontado — cron detenido");
+    };
+  }, []);
 
-// === Validar si el usuario ya existe en auth.users ===
-const checkIfUserExists = async (email) => {
-  try {
-    if (!email) return false;
-
-    // Intentamos loguear con contraseña vacía para forzar error
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: "fakepassword"
-    });
-
-    // Si el error es "Invalid login credentials", el usuario sí existe
-    if (error?.message?.includes("Invalid login credentials")) {
-      console.log("✅ El usuario ya existe:", email);
-      return true;
-    }
-
-    // Si el error es "User not found", el usuario no existe
-    if (error?.message?.includes("User not found")) {
-      console.log("🆕 El usuario no existe:", email);
+  // === Validar si el usuario ya existe en registerusers ===
+  const checkIfUserExists = async (email) => {
+    console.log("🔍 checkIfUserExists() EJECUTÁNDOSE con:", email);
+    if (!email) {
+      console.log("⛔ Email llegó vacío");
       return false;
     }
 
-    console.warn("⚠️ Otro error:", error?.message);
-    return false;
-  } catch (err) {
-    console.error("❌ Error en checkIfUserExists:", err);
-    return false;
-  }
-};
+    try {
+       console.log("📡 Lanzando query a registerusers...");
+      const { data, error } = await supabase
+        .from("registerusers")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+      console.log("📊 Resultado query:", data);
+      console.log("❌ Error query:", error);
 
+      if (error) {
+        console.error("❌ Error consultando registerusers:", error);
+        return false;
+      }
 
+      // Si existe una fila, el usuario ya está registrado
+      return !!data;
+    } catch (err) {
+      console.error("❌ Error en checkIfUserExists:", err);
+      return false;
+    }
+  };
+
+  const saveRegisterUser = async ({ email, phone, type, user_id }) => {
+    const { data, error } = await supabase.from("registerusers").insert([
+      {
+        email,
+        phone,
+        type,
+        user_id,
+      },
+    ]);
+
+    if (error) {
+      console.error("❌ Error guardando en registerusers:", error);
+      return null;
+    }
+
+    console.log("✅ Datos guardados en registerusers:", data);
+    return data;
+  };
 
   // === Métodos de login/logout ===
   const signInWithGoogle = async () => {
@@ -189,7 +209,10 @@ const checkIfUserExists = async (email) => {
 
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.warn("⚠️ Supabase signOut falló o el token expiró:", error.message);
+        console.warn(
+          "⚠️ Supabase signOut falló o el token expiró:",
+          error.message
+        );
       }
 
       localStorage.clear();
@@ -209,7 +232,16 @@ const checkIfUserExists = async (email) => {
     return supabase.auth.getSession();
   };
 
-  return { session, isAdmin, loading, signInWithGoogle, signOut, getSession, checkIfUserExists };
+  return {
+    session,
+    isAdmin,
+    loading,
+    signInWithGoogle,
+    signOut,
+    getSession,
+    checkIfUserExists,
+    saveRegisterUser,
+  };
 };
 
 export default AuthenticationSupabase;

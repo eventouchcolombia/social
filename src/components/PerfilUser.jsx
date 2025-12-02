@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthenticationSupabase from "./AuthenticationSupabase";
-import { supabase } from "../supabaseClient";
+//import { supabase } from "../supabaseClient";
 
 const PerfilUser = () => {
-  const [isRequesting, setIsRequesting] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  // const [isRequesting, setIsRequesting] = useState(false);
+  // const [requestSent, setRequestSent] = useState(false);
+  //const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
   const { signOut, session, loading } = AuthenticationSupabase();
 
@@ -21,36 +21,36 @@ const PerfilUser = () => {
    
   }, [session, loading, navigate]);
 
-  const handleCreateRequest = async () => {
-    if (!session?.user) return;
+  // const handleCreateRequest = async () => {
+  //   if (!session?.user) return;
 
-    setIsRequesting(true);
-    setErrorMsg("");
+  //   setIsRequesting(true);
+  //   setErrorMsg("");
 
-    try {
-      const { email, user_metadata } = session.user;
-      const name =
-        user_metadata?.full_name ||
-        user_metadata?.name ||
-        email.split("@")[0];
+  //   try {
+  //     const { email, user_metadata } = session.user;
+  //     const name =
+  //       user_metadata?.full_name ||
+  //       user_metadata?.name ||
+  //       email.split("@")[0];
 
-      const { error } = await supabase.from("event_requests").insert([
-        {
-          email,
-          name,
-        },
-      ]);
+  //     const { error } = await supabase.from("event_requests").insert([
+  //       {
+  //         email,
+  //         name,
+  //       },
+  //     ]);
 
-      if (error) throw error;
+  //     if (error) throw error;
 
-      setRequestSent(true);
-    } catch (err) {
-      console.error("❌ Error enviando solicitud:", err);
-      setErrorMsg("Error al enviar la solicitud. Intenta nuevamente.");
-    } finally {
-      setIsRequesting(false);
-    }
-  };
+  //     setRequestSent(true);
+  //   } catch (err) {
+  //     console.error("❌ Error enviando solicitud:", err);
+  //     setErrorMsg("Error al enviar la solicitud. Intenta nuevamente.");
+  //   } finally {
+  //     setIsRequesting(false);
+  //   }
+  // };
 
   if (loading) {
     return (
@@ -88,8 +88,12 @@ const PerfilUser = () => {
                     session.user.email.split("@")[0]}
                 </p>
               </div>
+              <div className="mb-4 text-left">
+                <p className="mb-2 text-center">pronto sabras de Nosotros</p>
+                </div>
+                
 
-              <button
+              {/* <button
                 onClick={handleCreateRequest}
                 disabled={isRequesting || requestSent}
                 className={`${
@@ -103,11 +107,11 @@ const PerfilUser = () => {
                   : isRequesting
                   ? "Enviando..."
                   : "Solicitar crear evento"}
-              </button>
+              </button> */}
 
-              {errorMsg && (
+              {/* {errorMsg && (
                 <p className="text-red-600 text-sm mt-2">{errorMsg}</p>
-              )}
+              )} */}
             </div>
           </>
         ) : (
