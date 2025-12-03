@@ -1,4 +1,4 @@
-// src/components/AuthenticationSupabase.jsx
+
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 
@@ -75,7 +75,7 @@ const AuthenticationSupabase = () => {
 
       unsub = listener;
 
-      // 🔁 Activar auto-refresh nativo de Supabase
+      //  Activar auto-refresh nativo de Supabase
       supabase.auth.startAutoRefresh();
 
       setLoading(false);
@@ -144,24 +144,7 @@ const AuthenticationSupabase = () => {
     }
   };
 
-  const saveRegisterUser = async ({ email, phone, type, user_id }) => {
-    const { data, error } = await supabase.from("registerusers").insert([
-      {
-        email,
-        phone,
-        type,
-        user_id,
-      },
-    ]);
 
-    if (error) {
-      console.error("❌ Error guardando en registerusers:", error);
-      return null;
-    }
-
-    console.log("✅ Datos guardados en registerusers:", data);
-    return data;
-  };
 
   // === Métodos de login/logout ===
   const signInWithGoogle = async () => {
@@ -240,7 +223,6 @@ const AuthenticationSupabase = () => {
     signOut,
     getSession,
     checkIfUserExists,
-    saveRegisterUser,
   };
 };
 

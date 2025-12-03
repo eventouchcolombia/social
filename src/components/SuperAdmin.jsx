@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
+import useGetRegister from "../hooks/getRegister";
 import ShareEvent from "./ShareEvent";
 
 // Lista de emails autorizados para SuperAdmin (hardcodeada)
@@ -15,17 +16,22 @@ const SuperAdmin = () => {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [admins, setAdmins] = useState([]);
   const [events, setEvents] = useState([]);
-  const [newAdmin, setNewAdmin] = useState({ email: "", identificador: ""});
+  const [newAdmin, setNewAdmin] = useState({ email: "", identificador: "" });
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loadingAdmins, setLoadingAdmins] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [selectedEventSlug, setSelectedEventSlug] = useState("");
-  const [requests, setRequests] = useState([]);
-  const [newEvent, setNewEvent] = useState({ identificador: "", eventSlug: "" });
+  // const [showShareModal, setShowShareModal] = useState(false);
+  // const [selectedEventSlug, setSelectedEventSlug] = useState("");
+  // const [requests, setRequests] = useState([]);
+  const [newEvent, setNewEvent] = useState({
+    identificador: "",
+    eventSlug: "",
+  });
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [expandedUsers, setExpandedUsers] = useState(new Set());
+
+  const { data, loadingRegister, error } = useGetRegister();
 
   useEffect(() => {
     if (isSuperAdmin) fetchRequests();
@@ -51,8 +57,8 @@ const SuperAdmin = () => {
       const { data: allData, error } = await supabase
         .from("admins")
         .select("id, email, event_slug, identificador, is_active, created_at")
-        .order('identificador', { ascending: true, nullsFirst: false })
-        .order('email', { ascending: true });
+        .order("identificador", { ascending: true, nullsFirst: false })
+        .order("email", { ascending: true });
 
       console.log("📊 Consulta completa:", { allData, error });
 
@@ -64,7 +70,10 @@ const SuperAdmin = () => {
       if (!allData || allData.length === 0) {
         console.log("⚠️ No se encontraron registros");
         setAdmins([]);
-        showMessage("No se encontraron administradores en la base de datos.", "error");
+        showMessage(
+          "No se encontraron administradores en la base de datos.",
+          "error"
+        );
         return;
       }
 
@@ -76,19 +85,26 @@ const SuperAdmin = () => {
         identificador: item.identificador || `legacy-${index}`, // Manejar NULLs
         is_active: item.is_active ?? true,
         created_at: item.created_at,
-        isLegacy: !item.identificador // Marcar registros legacy
+        isLegacy: !item.identificador, // Marcar registros legacy
       }));
 
       console.log("📋 Datos procesados:", processedData);
       setAdmins(processedData);
 
       // Mostrar estadísticas
-      const withIdentifier = processedData.filter(admin => !admin.isLegacy).length;
-      const withoutIdentifier = processedData.filter(admin => admin.isLegacy).length;
-      const withEvents = processedData.filter(admin => admin.event_slug).length;
+      const withIdentifier = processedData.filter(
+        (admin) => !admin.isLegacy
+      ).length;
+      const withoutIdentifier = processedData.filter(
+        (admin) => admin.isLegacy
+      ).length;
+      const withEvents = processedData.filter(
+        (admin) => admin.event_slug
+      ).length;
 
-      console.log(`📊 Estadísticas: ${processedData.length} total, ${withIdentifier} con identificador, ${withoutIdentifier} legacy, ${withEvents} con eventos`);
-
+      console.log(
+        `📊 Estadísticas: ${processedData.length} total, ${withIdentifier} con identificador, ${withoutIdentifier} legacy, ${withEvents} con eventos`
+      );
     } catch (error) {
       console.error("❌ Error cargando administradores:", error);
       showMessage("Error cargando administradores: " + error.message, "error");
@@ -100,44 +116,45 @@ const SuperAdmin = () => {
 
   // ...existing code...
 
-// Cargar eventos
-const fetchEvents = async () => {
-  try {
-    setLoadingEvents(true);
-    console.log("🔍 Cargando eventos desde Supabase...");
+  // Cargar eventos
+  const fetchEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      console.log("🔍 Cargando eventos desde Supabase...");
 
-    const { data, error } = await supabase
-      .from("events")
-      .select(`
+      const { data, error } = await supabase
+        .from("events")
+        .select(
+          `
         id,
         event_slug,
         admin_email,
         is_active,
         created_at,
         admin_id
-      `)
-      .order('created_at', { ascending: false });
+      `
+        )
+        .order("created_at", { ascending: false });
 
-    console.log("📊 Eventos encontrados:", { data, error });
+      console.log("📊 Eventos encontrados:", { data, error });
 
-    if (error) {
-      console.error("❌ Error en consulta:", error);
-      throw error;
+      if (error) {
+        console.error("❌ Error en consulta:", error);
+        throw error;
+      }
+
+      setEvents(data || []);
+      console.log(`📊 ${data?.length || 0} eventos cargados`);
+    } catch (error) {
+      console.error("❌ Error cargando eventos:", error);
+      showMessage("Error cargando eventos: " + error.message, "error");
+      setEvents([]);
+    } finally {
+      setLoadingEvents(false);
     }
+  };
 
-    setEvents(data || []);
-    console.log(`📊 ${data?.length || 0} eventos cargados`);
-
-  } catch (error) {
-    console.error("❌ Error cargando eventos:", error);
-    showMessage("Error cargando eventos: " + error.message, "error");
-    setEvents([]);
-  } finally {
-    setLoadingEvents(false);
-  }
-};
-
-// ...existing code...
+  // ...existing code...
   useEffect(() => {
     console.log("🔄 useEffect ejecutado - isSuperAdmin:", isSuperAdmin);
     if (isSuperAdmin) {
@@ -145,6 +162,7 @@ const fetchEvents = async () => {
       fetchAdmins();
       fetchEvents();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuperAdmin]);
 
   // 🔔 Escuchar solicitudes en tiempo real
@@ -172,18 +190,18 @@ const fetchEvents = async () => {
   }, [isSuperAdmin]);
 
   const fetchRequests = async () => {
-  const { data, error } = await supabase
-    .from("event_requests")
-    .select("*")
-    .order("requested_at", { ascending: false }); // ✅ columna correcta
+    // eslint-disable-next-line no-unused-vars
+    const { data, error } = await supabase
+      .from("event_requests")
+      .select("*")
+      .order("requested_at", { ascending: false }); // ✅ columna correcta
 
-  if (error) {
-    console.error("❌ Error cargando solicitudes:", error);
-  } else {
-    setRequests(data);
-  }
-};
-
+    if (error) {
+      console.error("❌ Error cargando solicitudes:", error);
+    } else {
+      //setRequests(data);
+    }
+  };
 
   // Mostrar mensaje temporal
   const showMessage = (text, type = "success") => {
@@ -193,8 +211,9 @@ const fetchEvents = async () => {
 
   // Generar identificador único
   const generateIdentifier = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
     for (let i = 0; i < 5; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -220,26 +239,30 @@ const fetchEvents = async () => {
         .select("id")
         .eq("email", newAdmin.email.toLowerCase().trim());
 
-      console.log("📧 Resultado verificación email:", { existingByEmail, emailCheckError });
+      console.log("📧 Resultado verificación email:", {
+        existingByEmail,
+        emailCheckError,
+      });
 
       // Si hay datos y no hay error, significa que existe
       if (existingByEmail && existingByEmail.length > 0) {
-        showMessage(
-          "Ya existe un administrador con ese email",
-          "error"
-        );
+        showMessage("Ya existe un administrador con ese email", "error");
         setIsCreating(false);
         return;
       }
 
       // Verificar si ya existe un admin con este identificador
       console.log("🔍 Verificando identificador existente...");
-      const { data: existingByIdentifier, error: identifierCheckError } = await supabase
-        .from("admins")
-        .select("id")
-        .eq("identificador", newAdmin.identificador);
+      const { data: existingByIdentifier, error: identifierCheckError } =
+        await supabase
+          .from("admins")
+          .select("id")
+          .eq("identificador", newAdmin.identificador);
 
-      console.log("🆔 Resultado verificación identificador:", { existingByIdentifier, identifierCheckError });
+      console.log("🆔 Resultado verificación identificador:", {
+        existingByIdentifier,
+        identifierCheckError,
+      });
 
       // Si hay datos y no hay error, significa que existe
       if (existingByIdentifier && existingByIdentifier.length > 0) {
@@ -252,17 +275,13 @@ const fetchEvents = async () => {
       }
 
       // Si se proporciona un event_slug, verificar que no esté en uso
-    
-
 
       // Crear el registro en la tabla admins
       const adminData = {
         email: newAdmin.email.toLowerCase().trim(),
         identificador: newAdmin.identificador,
-        is_active: true
+        is_active: true,
       };
-
-
 
       console.log("💾 Insertando datos en la base de datos:", adminData);
       const { data: insertedData, error: insertError } = await supabase
@@ -278,9 +297,15 @@ const fetchEvents = async () => {
       }
 
       const adminUrl = `/admin/${newAdmin.identificador}`;
-      const eventUrl = newAdmin.eventSlug ? `/${newAdmin.eventSlug}` : "No asignado";
+      const eventUrl = newAdmin.eventSlug
+        ? `/${newAdmin.eventSlug}`
+        : "No asignado";
 
-      const successMessage = `✅ Administrador creado exitosamente!\n\n📋 Información:\n• Email: ${newAdmin.email}\n• Identificador: ${newAdmin.identificador}\n• Event Slug: ${newAdmin.eventSlug || 'No asignado'}\n\n🔗 Enlaces:\n• Panel Admin: ${adminUrl}\n• Evento: ${eventUrl}`;
+      const successMessage = `✅ Administrador creado exitosamente!\n\n📋 Información:\n• Email: ${
+        newAdmin.email
+      }\n• Identificador: ${newAdmin.identificador}\n• Event Slug: ${
+        newAdmin.eventSlug || "No asignado"
+      }\n\n🔗 Enlaces:\n• Panel Admin: ${adminUrl}\n• Evento: ${eventUrl}`;
 
       showMessage(successMessage, "success");
       setNewAdmin({ email: "", identificador: "", eventSlug: "" });
@@ -293,78 +318,87 @@ const fetchEvents = async () => {
     }
   };
 
-
-
-// Crear evento para administrador existente
-const createEventForAdmin = async (e) => {
-  e.preventDefault();
-  if (!newEvent.identificador || !newEvent.eventSlug) {
-    showMessage("Por favor completa identificador y event slug", "error");
-    return;
-  }
-
-  setIsCreatingEvent(true);
-  try {
-    console.log("🚀 Iniciando creación de evento:", newEvent);
-
-    // Verificar que existe el administrador
-    const { data: existingAdmin, error: adminError } = await supabase
-      .from("admins")
-      .select("id, email, identificador")
-      .eq("identificador", newEvent.identificador)
-      .neq("identificador", null)
-      .single();
-
-    if (adminError || !existingAdmin) {
-      showMessage("No se encontró un administrador con ese identificador", "error");
+  // Crear evento para administrador existente
+  const createEventForAdmin = async (e) => {
+    e.preventDefault();
+    if (!newEvent.identificador || !newEvent.eventSlug) {
+      showMessage("Por favor completa identificador y event slug", "error");
       return;
     }
 
-    // Verificar que el event_slug no esté en uso
-    const { data: existingEvent } = await supabase
-      .from("events") // ✅ Usar tabla events
-      .select("id")
-      .eq("event_slug", newEvent.eventSlug)
-      .single();
+    setIsCreatingEvent(true);
+    try {
+      console.log("🚀 Iniciando creación de evento:", newEvent);
 
-    if (existingEvent) {
-      showMessage(`Ya existe un evento con ese slug "${newEvent.eventSlug}"`, "error");
-      return;
+      // Verificar que existe el administrador
+      const { data: existingAdmin, error: adminError } = await supabase
+        .from("admins")
+        .select("id, email, identificador")
+        .eq("identificador", newEvent.identificador)
+        .neq("identificador", null)
+        .single();
+
+      if (adminError || !existingAdmin) {
+        showMessage(
+          "No se encontró un administrador con ese identificador",
+          "error"
+        );
+        return;
+      }
+
+      // Verificar que el event_slug no esté en uso
+      const { data: existingEvent } = await supabase
+        .from("events") // ✅ Usar tabla events
+        .select("id")
+        .eq("event_slug", newEvent.eventSlug)
+        .single();
+
+      if (existingEvent) {
+        showMessage(
+          `Ya existe un evento con ese slug "${newEvent.eventSlug}"`,
+          "error"
+        );
+        return;
+      }
+
+      // Crear el evento en tabla events
+      const { error: insertError } = await supabase
+        .from("events") // ✅ Usar tabla events
+        .insert([
+          {
+            event_slug: newEvent.eventSlug,
+            admin_id: existingAdmin.id,
+            admin_email: existingAdmin.email,
+            is_active: true,
+          },
+        ]);
+
+      if (insertError) throw insertError;
+
+      const adminUrl = `/admin/${newEvent.identificador}`;
+      const eventUrl = `/${newEvent.eventSlug}`;
+
+      const successMessage = `✅ Evento creado exitosamente!\n\n📋 Información:\n• Administrador: ${existingAdmin.email}\n• Identificador Admin: ${newEvent.identificador}\n• Event Slug: ${newEvent.eventSlug}\n\n🔗 Enlaces:\n• Panel Admin: ${adminUrl}\n• Evento: ${eventUrl}`;
+
+      showMessage(successMessage, "success");
+      setNewEvent({ identificador: "", eventSlug: "" });
+      await fetchEvents(); // ✅ Recargar eventos
+    } catch (error) {
+      console.error("❌ Error creando evento:", error);
+      showMessage(`Error creando el evento: ${error.message}`, "error");
+    } finally {
+      setIsCreatingEvent(false);
     }
-
-    // Crear el evento en tabla events
-    const { error: insertError } = await supabase
-      .from("events") // ✅ Usar tabla events
-      .insert([{
-        event_slug: newEvent.eventSlug,
-        admin_id: existingAdmin.id,
-        admin_email: existingAdmin.email,
-        is_active: true
-      }]);
-
-    if (insertError) throw insertError;
-
-    const adminUrl = `/admin/${newEvent.identificador}`;
-    const eventUrl = `/${newEvent.eventSlug}`;
-
-    const successMessage = `✅ Evento creado exitosamente!\n\n📋 Información:\n• Administrador: ${existingAdmin.email}\n• Identificador Admin: ${newEvent.identificador}\n• Event Slug: ${newEvent.eventSlug}\n\n🔗 Enlaces:\n• Panel Admin: ${adminUrl}\n• Evento: ${eventUrl}`;
-
-    showMessage(successMessage, "success");
-    setNewEvent({ identificador: "", eventSlug: "" });
-    await fetchEvents(); // ✅ Recargar eventos
-  } catch (error) {
-    console.error("❌ Error creando evento:", error);
-    showMessage(`Error creando el evento: ${error.message}`, "error");
-  } finally {
-    setIsCreatingEvent(false);
-  }
-};
-
-
+  };
 
   // Eliminar administrador
   const deleteAdmin = async (id, email, identificador) => {
-    if (!confirm(`¿Estás seguro de eliminar al administrador "${email}" (${identificador})?`)) return;
+    if (
+      !confirm(
+        `¿Estás seguro de eliminar al administrador "${email}" (${identificador})?`
+      )
+    )
+      return;
 
     try {
       const { error } = await supabase.from("admins").delete().eq("id", id);
@@ -379,7 +413,6 @@ const createEventForAdmin = async (e) => {
     }
   };
 
-
   // Loading state
   if (loading) {
     return (
@@ -390,23 +423,28 @@ const createEventForAdmin = async (e) => {
   }
 
   // Eliminar evento
-const deleteEvent = async (eventId, eventSlug) => {
-  if (!confirm(`¿Estás seguro de eliminar el evento "${eventSlug}"?`)) return;
+  // eslint-disable-next-line no-unused-vars
+  const deleteEvent = async (eventId, eventSlug) => {
+    if (!confirm(`¿Estás seguro de eliminar el evento "${eventSlug}"?`)) return;
 
-  try {
-    const { error } = await supabase
-      .from("events")
-      .delete()
-      .eq("id", eventId);
+    try {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId);
 
-    if (error) throw error;
-    showMessage(`Evento "${eventSlug}" eliminado exitosamente`, "success");
-    await fetchEvents();
-  } catch (error) {
-    console.error("❌ Error eliminando evento:", error);
-    showMessage("Error eliminando el evento", "error");
-  }
-};
+      if (error) throw error;
+      showMessage(`Evento "${eventSlug}" eliminado exitosamente`, "success");
+      await fetchEvents();
+    } catch (error) {
+      console.error("❌ Error eliminando evento:", error);
+      showMessage("Error eliminando el evento", "error");
+    }
+  };
+
+  if (loadingRegister) return <p>Cargando…</p>;
+  if (error) return <p>Error: {error}</p>;
+
   // No authenticated
   if (!session) {
     return (
@@ -500,10 +538,7 @@ const deleteEvent = async (eventId, eventSlug) => {
           <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
             Crear Nuevo Administrador
           </h2>
-          <form
-            onSubmit={createAdmin}
-            className="space-y-4"
-          >
+          <form onSubmit={createAdmin} className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <input
                 type="email"
@@ -580,37 +615,58 @@ const deleteEvent = async (eventId, eventSlug) => {
           <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
             Crear Evento para Administrador
           </h2>
-          <form
-            onSubmit={createEventForAdmin}
-            className="space-y-4"
-          >
+          <form onSubmit={createEventForAdmin} className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <select
                 value={newEvent.identificador}
                 onChange={(e) =>
-                  setNewEvent((prev) => ({ ...prev, identificador: e.target.value }))
+                  setNewEvent((prev) => ({
+                    ...prev,
+                    identificador: e.target.value,
+                  }))
                 }
                 className="w-full px-4 py-3 rounded-lg bg-white/20 text-white border border-white/30 focus:border-blue-400 focus:outline-none text-sm sm:text-base"
                 required
               >
-                <option value="" className="bg-gray-800">Seleccionar administrador...</option>
+                <option value="" className="bg-gray-800">
+                  Seleccionar administrador...
+                </option>
                 {admins
-                  .filter(admin => admin.identificador && admin.identificador.trim() && !admin.isLegacy) // Solo admins con identificador válido
+                  .filter(
+                    (admin) =>
+                      admin.identificador &&
+                      admin.identificador.trim() &&
+                      !admin.isLegacy
+                  ) // Solo admins con identificador válido
                   .reduce((unique, admin) => {
                     // Agrupar por identificador para evitar duplicados en el select
-                    if (!unique.find(u => u.identificador === admin.identificador)) {
+                    if (
+                      !unique.find(
+                        (u) => u.identificador === admin.identificador
+                      )
+                    ) {
                       unique.push(admin);
                     }
                     return unique;
                   }, [])
                   .map((admin) => {
                     // Contar cuántos eventos tiene este admin
-                    const adminEvents = admins.filter(a => a.identificador === admin.identificador && a.event_slug);
+                    const adminEvents = admins.filter(
+                      (a) =>
+                        a.identificador === admin.identificador && a.event_slug
+                    );
                     const eventCount = adminEvents.length;
-                    
+
                     return (
-                      <option key={admin.identificador} value={admin.identificador} className="bg-gray-800">
-                        {admin.identificador} - {admin.email} {eventCount > 0 ? `(${eventCount} eventos)` : '(sin eventos)'}
+                      <option
+                        key={admin.identificador}
+                        value={admin.identificador}
+                        className="bg-gray-800"
+                      >
+                        {admin.identificador} - {admin.email}{" "}
+                        {eventCount > 0
+                          ? `(${eventCount} eventos)`
+                          : "(sin eventos)"}
                       </option>
                     );
                   })}
@@ -633,32 +689,46 @@ const deleteEvent = async (eventId, eventSlug) => {
             </div>
             <button
               type="submit"
-              disabled={isCreatingEvent || admins.filter(admin => admin.identificador && admin.identificador.trim() && !admin.isLegacy).length === 0}
+              disabled={
+                isCreatingEvent ||
+                admins.filter(
+                  (admin) =>
+                    admin.identificador &&
+                    admin.identificador.trim() &&
+                    !admin.isLegacy
+                ).length === 0
+              }
               className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed transition text-sm sm:text-base font-medium"
             >
               {isCreatingEvent ? "Creando..." : "Crear Evento"}
             </button>
           </form>
-          {admins.filter(admin => admin.identificador && admin.identificador.trim() && !admin.isLegacy).length === 0 && (
+          {admins.filter(
+            (admin) =>
+              admin.identificador &&
+              admin.identificador.trim() &&
+              !admin.isLegacy
+          ).length === 0 && (
             <p className="text-yellow-400 text-xs sm:text-sm mt-2">
               No hay administradores con identificador disponibles
             </p>
           )}
           <div className="text-gray-400 text-xs sm:text-sm mt-2 space-y-1">
-            <p>Panel admin: /admin/{newEvent.identificador || "identificador"}</p>
-            {newEvent.eventSlug && (
-              <p>Evento: /{newEvent.eventSlug}</p>
-            )}
+            <p>
+              Panel admin: /admin/{newEvent.identificador || "identificador"}
+            </p>
+            {newEvent.eventSlug && <p>Evento: /{newEvent.eventSlug}</p>}
             <p className="text-yellow-300">
               💡 El evento se asignará al identificador seleccionado
             </p>
             <p className="text-blue-300">
-              ℹ️ Los administradores pueden tener múltiples eventos con el mismo identificador
+              ℹ️ Los administradores pueden tener múltiples eventos con el mismo
+              identificador
             </p>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mt-6">
+        {/* <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mt-6">
           <h2 className="text-xl text-white mb-4">
             Solicitudes de creación de eventos
           </h2>
@@ -677,6 +747,35 @@ const deleteEvent = async (eventId, eventSlug) => {
               ))}
             </ul>
           )}
+        </div> */}
+
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mt-2">
+          <h2 className="text-xl sm:text-2xl mb-4 font-semibold text-white">
+            Registros de usuarios ({data?.length || 0} registros)
+          </h2>
+
+          <div className="text-white bg-white/5 rounded-xl overflow-hidden">
+            {/* Encabezados */}
+            <div className="grid grid-cols-3 px-4 py-2 bg-white/10 font-semibold text-xs sm:text-base uppercase tracking-wide">
+              <p>Email</p>
+              <p>Teléfono</p>
+              <p>Tipo</p>
+            </div>
+
+            {/* Lista */}
+            <div className="divide-y divide-white/10">
+              {data?.map((r) => (
+                <div
+                  key={r.id}
+                  className="grid grid-cols-3 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer text-sm sm:text-base"
+                >
+                  <p className="truncate">{r.email}</p>
+                  <p className="truncate">{r.phone || "—"}</p>
+                  <p className="truncate capitalize">{r.type || "—"}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Admins List */}
@@ -687,40 +786,63 @@ const deleteEvent = async (eventId, eventSlug) => {
                 Registros de Administradores ({admins.length} registros)
               </h2>
               <p className="text-gray-400 text-xs sm:text-sm">
-                Agrupados por usuario - Expandir para ver eventos de cada administrador
+                Agrupados por usuario - Expandir para ver eventos de cada
+                administrador
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
-                  onClick={() => {
-                    fetchAdmins();
-                    fetchEvents(); // ✅ AGREGAR
-                  }}
+                onClick={() => {
+                  fetchAdmins();
+                  fetchEvents(); // ✅ AGREGAR
+                }}
                 disabled={loadingAdmins || loadingEvents}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm disabled:bg-blue-800 disabled:cursor-not-allowed w-full sm:w-auto"
               >
-                {loadingAdmins || loadingEvents ? "🔄 Cargando..." : "🔄 Refrescar"}
+                {loadingAdmins || loadingEvents
+                  ? "🔄 Cargando..."
+                  : "🔄 Refrescar"}
               </button>
               <button
                 onClick={async () => {
                   console.log("🧪 Ejecutando análisis completo...");
+                  // eslint-disable-next-line no-unused-vars
                   const { data: allData, error } = await supabase
                     .from("admins")
                     .select("*");
-                  
+
                   console.log("🔍 Todos los registros raw:", allData);
-                  
+
                   // Analizar por tipo de registro
-                  const withId = allData?.filter(admin => admin.identificador) || [];
-                  const withoutId = allData?.filter(admin => !admin.identificador) || [];
-                  const withEvents = allData?.filter(admin => admin.event_slug) || [];
-                  
+                  const withId =
+                    allData?.filter((admin) => admin.identificador) || [];
+                  const withoutId =
+                    allData?.filter((admin) => !admin.identificador) || [];
+                  const withEvents =
+                    allData?.filter((admin) => admin.event_slug) || [];
+
                   console.log("📊 Análisis:");
                   console.log("  - Con identificador:", withId.length, withId);
-                  console.log("  - Sin identificador (eventos):", withoutId.length, withoutId);
-                  console.log("  - Con eventos:", withEvents.length, withEvents);
-                  
-                  alert(`Análisis completo:\n- Total: ${allData?.length || 0}\n- Con ID: ${withId.length}\n- Sin ID (eventos): ${withoutId.length}\n- Con eventos: ${withEvents.length}\n\nVer consola para detalles.`);
+                  console.log(
+                    "  - Sin identificador (eventos):",
+                    withoutId.length,
+                    withoutId
+                  );
+                  console.log(
+                    "  - Con eventos:",
+                    withEvents.length,
+                    withEvents
+                  );
+
+                  alert(
+                    `Análisis completo:\n- Total: ${
+                      allData?.length || 0
+                    }\n- Con ID: ${withId.length}\n- Sin ID (eventos): ${
+                      withoutId.length
+                    }\n- Con eventos: ${
+                      withEvents.length
+                    }\n\nVer consola para detalles.`
+                  );
                 }}
                 className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm w-full sm:w-auto"
               >
@@ -732,257 +854,322 @@ const deleteEvent = async (eventId, eventSlug) => {
           {loadingAdmins ? (
             <p className="text-gray-400">🔄 Cargando administradores...</p>
           ) : admins.length === 0 ? (
-            <p className="text-gray-400">No hay registros en la base de datos.</p>
-          ) : (() => {
-            // Agrupar por email
-const adminsByEmail = admins.reduce((acc, admin) => {
-  const email = admin.email;
-  if (!acc[email]) {
-    acc[email] = {
-      email: email,
-      adminRecord: admin,
-      events: []
-    };
-  }
-  return acc;
-}, {});
+            <p className="text-gray-400">
+              No hay registros en la base de datos.
+            </p>
+          ) : (
+            (() => {
+              // Agrupar por email
+              const adminsByEmail = admins.reduce((acc, admin) => {
+                const email = admin.email;
+                if (!acc[email]) {
+                  acc[email] = {
+                    email: email,
+                    adminRecord: admin,
+                    events: [],
+                  };
+                }
+                return acc;
+              }, {});
 
-// Agregar eventos a cada admin
-events.forEach(event => {
-  if (adminsByEmail[event.admin_email]) {
-    adminsByEmail[event.admin_email].events.push(event);
-  } else {
-    // Admin sin registro en tabla admins pero con eventos
-    adminsByEmail[event.admin_email] = {
-      email: event.admin_email,
-      adminRecord: null,
-      events: [event]
-    };
-  }
-});
+              // Agregar eventos a cada admin
+              events.forEach((event) => {
+                if (adminsByEmail[event.admin_email]) {
+                  adminsByEmail[event.admin_email].events.push(event);
+                } else {
+                  // Admin sin registro en tabla admins pero con eventos
+                  adminsByEmail[event.admin_email] = {
+                    email: event.admin_email,
+                    adminRecord: null,
+                    events: [event],
+                  };
+                }
+              });
 
-const adminEmails = Object.keys(adminsByEmail);
+              const adminEmails = Object.keys(adminsByEmail);
 
-            const toggleUser = (email) => {
-              const newExpanded = new Set(expandedUsers);
-              if (newExpanded.has(email)) {
-                newExpanded.delete(email);
-              } else {
-                newExpanded.add(email);
-              }
-              setExpandedUsers(newExpanded);
-            };
+              const toggleUser = (email) => {
+                const newExpanded = new Set(expandedUsers);
+                if (newExpanded.has(email)) {
+                  newExpanded.delete(email);
+                } else {
+                  newExpanded.add(email);
+                }
+                setExpandedUsers(newExpanded);
+              };
 
-            return (
-              <>
-                <div className="space-y-2">
-                  {adminEmails.map((email) => {
-                    const userData = adminsByEmail[email];
-                    const isExpanded = expandedUsers.has(email);
-                    const hasAdminAccess = userData.adminRecord !== null;
-                    const eventCount = userData.events.length;
-                    
-                    return (
-                      <div key={email} className="border border-white/20 rounded-lg overflow-hidden">
-                        {/* Header del usuario */}
-                        <div 
-                          className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
-                          onClick={() => toggleUser(email)}
+              return (
+                <>
+                  <div className="space-y-2">
+                    {adminEmails.map((email) => {
+                      const userData = adminsByEmail[email];
+                      const isExpanded = expandedUsers.has(email);
+                      const hasAdminAccess = userData.adminRecord !== null;
+                      const eventCount = userData.events.length;
+
+                      return (
+                        <div
+                          key={email}
+                          className="border border-white/20 rounded-lg overflow-hidden"
                         >
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-lg ${isExpanded ? 'transform rotate-90' : ''} transition-transform`}>
-                                ▶️
-                              </span>
+                          {/* Header del usuario */}
+                          <div
+                            className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
+                            onClick={() => toggleUser(email)}
+                          >
+                            <div className="flex items-center gap-3 flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-blue-400">👤</span>
-                                <span className="text-white font-medium">{email}</span>
+                                <span
+                                  className={`text-lg ${
+                                    isExpanded ? "transform rotate-90" : ""
+                                  } transition-transform`}
+                                >
+                                  ▶️
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-blue-400">👤</span>
+                                  <span className="text-white font-medium">
+                                    {email}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {hasAdminAccess && (
-                                <span className="text-green-400 text-xs px-2 py-1 bg-green-500/20 rounded flex items-center gap-1">
-                                  🔑 Admin: {userData.adminRecord.identificador}
-                                </span>
-                              )}
-                              {eventCount > 0 && (
-                                <span className="text-blue-400 text-xs px-2 py-1 bg-blue-500/20 rounded flex items-center gap-1">
-                                  🎯 {eventCount} evento{eventCount !== 1 ? 's' : ''}
-                                </span>
-                              )}
-                              {!hasAdminAccess && eventCount === 0 && (
-                                <span className="text-yellow-400 text-xs px-2 py-1 bg-yellow-500/20 rounded">
-                                  ⚠️ Sin configurar
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
 
-                        {/* Contenido expandible */}
-                        {isExpanded && (
-                          <div className="p-4 bg-white/5 border-t border-white/10">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                              {/* Admin Record */}
-                              <div>
-                                <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                                  🔑 Acceso Administrativo
-                                </h4>
-                                {userData.adminRecord ? (
-                                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-green-300 font-medium">
-                                        ID: {userData.adminRecord.identificador}
-                                      </span>
-                                      <span className={`text-xs px-2 py-1 rounded ${
-                                        userData.adminRecord.is_active 
-                                          ? 'bg-green-600/20 text-green-300' 
-                                          : 'bg-red-600/20 text-red-300'
-                                      }`}>
-                                        {userData.adminRecord.is_active ? 'Activo' : 'Inactivo'}
-                                      </span>
-                                    </div>
-                                    <div className="flex gap-2 flex-wrap">
-                                      <button
-                                        onClick={() => deleteAdmin(userData.adminRecord.id, email, userData.adminRecord.identificador)}
-                                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
-                                      >
-                                        🗑️ Eliminar Admin
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-                                    <p className="text-yellow-300 text-sm mb-2">
-                                      Sin acceso administrativo configurado
-                                    </p>
-                                    <p className="text-yellow-200 text-xs">
-                                      Use "Crear Nuevo Administrador" para dar acceso al panel
-                                    </p>
-                                  </div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {hasAdminAccess && (
+                                  <span className="text-green-400 text-xs px-2 py-1 bg-green-500/20 rounded flex items-center gap-1">
+                                    🔑 Admin:{" "}
+                                    {userData.adminRecord.identificador}
+                                  </span>
+                                )}
+                                {eventCount > 0 && (
+                                  <span className="text-blue-400 text-xs px-2 py-1 bg-blue-500/20 rounded flex items-center gap-1">
+                                    🎯 {eventCount} evento
+                                    {eventCount !== 1 ? "s" : ""}
+                                  </span>
+                                )}
+                                {!hasAdminAccess && eventCount === 0 && (
+                                  <span className="text-yellow-400 text-xs px-2 py-1 bg-yellow-500/20 rounded">
+                                    ⚠️ Sin configurar
+                                  </span>
                                 )}
                               </div>
+                            </div>
+                          </div>
 
-                              {/* Events */}
-                              <div>
-                                <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                                  🎯 Eventos ({eventCount})
-                                </h4>
-                                {eventCount > 0 ? (
-                                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                                    {userData.events.map((event) => (
-                                      <div key={event.id} className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-blue-300 font-medium flex items-center gap-2">
-                                            🎉 {event.event_slug || 'Sin slug'}
-                                          </span>
-                                          <span className={`text-xs px-2 py-1 rounded ${
-                                            event.is_active 
-                                              ? 'bg-green-600/20 text-green-300' 
-                                              : 'bg-red-600/20 text-red-300'
-                                          }`}>
-                                            {event.is_active ? 'Activo' : 'Inactivo'}
-                                          </span>
-                                        </div>
-                                        {event.event_slug && (
-                                          <div className="flex gap-2 flex-wrap">
-                                            <a
-                                              href={`/${event.event_slug}`}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition"
-                                            >
-                                              🌐 Ver Evento
-                                            </a>
-                                            <button
-                                              onClick={() => deleteAdmin(event.id, email, event.event_slug || 'evento')}
-                                              className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
-                                            >
-                                              🗑️ Eliminar Evento
-                                            </button>
-                                          </div>
-                                        )}
+                          {/* Contenido expandible */}
+                          {isExpanded && (
+                            <div className="p-4 bg-white/5 border-t border-white/10">
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {/* Admin Record */}
+                                <div>
+                                  <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                                    🔑 Acceso Administrativo
+                                  </h4>
+                                  {userData.adminRecord ? (
+                                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-green-300 font-medium">
+                                          ID:{" "}
+                                          {userData.adminRecord.identificador}
+                                        </span>
+                                        <span
+                                          className={`text-xs px-2 py-1 rounded ${
+                                            userData.adminRecord.is_active
+                                              ? "bg-green-600/20 text-green-300"
+                                              : "bg-red-600/20 text-red-300"
+                                          }`}
+                                        >
+                                          {userData.adminRecord.is_active
+                                            ? "Activo"
+                                            : "Inactivo"}
+                                        </span>
                                       </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div className="bg-gray-500/10 border border-gray-500/30 rounded-lg p-3">
-                                    <p className="text-gray-300 text-sm mb-2">
-                                      Sin eventos asignados
-                                    </p>
-                                    <p className="text-gray-400 text-xs">
-                                      Use "Crear Evento para Administrador" para asignar eventos
-                                    </p>
-                                  </div>
-                                )}
+                                      <div className="flex gap-2 flex-wrap">
+                                        <button
+                                          onClick={() =>
+                                            deleteAdmin(
+                                              userData.adminRecord.id,
+                                              email,
+                                              userData.adminRecord.identificador
+                                            )
+                                          }
+                                          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
+                                        >
+                                          🗑️ Eliminar Admin
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                                      <p className="text-yellow-300 text-sm mb-2">
+                                        Sin acceso administrativo configurado
+                                      </p>
+                                      <p className="text-yellow-200 text-xs">
+                                        Use "Crear Nuevo Administrador" para dar
+                                        acceso al panel
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Events */}
+                                <div>
+                                  <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                                    🎯 Eventos ({eventCount})
+                                  </h4>
+                                  {eventCount > 0 ? (
+                                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                                      {userData.events.map((event) => (
+                                        <div
+                                          key={event.id}
+                                          className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3"
+                                        >
+                                          <div className="flex items-center justify-between mb-2">
+                                            <span className="text-blue-300 font-medium flex items-center gap-2">
+                                              🎉{" "}
+                                              {event.event_slug || "Sin slug"}
+                                            </span>
+                                            <span
+                                              className={`text-xs px-2 py-1 rounded ${
+                                                event.is_active
+                                                  ? "bg-green-600/20 text-green-300"
+                                                  : "bg-red-600/20 text-red-300"
+                                              }`}
+                                            >
+                                              {event.is_active
+                                                ? "Activo"
+                                                : "Inactivo"}
+                                            </span>
+                                          </div>
+                                          {event.event_slug && (
+                                            <div className="flex gap-2 flex-wrap">
+                                              <a
+                                                href={`/${event.event_slug}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition"
+                                              >
+                                                🌐 Ver Evento
+                                              </a>
+                                              <button
+                                                onClick={() =>
+                                                  deleteAdmin(
+                                                    event.id,
+                                                    email,
+                                                    event.event_slug || "evento"
+                                                  )
+                                                }
+                                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
+                                              >
+                                                🗑️ Eliminar Evento
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="bg-gray-500/10 border border-gray-500/30 rounded-lg p-3">
+                                      <p className="text-gray-300 text-sm mb-2">
+                                        Sin eventos asignados
+                                      </p>
+                                      <p className="text-gray-400 text-xs">
+                                        Use "Crear Evento para Administrador"
+                                        para asignar eventos
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Enhanced Summary Section */}
-                <div className="mt-6 space-y-4">
-                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <h3 className="text-blue-300 font-semibold mb-3 flex items-center gap-2">
-                      📊 Resumen por Usuarios
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-white">{adminEmails.length}</div>
-                        <div className="text-gray-400">Usuarios únicos</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-400">
-                          {Object.values(adminsByEmail).filter(user => user.adminRecord !== null).length}
-                        </div>
-                        <div className="text-gray-400">Con acceso admin</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-400">
-                          {Object.values(adminsByEmail).reduce((total, user) => total + user.events.length, 0)}
-                        </div>
-                        <div className="text-gray-400">Total eventos</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-400">
-                          {admins.length}
-                        </div>
-                        <div className="text-gray-400">Total registros DB</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Users without admin access */}
-                  {(() => {
-                    const usersWithoutAdmin = Object.values(adminsByEmail).filter(user => user.adminRecord === null);
-                    return usersWithoutAdmin.length > 0 && (
-                      <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                        <h3 className="text-yellow-300 font-semibold mb-2 flex items-center gap-2">
-                          ⚠️ Usuarios sin Acceso Administrativo
-                        </h3>
-                        <p className="text-yellow-200 text-sm mb-3">
-                          {usersWithoutAdmin.length} usuario{usersWithoutAdmin.length !== 1 ? 's' : ''} tienen eventos pero no pueden acceder al panel administrativo.
-                        </p>
-                        <div className="text-xs text-yellow-300 space-y-1">
-                          {usersWithoutAdmin.slice(0, 3).map(user => (
-                            <div key={user.email}>• {user.email} ({user.events.length} evento{user.events.length !== 1 ? 's' : ''})</div>
-                          ))}
-                          {usersWithoutAdmin.length > 3 && (
-                            <div className="text-yellow-400">... y {usersWithoutAdmin.length - 3} más</div>
                           )}
                         </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Enhanced Summary Section */}
+                  <div className="mt-6 space-y-4">
+                    <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                      <h3 className="text-blue-300 font-semibold mb-3 flex items-center gap-2">
+                        📊 Resumen por Usuarios
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-white">
+                            {adminEmails.length}
+                          </div>
+                          <div className="text-gray-400">Usuarios únicos</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-400">
+                            {
+                              Object.values(adminsByEmail).filter(
+                                (user) => user.adminRecord !== null
+                              ).length
+                            }
+                          </div>
+                          <div className="text-gray-400">Con acceso admin</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-400">
+                            {Object.values(adminsByEmail).reduce(
+                              (total, user) => total + user.events.length,
+                              0
+                            )}
+                          </div>
+                          <div className="text-gray-400">Total eventos</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-400">
+                            {admins.length}
+                          </div>
+                          <div className="text-gray-400">
+                            Total registros DB
+                          </div>
+                        </div>
                       </div>
-                    );
-                  })()}
-                </div>
-              </>
-            );
-          })()}
+                    </div>
+
+                    {/* Users without admin access */}
+                    {(() => {
+                      const usersWithoutAdmin = Object.values(
+                        adminsByEmail
+                      ).filter((user) => user.adminRecord === null);
+                      return (
+                        usersWithoutAdmin.length > 0 && (
+                          <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                            <h3 className="text-yellow-300 font-semibold mb-2 flex items-center gap-2">
+                              ⚠️ Usuarios sin Acceso Administrativo
+                            </h3>
+                            <p className="text-yellow-200 text-sm mb-3">
+                              {usersWithoutAdmin.length} usuario
+                              {usersWithoutAdmin.length !== 1 ? "s" : ""} tienen
+                              eventos pero no pueden acceder al panel
+                              administrativo.
+                            </p>
+                            <div className="text-xs text-yellow-300 space-y-1">
+                              {usersWithoutAdmin.slice(0, 3).map((user) => (
+                                <div key={user.email}>
+                                  • {user.email} ({user.events.length} evento
+                                  {user.events.length !== 1 ? "s" : ""})
+                                </div>
+                              ))}
+                              {usersWithoutAdmin.length > 3 && (
+                                <div className="text-yellow-400">
+                                  ... y {usersWithoutAdmin.length - 3} más
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      );
+                    })()}
+                  </div>
+                </>
+              );
+            })()
+          )}
         </div>
 
         {/* Instructions */}
@@ -992,19 +1179,24 @@ const adminEmails = Object.keys(adminsByEmail);
           </h3>
           <ul className="text-yellow-100 text-xs sm:text-sm space-y-1 sm:space-y-2">
             <li className="break-words">
-              • <strong>Opción 1:</strong> Crear administrador completo (con email, identificador y evento opcional)
+              • <strong>Opción 1:</strong> Crear administrador completo (con
+              email, identificador y evento opcional)
             </li>
             <li className="break-words">
-              • <strong>Opción 2:</strong> Crear solo administrador (email + identificador) y luego asignar evento
+              • <strong>Opción 2:</strong> Crear solo administrador (email +
+              identificador) y luego asignar evento
             </li>
             <li className="break-words">
-              • <strong>Acceso:</strong> El admin debe ir a /admin/{`{identificador}`} e iniciar sesión
+              • <strong>Acceso:</strong> El admin debe ir a /admin/
+              {`{identificador}`} e iniciar sesión
             </li>
             <li className="break-words">
-              • <strong>Configuración:</strong> Si tiene evento, usar "Configurar Assets" para subir imágenes
+              • <strong>Configuración:</strong> Si tiene evento, usar
+              "Configurar Assets" para subir imágenes
             </li>
             <li className="break-words">
-              • <strong>Flexibilidad:</strong> Los admins pueden existir sin evento y asignárselo después
+              • <strong>Flexibilidad:</strong> Los admins pueden existir sin
+              evento y asignárselo después
             </li>
           </ul>
         </div>
