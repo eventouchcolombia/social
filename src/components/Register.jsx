@@ -18,45 +18,52 @@ export default function Register() {
   // 🟣 FUNCIÓN QUE HACE EL UPDATE (FUERA DEL onAuthStateChange)
   // ==========================================================
   const updatePendingRegister = async (pendingId, email) => {
-    try {
-      console.log("🟦 Ejecutando UPDATE FUERA DEL LISTENER");
+  try {
+    console.log("🟦 Ejecutando UPDATE FUERA DEL LISTENER");
 
-      const { data, error } = await supabase
-        .from("registerusers")
-        .update({ email })
-        .eq("id", pendingId)
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from("registerusers")
+      .update({ email })
+      .eq("id", pendingId)
+      .select()
+      .single();
 
-      // console.log("🔹 updateData:", data);
-      // console.log("🔹 updateError:", error);
+    if (error) {
+      console.error("❌ Error actualizando registro:", error);
 
-      if (error) {
-        console.error("❌ Error actualizando registro:", error);
+      // ⚠️ Si el correo ya existe en otra fila → eliminar el registro preliminar
+      if (error.code === "23505") {
+        console.warn("⚠️ Email duplicado, eliminando registro preliminar:", pendingId);
 
-        // ⚠️ Detectar email ya existente
-        if (error.code === "23505") {
-          setErrorMessage("Tu correo ya se encuentra registrado.");
-        } else {
-          setErrorMessage("Error guardando tus datos. Intenta nuevamente.");
-        }
+        // Eliminar SOLO el registro preliminar
+        await supabase
+          .from("registerusers")
+          .delete()
+          .eq("id", pendingId);
 
-        await supabase.auth.signOut();
-        return false;
+        localStorage.removeItem("pending_register_id");
+
+        setErrorMessage("Tu correo ya se encuentra registrado.");
+
+      } else {
+        setErrorMessage("Error guardando tus datos. Intenta nuevamente.");
       }
 
-      console.log("🎉 Registro actualizado correctamente:", data);
-
-      localStorage.removeItem("pending_register_id");
-
-      // 🔥 Mostramos el modal de éxito
-      setShowSuccessModal(true);
-      return true;
-    } catch (err) {
-      console.error("💥 ERROR en updatePendingRegister:", err);
+      await supabase.auth.signOut();
       return false;
     }
-  };
+
+    console.log("🎉 Registro actualizado correctamente:", data);
+
+    localStorage.removeItem("pending_register_id");
+
+    setShowSuccessModal(true);
+    return true;
+  } catch (err) {
+    console.error("💥 ERROR en updatePendingRegister:", err);
+    return false;
+  }
+};
 
   // ==========================================================
   // 1️⃣ REGISTRO PRELIMINAR (ANTES DE LOGIN)
