@@ -1,4 +1,4 @@
-import { storage } from "../firebase/firebase";
+import { storage } from "../../../config/firebase";
 import { ref, getDownloadURL } from "firebase/storage";
 import { useParams } from "react-router-dom";
 

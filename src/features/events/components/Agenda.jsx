@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../../../config/supabaseClient";
 
 export default function Agenda({ eventSlug, onClose }) {
   const [content, setContent] = useState("");

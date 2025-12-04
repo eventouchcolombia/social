@@ -1,12 +1,12 @@
 import { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
-import { storage } from "../firebase/firebase";
+import { storage } from "../../../config/firebase";
 // eslint-disable-next-line no-unused-vars
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
-import AuthenticationSupabase from "../components/AuthenticationSupabase";
-import ARScene from "./ARScene";
+import AuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
+import ARScene from "../../ar/components/ARScene";
 
 const Photo = () => {
   const webcamRef = useRef(null);

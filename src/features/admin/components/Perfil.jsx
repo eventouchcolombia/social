@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
-import { validateEventSlug, getEventAssetInstructions } from "../utils/eventAssets";
+import { supabase } from "../../../config/supabaseClient";
+import { validateEventSlug, getEventAssetInstructions } from "../../../utils/eventAssets";
 import { X } from "lucide-react";
 
 const Perfil = ({ onClose, userEmail }) => {

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
-import useAuthenticationSupabase from "./AuthenticationSupabase";
-import useGetRegister from "../hooks/getRegister";
+import { supabase } from "../../../config/supabaseClient";
+import useAuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
+import useGetRegister from "../../auth/hooks/getRegister";
 import { Mail, Phone, UserCircle,Copy } from "lucide-react";
-import ShareEvent from "./ShareEvent";
+import ShareEvent from "../../admin/components/ShareEvent";
 
 // Lista de emails autorizados para SuperAdmin (hardcodeada)
 const SUPER_ADMIN_EMAILS = [

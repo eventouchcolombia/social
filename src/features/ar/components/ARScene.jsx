@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { loadEventTexts } from "../utils/uploadAsset";
+import { loadEventTexts } from "../../../utils/uploadAsset";
 
 const ARScene = ({ eventSlug, isActive = true, onSceneReady }) => {
   const [arAsset, setArAsset] = useState("glasses");

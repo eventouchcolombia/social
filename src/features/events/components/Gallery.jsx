@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { storage } from "../firebase/firebase";
+import { storage } from "../../../config/firebase";
 import {
   ref,
   listAll,
@@ -9,7 +9,7 @@ import {
 } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
-import AuthenticationSupabase from "../components/AuthenticationSupabase";
+import AuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
 
 // Tema simplificado
 const themes = {
@@ -98,7 +98,7 @@ const Gallery = () => {
           setBackgroundUrl(bg || "/bggallerylocal.png");
         }
 
-        const { loadEventTexts } = await import("../utils/uploadAsset");
+        const { loadEventTexts } = await import("../../../utils/uploadAsset");
         const texts = await loadEventTexts(eventSlug);
         if (mounted) {
           setPrimaryColor(texts.primaryColor || "#753E89");

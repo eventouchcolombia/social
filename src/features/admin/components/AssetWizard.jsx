@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { uploadAsset, loadEventTexts } from "../utils/uploadAsset";
-import { downloadFileFromFirebase } from "../utils/eventAssets"; // Importar la función para descargar archivos
-import { useEvent } from "../hooks/useEvent";
+import { uploadAsset, loadEventTexts } from "../../../utils/uploadAsset";
+import { downloadFileFromFirebase } from "../../../utils/eventAssets"; // Importar la función para descargar archivos
+import { useEvent } from "../../events/hooks/useEvent";
 import { motion } from "framer-motion";
 import { Upload, X, Palette, ImageIcon, Type, Info } from "lucide-react"; // Importar icono para el enlace
 

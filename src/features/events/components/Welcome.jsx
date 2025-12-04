@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import { useEffect, useState } from "react";
-import useAuthenticationSupabase from "./AuthenticationSupabase";
-import { loadEventTexts } from "../utils/uploadAsset";
-import Modals from "../components/Modals";
-import { supabase } from "../supabaseClient";
+import useAuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
+import { loadEventTexts } from "../../../utils/uploadAsset";
+import Modals from "./Modals";
+import { supabase } from "../../../config/supabaseClient";
 import { useParams } from "react-router-dom";
 
 // 🎨 Configuración de estilos por evento

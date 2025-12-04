@@ -2,8 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useEvent } from "../hooks/useEvent";
 import { useEffect, useState } from "react";
 import { Camera, Image as ImageIcon } from "lucide-react";
-import useAuthenticationSupabase from "./AuthenticationSupabase";
-import { supabase } from "../supabaseClient";
+import useAuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
+import { supabase } from "../../../config/supabaseClient";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -38,7 +38,7 @@ const Choose = () => {
       const url = await getAssetUrl("bgchosee.png");
       setBackgroundUrl(url || "/Mobile.png");
 
-      const { loadEventTexts } = await import("../utils/uploadAsset");
+      const { loadEventTexts } = await import("../../../utils/uploadAsset");
       const texts = await loadEventTexts(eventSlug);
       setPrimaryColor(texts.primaryColor || "#753E89");
       setIsLoading(false); // 🔹 Marcar como cargado

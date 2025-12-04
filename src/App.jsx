@@ -1,21 +1,21 @@
-import "./App.css";
+import "./styles/App.css";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Outlet,
 } from "react-router-dom";
-import Welcome from "./components/Welcome";
-import Photo from "./components/Photo";
-import Choose from "./components/Choose";
-import Gallery from "./components/Gallery";
-import Admin from "./components/Admin";
-import SuperAdmin from "./components/SuperAdmin";
-import ProtectedRoute from "./components/ProtectedRoute";
-import RedirectToEventLocal from "./components/RedirectEventLocal";
-import Begin from "./components/Begin";
-import PerfilUser from "./components/PerfilUser";
-import Register from "./components/Register";
+import Welcome from "./features/events/components/Welcome";
+import Photo from "./features/events/components/Photo";
+import Choose from "./features/events/components/Choose";
+import Gallery from "./features/events/components/Gallery";
+import Admin from "./features/admin/components/Admin";
+import SuperAdmin from "./features/superadmin/components/SuperAdmin";
+import ProtectedRoute from "./features/events/components/ProtectedRoute";
+import RedirectToEventLocal from "./features/events/components/RedirectEventLocal";
+import Begin from "./features/events/components/Begin";
+import PerfilUser from "./features/auth/components/PerfilUser";
+import Register from "./features/auth/components/Register";
 
 function App() {
  

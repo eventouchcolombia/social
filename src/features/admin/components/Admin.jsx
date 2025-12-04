@@ -2,10 +2,10 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ref, listAll, getDownloadURL } from "firebase/storage"; 
-import { storage } from "../firebaseConfig"; 
+import { storage } from "../../../config/firebaseConfig"; 
 import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
-import Agenda from "./Agenda";
+import Agenda from "../../events/components/Agenda";
 import Perfil from "./Perfil";
 import PhotosAdmin from "./PhotosAdmin";
 import {
@@ -19,9 +19,9 @@ import {
   Menu,
 } from "lucide-react";
 
-import useAuthenticationSupabase from "./AuthenticationSupabase";
-import { useEvent } from "../hooks/useEvent";
-import { supabase } from "../supabaseClient";
+import useAuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
+import { useEvent } from "../../events/hooks/useEvent";
+import { supabase } from "../../../config/supabaseClient";
 
 const Admin = () => {
   const { identificador, eventSlug } = useParams();

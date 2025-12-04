@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import AuthenticationSupabase from "./AuthenticationSupabase";
+import AuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
 
 const ProtectedRoute = ({ children }) => {
   const { session, loading } = AuthenticationSupabase();

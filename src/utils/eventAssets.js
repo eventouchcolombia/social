@@ -1,5 +1,5 @@
 import { ref, getDownloadURL } from "firebase/storage"; // Asegúrate de importar `ref`
-import { storage } from "../firebase/firebase"; // Importar la configuración de Firebase
+import { storage } from "../config/firebase"; // Importar la configuración de Firebase
 
 /**
  * Utilidades para gestión de assets de eventos

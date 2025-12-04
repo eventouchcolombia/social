@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { storage } from "../firebase/firebase";
+import { storage } from "../../../config/firebase";
 import {
   Search,
   Filter,

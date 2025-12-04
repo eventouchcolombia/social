@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
-import useAuthenticationSupabase from "./AuthenticationSupabase";
+import { supabase } from "../../../config/supabaseClient";
+import useAuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
 
 
 // eslint-disable-next-line no-unused-vars

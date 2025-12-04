@@ -1,5 +1,5 @@
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../firebase/firebase";
+import { storage } from "../config/firebase";
 
 /**
  * Sube un archivo a Firebase Storage y devuelve la URL pública
