@@ -255,7 +255,30 @@ const AssetWizard = ({ onClose }) => {
         )}
 
         {activeTab === "imagenes" && (
+          
           <>
+                  <div className="mb-8 bg-gray-50 rounded-xl p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Realidad Aumentada</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Seleccionar Asset de AR
+              </label>
+              <select
+                value={eventTexts.arAsset}
+                onChange={(e) => setEventTexts(prev => ({ ...prev, arAsset: e.target.value }))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              >
+                <option value="none">Ninguno</option>
+                <option value="glasses">Gafas</option>
+                <option value="hat">Sombrero</option>
+                <option value="mustashe">Bigote</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Imágenes del Evento</h3>
               <div className="flex justify-between items-center mb-4">
