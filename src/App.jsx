@@ -5,8 +5,6 @@ import {
   Route,
   Outlet,
 } from "react-router-dom";
-import { useEffect } from "react";
-import { supabase } from "./supabaseClient";
 import Welcome from "./components/Welcome";
 import Photo from "./components/Photo";
 import Choose from "./components/Choose";
@@ -20,33 +18,11 @@ import PerfilUser from "./components/PerfilUser";
 import Register from "./components/Register";
 
 function App() {
-  // 👇 Escucha los eventos de sesión
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth event:", event);
-          console.log("Session actual:", session);
-
-        if (event === "TOKEN_REFRESHED") {
-          console.log("🔁 Token renovado automáticamente");
-        }
-
-        if (event === "SIGNED_OUT") {
-          console.log("🚪 Usuario cerró sesión");
-        }
-      }
-    );
-
-    // Limpieza del listener al desmontar
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, []);
+ 
 
   return (
     <Router>
       <Routes>
-        {/* ahora Begin es la pantalla de inicio; Welcome se monta en /:eventSlug */}
         <Route path="/" element={<Begin />} />
         <Route path="/:eventSlug" element={<Welcome />} />
         <Route path="/admin/:identificador/:eventSlug" element={<Admin />} />
@@ -67,7 +43,6 @@ function App() {
           <Route path="/:eventSlug/gallery" element={<Gallery />} />
         </Route>
 
-        {/* ruta fallback: cualquier ruta no existente redirige al último slug guardado */}
         <Route path="*" element={<RedirectToEventLocal />} />
       </Routes>
     </Router>

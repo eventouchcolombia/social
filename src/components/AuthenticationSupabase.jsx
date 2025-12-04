@@ -91,16 +91,13 @@ const AuthenticationSupabase = () => {
 
   // === Refrescar sesión manual cada 5 minutos ===
   useEffect(() => {
-    console.log("🕒 useEffect activo — iniciando cron cada 5 minutos");
+   
 
     const refreshSession = async () => {
-      console.log(
-        "⏰ Ejecutando refreshSession:",
-        new Date().toLocaleTimeString()
-      );
+     
       // eslint-disable-next-line no-unused-vars
       const { data, error } = await supabase.auth.refreshSession();
-      if (error) console.warn("⚠️ Error al refrescar sesión:", error.message);
+      if (error) return;
     };
 
     const interval = setInterval(refreshSession, 5 * 60 * 1000); // cada 1 minuto
@@ -109,11 +106,11 @@ const AuthenticationSupabase = () => {
 
     return () => {
       clearInterval(interval);
-      console.log("🧹 useEffect desmontado — cron detenido");
+  
     };
   }, []);
 
-  // === Validar si el usuario ya existe en registerusers ===
+  // Validar si el usuario ya existe en registerusers
   const checkIfUserExists = async (email) => {
     console.log("🔍 checkIfUserExists() EJECUTÁNDOSE con:", email);
     if (!email) {

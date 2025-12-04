@@ -65,9 +65,9 @@ export default function Register() {
   }
 };
 
-  // ==========================================================
-  // 1️⃣ REGISTRO PRELIMINAR (ANTES DE LOGIN)
-  // ==========================================================
+  
+  // 1️. REGISTRO PRELIMINAR (ANTES DE LOGIN)
+
   const handleRegisterUser = async () => {
     if (!phone.trim()) {
       setErrorMessage("El teléfono es obligatorio.");
@@ -110,9 +110,8 @@ export default function Register() {
     }
   };
 
-  // ==========================================================
-  // 2️⃣ CUANDO GOOGLE DEVUELVE EL USUARIO
-  // ==========================================================
+  
+  // 2️. CUANDO GOOGLE DEVUELVE EL USUARIO
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -149,7 +148,7 @@ export default function Register() {
           email,
         });
 
-        // ⚠️ CLAVE: mover el UPDATE fuera del evento SIGNED_IN
+        //  CLAVE: mover el UPDATE fuera del evento SIGNED_IN
         setTimeout(() => {
           updatePendingRegister(pendingId, email).then(() => {
             processingRef.current = false;
@@ -161,9 +160,7 @@ export default function Register() {
     return () => listener?.subscription?.unsubscribe();
   }, [navigate]);
 
-  // ==========================================================
-  // UI
-  // ==========================================================
+ 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[url('/Mobile.png')] bg-cover bg-center text-[#753E89] p-4">
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md shadow-xl text-center">
