@@ -14,14 +14,14 @@ export default function Register() {
 
   const processingRef = useRef(false);
 
-  // ==========================================================
-  // 🟣 FUNCIÓN QUE HACE EL UPDATE (FUERA DEL onAuthStateChange)
-  // ==========================================================
+
+  //  FUNCIÓN QUE HACE EL UPDATE (FUERA DEL onAuthStateChange)
+  
   const updatePendingRegister = async (pendingId, email) => {
   try {
-    console.log("🟦 Ejecutando UPDATE FUERA DEL LISTENER");
+    
 
-    const { data, error } = await supabase
+    const {  error } = await supabase
       .from("registerusers")
       .update({ email })
       .eq("id", pendingId)
@@ -29,11 +29,11 @@ export default function Register() {
       .single();
 
     if (error) {
-      console.error("❌ Error actualizando registro:", error);
+      console.warn("Email ya registrado");
 
-      // ⚠️ Si el correo ya existe en otra fila → eliminar el registro preliminar
+      //  Si el correo ya existe en otra fila → eliminar el registro preliminar
       if (error.code === "23505") {
-        console.warn("⚠️ Email duplicado, eliminando registro preliminar:", pendingId);
+        console.warn(" Email duplicado");
 
         // Eliminar SOLO el registro preliminar
         await supabase
@@ -53,21 +53,20 @@ export default function Register() {
       return false;
     }
 
-    console.log("🎉 Registro actualizado correctamente:", data);
 
     localStorage.removeItem("pending_register_id");
 
     setShowSuccessModal(true);
     return true;
   } catch (err) {
-    console.error("💥 ERROR en updatePendingRegister:", err);
+    console.error(" ERROR en updatePendingRegister:", err);
     return false;
   }
 };
 
-  // ==========================================================
-  // 1️⃣ REGISTRO PRELIMINAR (ANTES DE LOGIN)
-  // ==========================================================
+  
+  // 1️. REGISTRO PRELIMINAR (ANTES DE LOGIN)
+
   const handleRegisterUser = async () => {
     if (!phone.trim()) {
       setErrorMessage("El teléfono es obligatorio.");
@@ -94,48 +93,47 @@ export default function Register() {
         .single();
 
       if (error) {
-        console.error("❌ Error insertando registro preliminar:", error);
+        console.error(" Error insertando registro preliminar:", error);
         setErrorMessage("Error al registrar tus datos. Intenta nuevamente.");
         return;
       }
 
-      console.log("📌 Registro preliminar creado:", data);
+      console.log(" Registro preliminar creado:", data);
 
       localStorage.setItem("pending_register_id", data.id);
 
       await signInWithGoogle();
     } catch (err) {
-      console.error("💥 Error:", err);
+      console.error(" Error:", err);
       setErrorMessage("Ocurrió un error inesperado.");
     }
   };
 
-  // ==========================================================
-  // 2️⃣ CUANDO GOOGLE DEVUELVE EL USUARIO
-  // ==========================================================
+  
+  // 2️. CUANDO GOOGLE DEVUELVE EL USUARIO
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event !== "SIGNED_IN") return;
 
         if (!session?.user) {
-          console.error("❌ No hay sesión después de Google.");
+          console.error(" No hay sesión después de Google.");
           return;
         }
 
         if (processingRef.current) {
-          console.log("⛔ Ya se está procesando un login.");
+          
           return;
         }
 
         processingRef.current = true;
 
         const email = session.user.email;
-        console.log("👤 Email del usuario autenticado:", email);
+      
 
         let pendingId = localStorage.getItem("pending_register_id");
         if (!pendingId) {
-          console.error("❌ No existe pending_register_id.");
+          console.error(" No existe pending_register_id.");
           setErrorMessage("Error interno. Intenta registrarte de nuevo.");
           await supabase.auth.signOut();
           processingRef.current = false;
@@ -144,12 +142,9 @@ export default function Register() {
 
         pendingId = pendingId.trim();
 
-        console.log("🟪 PREPARANDO UPDATE FUERA DEL LISTENER:", {
-          pendingId,
-          email,
-        });
+      
 
-        // ⚠️ CLAVE: mover el UPDATE fuera del evento SIGNED_IN
+        //  CLAVE: mover el UPDATE fuera del evento SIGNED_IN
         setTimeout(() => {
           updatePendingRegister(pendingId, email).then(() => {
             processingRef.current = false;
@@ -161,9 +156,7 @@ export default function Register() {
     return () => listener?.subscription?.unsubscribe();
   }, [navigate]);
 
-  // ==========================================================
-  // UI
-  // ==========================================================
+ 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[url('/Mobile.png')] bg-cover bg-center text-[#753E89] p-4">
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md shadow-xl text-center">

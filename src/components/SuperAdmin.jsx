@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import useAuthenticationSupabase from "./AuthenticationSupabase";
 import useGetRegister from "../hooks/getRegister";
+import { Mail, Phone, UserCircle,Copy } from "lucide-react";
 import ShareEvent from "./ShareEvent";
 
 // Lista de emails autorizados para SuperAdmin (hardcodeada)
@@ -749,34 +750,52 @@ const SuperAdmin = () => {
           )}
         </div> */}
 
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mt-2">
-          <h2 className="text-xl sm:text-2xl mb-4 font-semibold text-white">
-            Registros de usuarios ({data?.length || 0} registros)
-          </h2>
+       <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mt-2">
+  <h2 className="text-xl sm:text-2xl mb-4 font-semibold text-white flex items-center gap-2">
+    Registros de usuarios ({data?.length || 0} registros)
+  </h2>
 
-          <div className="text-white bg-white/5 rounded-xl overflow-hidden">
-            {/* Encabezados */}
-            <div className="grid grid-cols-3 px-4 py-2 bg-white/10 font-semibold text-xs sm:text-base uppercase tracking-wide">
-              <p>Email</p>
-              <p>Teléfono</p>
-              <p>Tipo</p>
-            </div>
+  <div className="text-white bg-white/5 rounded-xl overflow-hidden">
+    {/* Encabezados */}
+    <div className="grid grid-cols-3 px-4 py-2 bg-white/10 font-semibold text-xs sm:text-base uppercase tracking-wide">
+      <p className="flex items-center gap-2">
+        <Mail className="w-4 h-4" />
+        Email
+      </p>
+      <p className="flex items-center gap-2">
+        <Phone className="w-4 h-4" />
+        Teléfono
+      </p>
+      <p className="flex items-center gap-2">
+        <UserCircle className="w-4 h-4" />
+        Tipo
+      </p>
+    </div>
 
-            {/* Lista */}
-            <div className="divide-y divide-white/10">
-              {data?.map((r) => (
-                <div
-                  key={r.id}
-                  className="grid grid-cols-3 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer text-sm sm:text-base"
-                >
-                  <p className="truncate">{r.email}</p>
-                  <p className="truncate">{r.phone || "—"}</p>
-                  <p className="truncate capitalize">{r.type || "—"}</p>
-                </div>
-              ))}
-            </div>
+    {/* Lista */}
+    <div className="divide-y divide-white/10">
+      {data?.map((r) => (
+        <div
+          key={r.id}
+          className="grid grid-cols-3 px-4 py-3 hover:bg-white/10 transition-colors text-sm sm:text-base"
+        >
+          {/* Email + botón copiar */}
+          <div className="flex items-center gap-2">
+            <p className="truncate">{r.email}</p>
+
+            <Copy
+              className="w-4 h-4 cursor-pointer opacity-70 hover:opacity-100 transition"
+              onClick={() => navigator.clipboard.writeText(r.email)}
+            />
           </div>
+
+          <p className="truncate">{r.phone || "—"}</p>
+          <p className="truncate capitalize">{r.type || "—"}</p>
         </div>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* Admins List */}
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mt-2">

@@ -1,8 +1,8 @@
-/* eslint-disable no-undef */
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ref, listAll, getDownloadURL } from "firebase/storage"; // Firebase Storage imports
-import { storage } from "../firebaseConfig"; // Ensure this import exists and points to your Firebase setup
+import { ref, listAll, getDownloadURL } from "firebase/storage"; 
+import { storage } from "../firebaseConfig"; 
 import AssetWizard from "./AssetWizard";
 import ShareEvent from "./ShareEvent";
 import Agenda from "./Agenda";
@@ -42,57 +42,16 @@ const Admin = () => {
   const [showAgenda, setShowAgenda] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  useEffect(() => {
-    if (session && isAdmin) {
-      console.log(
-        `✅ [ADMIN DETECTADO] El usuario ${session.user?.email} tiene permisos de administrador para el evento "${eventSlug}"`
-      );
-    } else if (session && !isAdmin) {
-      console.log(
-        `⚠️ [NO ADMIN] El usuario ${session.user?.email} no tiene permisos de administrador.`
-      );
-    } else if (!session) {
-      console.log("ℹ️ No hay sesión activa aún.");
-    }
-  }, [session, isAdmin, eventSlug]);
 
-  useEffect(() => {
-    if (isAdmin === true && session) {
-      console.log("✅ [ADMIN CONFIRMADO]");
-      console.log("Correo del admin:", session.user?.email);
-      console.log("Event Slug actual:", eventSlug);
-      console.log("Estado completo ->", { isAdmin, session });
-    }
-  }, [isAdmin, session, eventSlug]);
+
 
   useEffect(() => {
     if (eventSlug) {
       setCurrentEventSlug(eventSlug);
-      console.log(
-        `✅ Event slug from URL: ${eventSlug} para identificador: ${identificador}`
-      );
+      
     }
   }, [eventSlug, identificador]);
-  // === cargar fotos solo si es admin ===
-  // const fetchPhotos = async () => {
-  //   // Updated: Use currentEventSlug
-  //   if (!currentEventSlug) return;
-
-  //   try {
-  //     // Updated: Use currentEventSlug
-  //     const listRef = ref(storage, `photos/${currentEventSlug}`);
-  //     const result = await listAll(listRef);
-  //     const urls = await Promise.all(
-  //       result.items.map(async (item) => ({
-  //         name: item.name,
-  //         url: await getDownloadURL(item),
-  //       }))
-  //     );
-  //     setPhotos(urls.reverse());
-  //   } catch (error) {
-  //     console.error("❌ Error cargando fotos:", error);
-  //   }
-  // };
+ 
   const fetchPhotos = async () => {
     if (!currentEventSlug) return;
 
