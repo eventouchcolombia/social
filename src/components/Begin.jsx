@@ -42,7 +42,7 @@ const Begin = ({ onCreate }) => {
       .eq("admin_email", userEmail.toLowerCase().trim())
       .eq("is_active", true);
     
-    console.log("[fetchEventForEmail] Eventos encontrados:", eventsData);
+  
     
     if (eventsError || !eventsData || eventsData.length === 0) {
       console.log("❌ No se encontraron eventos activos para este admin");
@@ -61,7 +61,7 @@ const Begin = ({ onCreate }) => {
       eventCount: eventsData.length
     };
     
-    console.log(" [fetchEventForEmail] Resultado final:", result);
+   
     return result;
     
   } catch (error) {
@@ -99,7 +99,7 @@ const Begin = ({ onCreate }) => {
         if (adminRow && adminRow.identificador && adminRow.event_slug) {
           if (adminRow.is_active === false) {
             console.warn(
-              "⚠️ Evento inactivo, no se redirige:",
+              " Evento inactivo, no se redirige:",
               adminRow.event_slug
             );
             return;
@@ -107,7 +107,7 @@ const Begin = ({ onCreate }) => {
 
           const targetPath = `/admin/${adminRow.identificador}/${adminRow.event_slug}`;
           if (window.location.pathname !== targetPath) {
-            console.log(" Redirigiendo admin a:", targetPath);
+            
             navigate(targetPath);
           }
         } else {
