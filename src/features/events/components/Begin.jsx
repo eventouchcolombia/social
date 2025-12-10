@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../../config/supabaseClient";
 import useAuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
-
+import { useTotem } from "../../../totem/TotemContext";
+import { Monitor } from "lucide-react";
 
 // eslint-disable-next-line no-unused-vars
 const Begin = ({ onCreate }) => {
@@ -15,78 +16,66 @@ const Begin = ({ onCreate }) => {
 
   const { session, isAdmin, loading, signInWithGoogle } =
     useAuthenticationSupabase();
+  const { isTotemMode, enableTotemMode, disableTotemMode } = useTotem();
 
   // Función: busca en la tabla 'admins' por email y devuelve la fila
   const fetchEventForEmail = async (userEmail) => {
-  try {
-    
-    
-    // PASO 1: Buscar admin en tabla admins
-    const { data: adminData, error: adminError } = await supabase
-      .from("admins")
-      .select("id, email, identificador, is_active")
-      .eq("email", userEmail.toLowerCase().trim())
-      .neq("identificador", null); // Solo admins reales
-    
- 
-    
-    if (adminError || !adminData || adminData.length === 0) {
-      
+    try {
+      // PASO 1: Buscar admin en tabla admins
+      const { data: adminData, error: adminError } = await supabase
+        .from("admins")
+        .select("id, email, identificador, is_active")
+        .eq("email", userEmail.toLowerCase().trim())
+        .neq("identificador", null); // Solo admins reales
+
+      if (adminError || !adminData || adminData.length === 0) {
+        return null;
+      }
+
+      const admin = adminData[0];
+      const { data: eventsData, error: eventsError } = await supabase
+        .from("events")
+        .select("id, event_slug, admin_id, admin_email, is_active")
+        .eq("admin_email", userEmail.toLowerCase().trim())
+        .eq("is_active", true);
+
+      if (eventsError || !eventsData || eventsData.length === 0) {
+        console.log("❌ No se encontraron eventos activos para este admin");
+        return null;
+      }
+
+      // PASO 3: Retornar admin con su primer evento
+      const firstEvent = eventsData[0];
+
+      const result = {
+        id: admin.id,
+        email: admin.email,
+        identificador: admin.identificador,
+        is_active: admin.is_active,
+        event_slug: firstEvent.event_slug, // Desde tabla events
+        eventCount: eventsData.length,
+      };
+
+      return result;
+    } catch (error) {
+      console.error(" Error en fetchEventForEmail:", error);
       return null;
     }
-    
-    const admin = adminData[0];
-    const { data: eventsData, error: eventsError } = await supabase
-      .from("events")
-      .select("id, event_slug, admin_id, admin_email, is_active")
-      .eq("admin_email", userEmail.toLowerCase().trim())
-      .eq("is_active", true);
-    
-  
-    
-    if (eventsError || !eventsData || eventsData.length === 0) {
-      console.log("❌ No se encontraron eventos activos para este admin");
-      return null;
-    }
-    
-    // PASO 3: Retornar admin con su primer evento
-    const firstEvent = eventsData[0];
-    
-    const result = {
-      id: admin.id,
-      email: admin.email,
-      identificador: admin.identificador,
-      is_active: admin.is_active,
-      event_slug: firstEvent.event_slug, // Desde tabla events
-      eventCount: eventsData.length
-    };
-    
-   
-    return result;
-    
-  } catch (error) {
-    console.error(" Error en fetchEventForEmail:", error);
-    return null;
-  }
-};
+  };
 
   useEffect(() => {
-   
-
     //  Esperar a que session e isAdmin estén definidos
     if (!session || isAdmin === undefined) {
-     
       return;
     }
 
     (async () => {
       const email = session.user?.email;
-      
 
       // Check for pending event slug first
-      const pendingEventSlug = localStorage.getItem('pendingEventSlug');
+      const pendingEventSlug = localStorage.getItem("pendingEventSlug");
       if (pendingEventSlug) {
-        localStorage.removeItem('pendingEventSlug');
+        localStorage.removeItem("pendingEventSlug");
         console.log(" Redirigiendo a evento pendiente:", pendingEventSlug);
         navigate(`/${pendingEventSlug}`);
         return;
@@ -107,7 +96,6 @@ const Begin = ({ onCreate }) => {
 
           const targetPath = `/admin/${adminRow.identificador}/${adminRow.event_slug}`;
           if (window.location.pathname !== targetPath) {
-            
             navigate(targetPath);
           }
         } else {
@@ -115,9 +103,8 @@ const Begin = ({ onCreate }) => {
         }
       } else if (isAdmin === false) {
         //  Usuario regular
-        if (window.location.pathname !== "/profile") {
-         
-          navigate("/profile");
+        if (window.location.pathname !== "/") {
+          navigate("/");
         }
       }
     })();
@@ -126,24 +113,24 @@ const Begin = ({ onCreate }) => {
   // 🟣 Maneja el click del botón Google
   const handleGoogleLogin = async () => {
     setAuthStarted(true);
-    
+
     await signInWithGoogle();
   };
 
   // ✅ Lógica para crear o asistir a evento
-const handleCreateConfirm = async () => {
-  const slug = eventSlug.trim().toLowerCase();
-  if (!slug) {
-    setShowCreateModal(false);
-    setShowNotFoundModal(true);
-    return;
-  }
+  const handleCreateConfirm = async () => {
+    const slug = eventSlug.trim().toLowerCase();
+    if (!slug) {
+      setShowCreateModal(false);
+      setShowNotFoundModal(true);
+      return;
+    }
 
-  try {
-    // ✅ Buscar en tabla events con JOIN
-    const { data, error } = await supabase
-      .from("events")
-      .select(`
+    try {
+      // ✅ Buscar en tabla events con JOIN
+      const { data, error } = await supabase
+        .from("events")
+        .select(`
         id,
         event_slug,
         admin_id,
@@ -151,30 +138,29 @@ const handleCreateConfirm = async () => {
         is_active,
         admins!inner(identificador)
       `)
-      .eq("event_slug", slug)
-      .eq("is_active", true);
+        .eq("event_slug", slug)
+        .eq("is_active", true);
 
-    if (error) {
-      console.error("Error buscando evento (create):", error);
-      alert("Hubo un error al buscar el evento.");
-      return;
+      if (error) {
+        console.error("Error buscando evento (create):", error);
+        alert("Hubo un error al buscar el evento.");
+        return;
+      }
+      // ✅ Lógica DESPUÉS de la consulta
+      if (!data || data.length === 0) {
+        setShowCreateModal(false);
+        setShowNotFoundModal(true);
+      } else {
+        // ✅ Navegar directamente al evento encontrado
+        navigate(`/${data[0].event_slug}`); // Para asistir al evento
+        setShowCreateModal(false);
+        setEventSlug("");
+      }
+    } catch (err) {
+      console.error("Exception en handleCreateConfirm:", err);
+      alert("Error inesperado. Revisa la consola.");
     }
-     // ✅ Lógica DESPUÉS de la consulta
-    if (!data || data.length === 0) {
-      setShowCreateModal(false);
-      setShowNotFoundModal(true);
-    } else {
-      // ✅ Navegar directamente al evento encontrado
-      navigate(`/${data[0].event_slug}`); // Para asistir al evento
-      setShowCreateModal(false);
-      setEventSlug("");
-    }
-  } catch (err) {
-    console.error("Exception en handleCreateConfirm:", err);
-    alert("Error inesperado. Revisa la consola.");
-  }
-};
-
+  };
 
   const handleAttendClick = () => {
     setShowModal(true);
@@ -188,10 +174,10 @@ const handleCreateConfirm = async () => {
 
     const slug = eventSlug.trim().toLowerCase();
     const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("event_slug", slug)
-    .eq("is_active", true);
+      .from("events")
+      .select("*")
+      .eq("event_slug", slug)
+      .eq("is_active", true);
 
     if (error) {
       alert("Hubo un error al buscar el evento");
@@ -202,10 +188,10 @@ const handleCreateConfirm = async () => {
       alert("El evento no existe o fue desactivado");
     } else {
       // Store the event slug for after authentication
-      localStorage.setItem('pendingEventSlug', data[0].event_slug);
+      localStorage.setItem("pendingEventSlug", data[0].event_slug);
       setShowModal(false);
       setEventSlug("");
-      // Redirect to Google login instead of directly to event
+      // Redirect to Google login
       await signInWithGoogle();
     }
   };
@@ -267,7 +253,7 @@ const handleCreateConfirm = async () => {
         </div>
       </div>
 
-      {/* Modal ingreso a evento */}
+      {/* Modal ingreso a evento - ACTUALIZADO con Switch */}
       {showModal && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
           <div className="bg-white rounded-2xl p-6 w-80 shadow-lg flex flex-col items-center">
@@ -281,6 +267,41 @@ const handleCreateConfirm = async () => {
               onChange={(e) => setEventSlug(e.target.value)}
               className="border border-gray-400 rounded-lg p-2 w-full mb-4 focus:outline-none focus:ring-2 focus:ring-[#753E89]"
             />
+
+            {/* Switch de modo Totem */}
+            <div className="w-full mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Monitor className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Modo Totem
+                  </span>
+                </div>
+
+                {/* Toggle Switch */}
+                <button
+                  onClick={isTotemMode ? disableTotemMode : enableTotemMode}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isTotemMode ? "bg-orange-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isTotemMode ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Descripción del switch */}
+              <p className="text-xs text-gray-500 mt-1">
+                {isTotemMode
+                  ? "Los usuarios no podrán cerrar sesión"
+                  : "Ideal para dispositivos públicos"}
+              </p>
+            </div>
+
+            {/* Botones principales */}
             <div className="flex gap-3 w-full">
               <button
                 onClick={() => setShowModal(false)}
@@ -361,6 +382,13 @@ const handleCreateConfirm = async () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Indicador si ya está en modo Totem */}
+      {isTotemMode && (
+        <div className="fixed top-4 right-4 bg-orange-500 text-white px-3 py-2 rounded-full text-sm font-semibold shadow-lg z-50">
+          🔒 MODO TOTEM ACTIVO
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Camera, Image as ImageIcon } from "lucide-react";
 import useAuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
 import { supabase } from "../../../config/supabaseClient";
+import { useTotem } from "../../../totem/TotemContext";
 
 // 🎨 Configuración de estilos por evento
 const themes = {
@@ -24,6 +25,7 @@ const Choose = () => {
   const { signOut, session } = useAuthenticationSupabase();
   const navigate = useNavigate();
   const { eventSlug, getAssetUrl } = useEvent();
+  const { isTotemMode } = useTotem();
 
   const [backgroundUrl, setBackgroundUrl] = useState(null);
   const [agenda, setAgenda] = useState([]);
@@ -99,7 +101,7 @@ const Choose = () => {
         )}
 
         {/* 🔴 Botón cerrar sesión (AHORA CONDICIONAL) */}
-        {user && ( // 👈 NUEVA CONDICIÓN: Solo renderiza si hay usuario
+        {user && !isTotemMode && ( // 👈 NUEVA CONDICIÓN: Solo renderiza si hay usuario y NO está en modo Totem
           <button
             onClick={async () => {
               await signOut(); // cerrar sesión en Supabase
@@ -168,6 +170,13 @@ const Choose = () => {
           </button>
         </div>
       </div>
+
+      {/* Indicador de modo Totem */}
+      {isTotemMode && (
+        <div className="fixed top-4 right-4 bg-orange-500 text-white px-3 py-2 rounded-full text-sm font-semibold shadow-lg z-50">
+          🔒 MODO TOTEM
+        </div>
+      )}
     </div>
   );
 };

@@ -1,9 +1,11 @@
 import { Navigate, useLocation } from "react-router-dom";
 import AuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
+import { useTotem } from "../../../totem/TotemContext";
 
 const ProtectedRoute = ({ children }) => {
   const { session, loading } = AuthenticationSupabase();
   const location = useLocation();
+  const { isTotemMode } = useTotem();
 
   // Mostrar loader mientras se verifica la sesión
   if (loading) {
@@ -23,7 +25,18 @@ const ProtectedRoute = ({ children }) => {
     return slug ? <Navigate to={`/${slug}`} replace /> : <Navigate to="/" replace />;
   }
 
-  return children;
+  return (
+    <>
+      {/* Indicador global de modo Totem en rutas protegidas */}
+      {isTotemMode && (
+        <div className="fixed top-4 right-4 bg-orange-500 text-white px-3 py-2 rounded-full text-sm font-semibold shadow-lg z-50">
+          🔒 MODO TOTEM
+        </div>
+      )}
+      
+      {children}
+    </>
+  );
 };
 
 export default ProtectedRoute;

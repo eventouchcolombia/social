@@ -5,6 +5,7 @@ import {
   Route,
   Outlet,
 } from "react-router-dom";
+import { TotemProvider } from "./totem/TotemContext";
 import Welcome from "./features/events/components/Welcome";
 import Photo from "./features/events/components/Photo";
 import Choose from "./features/events/components/Choose";
@@ -18,34 +19,34 @@ import PerfilUser from "./features/auth/components/PerfilUser";
 import Register from "./features/auth/components/Register";
 
 function App() {
- 
-
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Begin />} />
-        <Route path="/:eventSlug" element={<Welcome />} />
-        <Route path="/admin/:identificador/:eventSlug" element={<Admin />} />
-        <Route path="/superadmin" element={<SuperAdmin />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<PerfilUser />} />
+    <TotemProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Begin />} />
+          <Route path="/:eventSlug" element={<Welcome />} />
+          <Route path="/admin/:identificador/:eventSlug" element={<Admin />} />
+          <Route path="/superadmin" element={<SuperAdmin />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={<PerfilUser />} />
 
-        {/* Rutas protegidas agrupadas */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <Outlet />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/:eventSlug/photo" element={<Photo />} />
-          <Route path="/:eventSlug/choose" element={<Choose />} />
-          <Route path="/:eventSlug/gallery" element={<Gallery />} />
-        </Route>
+          {/* Rutas protegidas agrupadas */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <Outlet />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/:eventSlug/photo" element={<Photo />} />
+            <Route path="/:eventSlug/choose" element={<Choose />} />
+            <Route path="/:eventSlug/gallery" element={<Gallery />} />
+          </Route>
 
-        <Route path="*" element={<RedirectToEventLocal />} />
-      </Routes>
-    </Router>
+          <Route path="*" element={<RedirectToEventLocal />} />
+        </Routes>
+      </Router>
+    </TotemProvider>
   );
 }
 
