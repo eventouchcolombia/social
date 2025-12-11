@@ -5,7 +5,7 @@ import {
   validateEventSlug,
   getEventAssetInstructions,
 } from "../../../utils/eventAssets";
-import { X } from "lucide-react";
+import { X, User } from "lucide-react";
 import ReservaTotemForm from "../../../totem/FormTotem";
 
 const Perfil = ({ onClose, userEmail }) => {
@@ -16,7 +16,7 @@ const Perfil = ({ onClose, userEmail }) => {
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [showEventsList, setShowEventsList] = useState(false);
   const [showReservaForm, setShowReservaForm] = useState(false);
-  
+
   const navigate = useNavigate();
 
   // Mostrar mensaje temporal
@@ -179,7 +179,10 @@ const Perfil = ({ onClose, userEmail }) => {
           <X className="w-6 h-6" />
         </button>
 
-        <h2 className="text-xl font-bold mb-2 text-[#753E89]">Perfil</h2>
+        <h2 className="text-xl font-bold mb-2 text-[#753E89] flex items-center gap-2">
+          <User className="w-5 h-5" />
+          Perfil
+        </h2>
 
         {/* Mostrar email fijo */}
         <p className="text-gray-600 text-xs mb-6 break-all">{userEmail}</p>
@@ -357,19 +360,18 @@ const Perfil = ({ onClose, userEmail }) => {
         </label>
         <button
           onClick={() => setShowReservaForm(true)}
-
           className="bg-[#753E89] w-36 cursor-pointer text-white rounded-lg px-4 py-2 mt-2 text-sm font-semibold hover:bg-[#8a4ea0] transition"
         >
           Solicítalo aquí
         </button>
-      {showReservaForm && (
-        <div className="mt-4">
-          <ReservaTotemForm
-            userEmail={userEmail}
-            onClose={() => setShowReservaForm(false)}
-          />
-        </div>
-      )}
+        {showReservaForm && (
+          <div className="mt-4">
+            <ReservaTotemForm
+              userEmail={userEmail}
+              onClose={() => setShowReservaForm(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
