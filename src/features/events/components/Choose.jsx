@@ -33,6 +33,7 @@ const Choose = () => {
   const [isLoading, setIsLoading] = useState(true); // 🔹 Estado de carga
 
   // Selecciona el tema según la ruta, o usa el default
+  // eslint-disable-next-line no-unused-vars
   const theme = themes[eventSlug] || defaultTheme;
 
   useEffect(() => {
