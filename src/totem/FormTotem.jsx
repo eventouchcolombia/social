@@ -10,7 +10,7 @@ import {
 
 const ReservaTotemForm = ({ onClose }) => {
   const [fecha, setFecha] = useState("");
-  const [transporte, setTransporte] = useState(false);
+  const [transporte, setTransporte] = useState(null);
   const [fechasOcupadas, setFechasOcupadas] = useState([]);
   const [authUser, setAuthUser] = useState(null);
 
@@ -129,10 +129,15 @@ const ReservaTotemForm = ({ onClose }) => {
           </label>
 
           <select
-            value={transporte}
-            onChange={(e) => setTransporte(e.target.value === "true")}
+            value={transporte === null ? "" : transporte}
+            onChange={(e) =>
+              setTransporte(
+                e.target.value === "" ? null : e.target.value === "true"
+              )
+            }
             className="border border-gray-300 text-sm p-2 rounded w-full"
           >
+            <option value="">Selecciona</option>
             <option value="false">No</option>
             <option value="true">Sí</option>
           </select>
