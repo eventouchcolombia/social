@@ -119,26 +119,7 @@ const Admin = () => {
     loadBackground();
   }, [currentEventSlug, getAssetUrl]);
 
-  // useEffect(() => {
-  //   const fetchActiveUsers = async () => {
-  //     try {
-  //       const { data, error } = await supabase
-  //         .from("event_users")
-  //         .select("*", { count: "exact" })
-  //         .eq("event_slug", currentEventSlug);
-
-  //       if (error) throw error;
-
-  //       setUsersList(data || []);
-  //       setActiveUsers(data.length || 0);
-  //     } catch (err) {
-  //       console.error("❌ Error obteniendo usuarios activos:", err.message);
-  //     }
-  //   };
-
-  //   fetchActiveUsers();
-  // }, [currentEventSlug]);
-
+ 
   // Updated: Use currentEventSlug
   if (loading || !currentEventSlug) {
     return (

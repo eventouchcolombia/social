@@ -228,7 +228,7 @@ const Begin = ({ onCreate }) => {
           <div className="w-full md:w-1/2 flex flex-col  gap-4 items-center justify-center">
             <button
               onClick={handleGoogleLogin}
-              className="w-full sm:w-1/2 flex justify-center items-center gap-2 py-3 rounded-full text-black text-xl bg-white hover:bg-gray-100 shadow-md transition"
+              className="w-full sm:w-1/2 cursor-pointer flex justify-center items-center gap-2 py-3 rounded-full text-black text-xl bg-white hover:bg-gray-100 shadow-md transition"
             >
               <img src="/google.png" alt="Google" className="w-6 h-6" />
               Inicia sesión con Google
@@ -236,7 +236,7 @@ const Begin = ({ onCreate }) => {
 
             <span
               onClick={() => navigate("/register")}
-              className=" mt-[-10px] text-[#753E89]  cursor-pointer hover:text-[#5e3270] transition"
+              className=" mt-1 text-[#753E89]  cursor-pointer hover:text-[#5e3270] transition"
             >
               ¿No tienes cuenta? Regístrate
             </span>
@@ -244,8 +244,8 @@ const Begin = ({ onCreate }) => {
             <button
               type="button"
               onClick={handleAttendClick}
-              className="w-full sm:w-1/2 py-3 rounded-full text-white 
-                         bg-[#753E89] hover:bg-[#f7eef9] transition-colors shadow-sm text-xl"
+              className="w-full cursor-pointer sm:w-1/2 py-3 rounded-full text-white 
+                         bg-[#753E89] hover:bg-[#f7eef9] hover:text-[#753E89] transition-colors shadow-sm text-xl"
             >
               Asiste a tu evento
             </button>

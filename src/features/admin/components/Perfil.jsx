@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../../config/supabaseClient";
-import { validateEventSlug, getEventAssetInstructions } from "../../../utils/eventAssets";
-import { X } from "lucide-react";
+import {
+  validateEventSlug,
+  getEventAssetInstructions,
+} from "../../../utils/eventAssets";
+import { X, User } from "lucide-react";
+import ReservaTotemForm from "../../../totem/FormTotem";
 
 const Perfil = ({ onClose, userEmail }) => {
   const [newEvent, setNewEvent] = useState({ eventSlug: "" });
@@ -11,11 +15,13 @@ const Perfil = ({ onClose, userEmail }) => {
   const [userEvents, setUserEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [showEventsList, setShowEventsList] = useState(false);
+  const [showReservaForm, setShowReservaForm] = useState(false);
+
   const navigate = useNavigate();
 
   // Mostrar mensaje temporal
   const showMessage = (text, type = "success") => {
-    setMessage({ text, type }); 
+    setMessage({ text, type });
     setTimeout(() => setMessage({ text: "", type: "" }), 5000);
   };
 
@@ -35,48 +41,53 @@ const Perfil = ({ onClose, userEmail }) => {
     }
 
     setIsCreating(true);
-  try {
-    // Obtener el admin_id del usuario actual
-    const { data: adminData, error: adminError } = await supabase
-      .from("admins")
-      .select("id")
-      .eq("email", userEmail.toLowerCase().trim())
-      .neq("identificador", null)
-      .single();
+    try {
+      // Obtener el admin_id del usuario actual
+      const { data: adminData, error: adminError } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("email", userEmail.toLowerCase().trim())
+        .neq("identificador", null)
+        .single();
 
-    if (adminError || !adminData) {
-      showMessage("Necesitas ser administrador para crear eventos", "error");
-      return;
-    }
+      if (adminError || !adminData) {
+        showMessage("Necesitas ser administrador para crear eventos", "error");
+        return;
+      }
 
-    // Verificar si ya existe el evento
-    const { data: existing } = await supabase
-      .from("events")
-      .select("id")
-      .eq("event_slug", newEvent.eventSlug)
-      .single();
+      // Verificar si ya existe el evento
+      const { data: existing } = await supabase
+        .from("events")
+        .select("id")
+        .eq("event_slug", newEvent.eventSlug)
+        .single();
 
-    if (existing) {
-      showMessage("Ya existe un evento con ese nombre", "error");
-      return;
-    }
+      if (existing) {
+        showMessage("Ya existe un evento con ese nombre", "error");
+        return;
+      }
 
-    // Crear el evento
-    const { error } = await supabase
-      .from("events")
-      .insert([{
-        event_slug: newEvent.eventSlug,
-        admin_id: adminData.id,
-        admin_email: userEmail.toLowerCase().trim(),
-        is_active: true
-      }]);
+      // Crear el evento
+      const { error } = await supabase.from("events").insert([
+        {
+          event_slug: newEvent.eventSlug,
+          admin_id: adminData.id,
+          admin_email: userEmail.toLowerCase().trim(),
+          is_active: true,
+        },
+      ]);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const instructions = getEventAssetInstructions(newEvent.eventSlug);
-    showMessage(`✅ Evento "${newEvent.eventSlug}" creado exitosamente!\n\n${instructions.instructions.join('\n')}`, "success");
-    setNewEvent({ eventSlug: "" });
-  } catch (error) {
+      const instructions = getEventAssetInstructions(newEvent.eventSlug);
+      showMessage(
+        `✅ Evento "${
+          newEvent.eventSlug
+        }" creado exitosamente!\n\n${instructions.instructions.join("\n")}`,
+        "success"
+      );
+      setNewEvent({ eventSlug: "" });
+    } catch (error) {
       console.error("❌ Error creando evento:", error);
       showMessage("Error creando el evento", "error");
     } finally {
@@ -85,31 +96,33 @@ const Perfil = ({ onClose, userEmail }) => {
   };
 
   // Cargar eventos del usuario
-const fetchUserEvents = async () => {
-  setLoadingEvents(true);
-  try {
-    const { data, error } = await supabase
-      .from("events")
-      .select(`
+  const fetchUserEvents = async () => {
+    setLoadingEvents(true);
+    try {
+      const { data, error } = await supabase
+        .from("events")
+        .select(
+          `
         id, 
         event_slug, 
         is_active, 
         admin_id,
         created_at,
         admins!inner(identificador)
-      `)
-      .eq("admin_email", userEmail.toLowerCase().trim())
-      .order('created_at', { ascending: false });
+      `
+        )
+        .eq("admin_email", userEmail.toLowerCase().trim())
+        .order("created_at", { ascending: false });
 
-    if (error) throw error;
-    setUserEvents(data || []);
-  } catch (error) {
-    console.error("❌ Error cargando eventos:", error);
-    showMessage("Error cargando eventos", "error");
-  } finally {
-    setLoadingEvents(false);
-  }
-};
+      if (error) throw error;
+      setUserEvents(data || []);
+    } catch (error) {
+      console.error("❌ Error cargando eventos:", error);
+      showMessage("Error cargando eventos", "error");
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
 
   // Toggle activar/desactivar evento
   const toggleEventStatus = async (eventId, currentStatus) => {
@@ -122,16 +135,14 @@ const fetchUserEvents = async () => {
       if (error) throw error;
 
       // Actualizar el estado local
-      setUserEvents(prev => 
-        prev.map(event => 
-          event.id === eventId 
-            ? { ...event, is_active: !currentStatus }
-            : event
+      setUserEvents((prev) =>
+        prev.map((event) =>
+          event.id === eventId ? { ...event, is_active: !currentStatus } : event
         )
       );
 
       showMessage(
-        `Evento ${!currentStatus ? 'activado' : 'desactivado'} exitosamente`,
+        `Evento ${!currentStatus ? "activado" : "desactivado"} exitosamente`,
         "success"
       );
     } catch (error) {
@@ -152,34 +163,39 @@ const fetchUserEvents = async () => {
   }, [isCreating]);
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/70 flex justify-start items-stretch z-50"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white w-80 shadow-lg overflow-y-auto animate-slide-in-left p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botón cerrar X */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-600 hover:text-[#753E89] transition"
+          className="absolute cursor-pointer top-4 right-4 text-gray-600 hover:text-[#753E89] transition"
         >
           <X className="w-6 h-6" />
         </button>
 
-        <h2 className="text-xl font-bold mb-2 text-[#753E89]">Perfil</h2>
-        
+        <h2 className="text-xl font-bold mb-2 text-[#753E89] flex items-center gap-2">
+          <User className="w-5 h-5" />
+          Perfil
+        </h2>
+
         {/* Mostrar email fijo */}
-        <p className="text-gray-600 text-xs mb-6 break-all">
-          {userEmail}
-        </p>
-        
+        <p className="text-gray-600 text-xs mb-6 break-all">{userEmail}</p>
+
         {/* Botones principales */}
         <div className="grid grid-cols-2 gap-2 mb-6">
           <button
             onClick={() => setShowEventsList(false)}
-            className={`px-3 py-2 rounded-lg font-semibold text-sm transition ${!showEventsList ? 'bg-[#753E89] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            className={`px-3 py-2 rounded-lg font-semibold text-sm transition ${
+              !showEventsList
+                ? "bg-[#753E89] text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
           >
             Crear Evento
           </button>
@@ -188,19 +204,25 @@ const fetchUserEvents = async () => {
               setShowEventsList(true);
               fetchUserEvents();
             }}
-            className={`px-3 py-2 rounded-lg font-semibold text-sm transition ${showEventsList ? 'bg-[#753E89] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            className={`px-3 py-2 rounded-lg font-semibold text-sm transition ${
+              showEventsList
+                ? "bg-[#753E89] text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
           >
             Mis Eventos
           </button>
         </div>
-        
+
         {/* Message Alert */}
         {message.text && (
-          <div className={`mb-4 p-3 rounded-lg text-xs ${
-            message.type === "success" 
-              ? "bg-green-100 border border-green-500 text-green-700" 
-              : "bg-red-100 border border-red-500 text-red-700"
-          }`}>
+          <div
+            className={`mb-4 p-3 rounded-lg text-xs ${
+              message.type === "success"
+                ? "bg-green-100 border border-green-500 text-green-700"
+                : "bg-red-100 border border-red-500 text-red-700"
+            }`}
+          >
             <pre className="whitespace-pre-wrap font-sans">{message.text}</pre>
           </div>
         )}
@@ -216,7 +238,12 @@ const fetchUserEvents = async () => {
                 type="text"
                 placeholder="ej: boda-maria-juan"
                 value={newEvent.eventSlug}
-                onChange={(e) => setNewEvent(prev => ({ ...prev, eventSlug: e.target.value.toLowerCase() }))}
+                onChange={(e) =>
+                  setNewEvent((prev) => ({
+                    ...prev,
+                    eventSlug: e.target.value.toLowerCase(),
+                  }))
+                }
                 className="w-full px-4 py-3 rounded-lg bg-gray-50 text-black placeholder-gray-400 border border-gray-300 focus:border-[#753E89] focus:outline-none text-sm"
                 pattern="[a-z0-9\-]+"
                 title="Solo letras minúsculas, números y guiones"
@@ -239,7 +266,9 @@ const fetchUserEvents = async () => {
         ) : (
           // Lista de eventos
           <div>
-            <h3 className="text-sm font-semibold mb-3 text-gray-700">Mis Eventos ({userEvents.length})</h3>
+            <h3 className="text-sm font-semibold mb-3 text-gray-700">
+              Mis Eventos ({userEvents.length})
+            </h3>
             {loadingEvents ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#753E89]"></div>
@@ -247,19 +276,28 @@ const fetchUserEvents = async () => {
             ) : userEvents.length > 0 ? (
               <ul className="space-y-2">
                 {userEvents.map((event) => (
-                  <li key={event.event_slug} className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+                  <li
+                    key={event.event_slug}
+                    className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden"
+                  >
                     <div className="flex items-center">
                       <button
                         onClick={() => {
-                          navigate(`/admin/${event.admins.identificador}/${event.event_slug}`);
+                          navigate(
+                            `/admin/${event.admins.identificador}/${event.event_slug}`
+                          );
                           onClose();
                         }}
                         className="flex-1 text-left px-4 py-3 hover:bg-[#753E89] hover:text-white transition group"
                       >
-                        <span className="text-sm font-medium">{event.event_slug}</span>
-                        <span className="ml-2 text-xs text-gray-400 group-hover:text-white">→</span>
+                        <span className="text-sm font-medium">
+                          {event.event_slug}
+                        </span>
+                        <span className="ml-2 text-xs text-gray-400 group-hover:text-white">
+                          →
+                        </span>
                       </button>
-                      
+
                       {/* Toggle Switch */}
                       <div className="px-3 flex items-center">
                         <button
@@ -268,33 +306,45 @@ const fetchUserEvents = async () => {
                             toggleEventStatus(event.id, event.is_active);
                           }}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                            event.is_active ? 'bg-[#753E89]' : 'bg-gray-300'
+                            event.is_active ? "bg-[#753E89]" : "bg-gray-300"
                           }`}
-                          title={event.is_active ? 'Desactivar evento' : 'Activar evento'}
+                          title={
+                            event.is_active
+                              ? "Desactivar evento"
+                              : "Activar evento"
+                          }
                         >
                           <span
                             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              event.is_active ? 'translate-x-6' : 'translate-x-1'
+                              event.is_active
+                                ? "translate-x-6"
+                                : "translate-x-1"
                             }`}
                           />
                         </button>
                       </div>
                     </div>
-                    
+
                     {/* Estado visual */}
-                    <div className={`px-4 py-1 text-xs ${
-                      event.is_active 
-                        ? 'bg-green-50 text-green-700' 
-                        : 'bg-red-50 text-red-700'
-                    }`}>
-                      {event.is_active ? '✓ Evento activo' : '✕ Evento desactivado'}
+                    <div
+                      className={`px-4 py-1 text-xs ${
+                        event.is_active
+                          ? "bg-green-50 text-green-700"
+                          : "bg-red-50 text-red-700"
+                      }`}
+                    >
+                      {event.is_active
+                        ? "✓ Evento activo"
+                        : "✕ Evento desactivado"}
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500 text-sm mb-2">No tienes eventos creados</p>
+                <p className="text-gray-500 text-sm mb-2">
+                  No tienes eventos creados
+                </p>
                 <button
                   onClick={() => setShowEventsList(false)}
                   className="text-[#753E89] text-xs font-semibold hover:underline"
@@ -303,6 +353,23 @@ const fetchUserEvents = async () => {
                 </button>
               </div>
             )}
+          </div>
+        )}
+        <label className="block text-sm font-semibold text-gray-700 mt-8">
+          ¿Necesitas un tótem para tu evento?
+        </label>
+        <button
+          onClick={() => setShowReservaForm(true)}
+          className="bg-[#753E89] w-36 cursor-pointer text-white rounded-lg px-4 py-2 mt-2 text-sm font-semibold hover:bg-[#8a4ea0] transition"
+        >
+          Solicítalo aquí
+        </button>
+        {showReservaForm && (
+          <div className="mt-4">
+            <ReservaTotemForm
+              userEmail={userEmail}
+              onClose={() => setShowReservaForm(false)}
+            />
           </div>
         )}
       </div>
