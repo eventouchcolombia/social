@@ -304,7 +304,13 @@ const Begin = ({ onCreate }) => {
             {/* Botones principales */}
             <div className="flex gap-3 w-full">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  // Only disable totem mode when clicking Cancel
+                  if (isTotemMode) {
+                    disableTotemMode();
+                  }
+                }}
                 className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300"
               >
                 Cancelar
