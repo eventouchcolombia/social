@@ -84,7 +84,7 @@ const Choose = () => {
       {/* Header con usuario + logout */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
         {/* 👤 Usuario logueado (Este ya tiene la condición user &&) */}
-        {user && (
+        {user && !isTotemMode && (
           <div className="flex items-center gap-2 px-3 py-1 rounded-lg ">
             {user.user_metadata?.avatar_url && (
               <img
