@@ -207,24 +207,26 @@ const Begin = ({ onCreate }) => {
 
   // ===================== UI PRINCIPAL =====================
   return (
-    <div className="relative min-h-screen flex flex-col justify-between items-center px-4 py-8">
-      <img
+    <div className="relative min-h-screen flex flex-col justify-between items-center px-4 py-8 ">
+      {/* <img
         src="/Mobile.png"
         alt="Fondo"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-      />
-      <div className="absolute inset-0 bg-black/25" />
+      /> */}
+      <div className="absolute inset-0 bg-white" />
 
-      <header className="relative z-10 w-full flex items-center justify-center">
-        <h1 className="mt-2 text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
-          EvenTouch App
-        </h1>
+      <header className="relative z-20 w-full flex items-center justify-center">
+        <img
+          src="/Eventouch_Logo.png"
+          alt="Eventouch Logo"
+          className="w-68 md:w-170 h-auto"
+        />
       </header>
 
       <div className="flex-1" />
 
       <div className="absolute z-10 bottom-0 left-0 right-0 flex justify-center">
-        <div className="w-[110%] h-54 bg-white/40 rounded-t-4xl p-8 shadow-lg flex flex-col items-center">
+        <div className="w-full  bg-white/40 rounded-t-4xl p-8 shadow-lg flex flex-col  items-center py-50">
           <div className="w-full md:w-1/2 flex flex-col  gap-4 items-center justify-center">
             <button
               onClick={handleGoogleLogin}
@@ -234,21 +236,22 @@ const Begin = ({ onCreate }) => {
               Inicia sesión con Google
             </button>
 
-            <span
-              onClick={() => navigate("/register")}
-              className=" mt-1 text-[#753E89]  cursor-pointer hover:text-[#5e3270] transition"
-            >
-              ¿No tienes cuenta? Regístrate
-            </span>
+
 
             <button
               type="button"
               onClick={handleAttendClick}
-              className="w-full cursor-pointer sm:w-1/2 py-3 rounded-full text-white 
+              className="w-full cursor-pointer sm:w-1/2 py-3 text-sm rounded-full text-white 
                          bg-[#753E89] hover:bg-[#f7eef9] hover:text-[#753E89] transition-colors shadow-sm text-xl"
             >
               Asiste a tu evento
             </button>
+                        <span
+              onClick={() => navigate("/register")}
+              className="  text-[#753E89] text-sm cursor-pointer hover:text-[#5e3270] transition"
+            >
+              ¿No tienes cuenta? Regístrate
+            </span>
           </div>
         </div>
       </div>
