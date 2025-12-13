@@ -75,7 +75,7 @@ const Choose = () => {
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center min-h-screen bg-cover bg-center px-4"
+      className="relative flex flex-col items-center md:justify-end min-h-screen bg-cover bg-center px-4 "
       style={{
         backgroundImage: backgroundUrl ? `url('${backgroundUrl}')` : "none",
         minHeight: "100dvh",
@@ -143,7 +143,7 @@ const Choose = () => {
       )}
 
       {/* Caja inferior */}
-      <div className="w-[109%] bg-white/70 rounded-t-3xl shadow-lg p-4 flex flex-col mt-138">
+      <div className="w-full h-full bg-white/70 rounded-t-3xl shadow-lg p-4 flex flex-col mt-138">
         <h1 className="text-lg text-left font-bold mb-6 text-black">
           ¿Qué quieres hacer?
         </h1>
