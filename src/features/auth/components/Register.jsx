@@ -14,57 +14,48 @@ export default function Register() {
 
   const processingRef = useRef(false);
 
-
   //  FUNCIÓN QUE HACE EL UPDATE (FUERA DEL onAuthStateChange)
-  
-  const updatePendingRegister = async (pendingId, email) => {
-  try {
-    
 
-    const {  error } = await supabase
-      .from("registerusers")
-      .update({ email })
-      .eq("id", pendingId)
-      .select()
-      .single();
+  const updatePendingRegister = async (pendingId, email, fullName) => {
+    try {
+      const { error } = await supabase
+        .from("registerusers")
+        .update({ email, name: fullName })
+        .eq("id", pendingId)
+        .select()
+        .single();
 
-    if (error) {
-      console.warn("Email ya registrado");
+      if (error) {
+        console.warn("Email ya registrado");
 
-      //  Si el correo ya existe en otra fila → eliminar el registro preliminar
-      if (error.code === "23505") {
-        console.warn(" Email duplicado");
+        //  Si el correo ya existe en otra fila → eliminar el registro preliminar
+        if (error.code === "23505") {
+          console.warn(" Email duplicado");
 
-        // Eliminar SOLO el registro preliminar
-        await supabase
-          .from("registerusers")
-          .delete()
-          .eq("id", pendingId);
+          // Eliminar SOLO el registro preliminar
+          await supabase.from("registerusers").delete().eq("id", pendingId);
 
-        localStorage.removeItem("pending_register_id");
+          localStorage.removeItem("pending_register_id");
 
-        setErrorMessage("Tu correo ya se encuentra registrado.");
+          setErrorMessage("Tu correo ya se encuentra registrado.");
+        } else {
+          setErrorMessage("Error guardando tus datos. Intenta nuevamente.");
+        }
 
-      } else {
-        setErrorMessage("Error guardando tus datos. Intenta nuevamente.");
+        await supabase.auth.signOut();
+        return false;
       }
 
-      await supabase.auth.signOut();
+      localStorage.removeItem("pending_register_id");
+
+      setShowSuccessModal(true);
+      return true;
+    } catch (err) {
+      console.error(" ERROR en updatePendingRegister:", err);
       return false;
     }
+  };
 
-
-    localStorage.removeItem("pending_register_id");
-
-    setShowSuccessModal(true);
-    return true;
-  } catch (err) {
-    console.error(" ERROR en updatePendingRegister:", err);
-    return false;
-  }
-};
-
-  
   // 1️. REGISTRO PRELIMINAR (ANTES DE LOGIN)
 
   const handleRegisterUser = async () => {
@@ -109,7 +100,6 @@ export default function Register() {
     }
   };
 
-  
   // 2️. CUANDO GOOGLE DEVUELVE EL USUARIO
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -122,14 +112,16 @@ export default function Register() {
         }
 
         if (processingRef.current) {
-          
           return;
         }
 
         processingRef.current = true;
 
         const email = session.user.email;
-      
+        const fullName =
+          session.user.user_metadata?.full_name ||
+          session.user.user_metadata?.name ||
+          "";
 
         let pendingId = localStorage.getItem("pending_register_id");
         if (!pendingId) {
@@ -142,11 +134,9 @@ export default function Register() {
 
         pendingId = pendingId.trim();
 
-      
-
         //  CLAVE: mover el UPDATE fuera del evento SIGNED_IN
         setTimeout(() => {
-          updatePendingRegister(pendingId, email).then(() => {
+          updatePendingRegister(pendingId, email,fullName).then(() => {
             processingRef.current = false;
           });
         }, 50);
@@ -156,7 +146,6 @@ export default function Register() {
     return () => listener?.subscription?.unsubscribe();
   }, [navigate]);
 
- 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[url('/Mobile.png')] bg-cover bg-center text-[#753E89] p-4">
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md shadow-xl text-center">

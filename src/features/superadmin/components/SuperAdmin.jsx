@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../../config/supabaseClient";
 import useAuthenticationSupabase from "../../auth/components/AuthenticationSupabase";
 import useGetRegister from "../../auth/hooks/getRegister";
-import { Mail, Phone, UserCircle,Copy } from "lucide-react";
+import { Mail, Phone, UserCircle, Copy } from "lucide-react";
 import ShareEvent from "../../admin/components/ShareEvent";
 
 // Lista de emails autorizados para SuperAdmin (hardcodeada)
@@ -22,6 +22,9 @@ const SuperAdmin = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loadingAdmins, setLoadingAdmins] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [reservas, setReservas] = useState([]);
+  const [loadingReservas, setLoadingReservas] = useState(false);
+
   // const [showShareModal, setShowShareModal] = useState(false);
   // const [selectedEventSlug, setSelectedEventSlug] = useState("");
   // const [requests, setRequests] = useState([]);
@@ -33,6 +36,34 @@ const SuperAdmin = () => {
   const [expandedUsers, setExpandedUsers] = useState(new Set());
 
   const { data, loadingRegister, error } = useGetRegister();
+
+  const fetchReservasTotem = async () => {
+    try {
+      setLoadingReservas(true);
+
+      const { data, error } = await supabase
+        .from("reservatotem")
+        .select(
+          `
+        id,
+        nombre,
+        correo,
+        fecha_reserva,
+        transporte,
+        created_at
+      `
+        )
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setReservas(data || []);
+    } catch (error) {
+      console.error("❌ Error cargando reservas:", error);
+    } finally {
+      setLoadingReservas(false);
+    }
+  };
 
   useEffect(() => {
     if (isSuperAdmin) fetchRequests();
@@ -162,6 +193,7 @@ const SuperAdmin = () => {
       console.log("✅ Llamando a fetchAdmins...");
       fetchAdmins();
       fetchEvents();
+      fetchReservasTotem();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuperAdmin]);
@@ -449,7 +481,7 @@ const SuperAdmin = () => {
   // No authenticated
   if (!session) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-4">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-linear-to-br from-gray-900 to-blue-900 px-4">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-white mb-6 sm:mb-8">
           SuperAdmin Panel
         </h1>
@@ -499,7 +531,7 @@ const SuperAdmin = () => {
 
   // SuperAdmin Panel
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 px-2 sm:px-4 py-4 sm:py-6">
+    <div className="min-h-screen bg-linear-to-br from-gray-900 to-blue-900 px-2 sm:px-4 py-4 sm:py-6">
       {/* Header */}
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -750,52 +782,102 @@ const SuperAdmin = () => {
           )}
         </div> */}
 
-       <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mt-2">
-  <h2 className="text-xl sm:text-2xl mb-4 font-semibold text-white flex items-center gap-2">
-    Registros de usuarios ({data?.length || 0} registros)
-  </h2>
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mt-2">
+          <h2 className="text-xl sm:text-2xl mb-4 font-semibold text-white flex items-center gap-2">
+            Registros de usuarios ({data?.length || 0} registros)
+          </h2>
 
-  <div className="text-white bg-white/5 rounded-xl overflow-hidden">
-    {/* Encabezados */}
-    <div className="grid grid-cols-3 px-4 py-2 bg-white/10 font-semibold text-xs sm:text-base uppercase tracking-wide">
-      <p className="flex items-center gap-2">
-        <Mail className="w-4 h-4" />
-        Email
-      </p>
-      <p className="flex items-center gap-2">
-        <Phone className="w-4 h-4" />
-        Teléfono
-      </p>
-      <p className="flex items-center gap-2">
-        <UserCircle className="w-4 h-4" />
-        Tipo
-      </p>
-    </div>
+          <div className="text-white bg-white/5 rounded-xl overflow-hidden">
+            {/* Encabezados */}
+            <div className="grid grid-cols-4 px-4 py-2 bg-white/10 font-semibold text-xs sm:text-base uppercase tracking-wide">
+              <p className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Email
+              </p>
+              <p className="flex items-center gap-2">
+                <UserCircle className="w-4 h-4" />
+                Nombre
+              </p>
+              <p className="flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                Teléfono
+              </p>
+              <p className="flex items-center gap-2">
+                <UserCircle className="w-4 h-4" />
+                Tipo
+              </p>
+            </div>
 
-    {/* Lista */}
-    <div className="divide-y divide-white/10">
-      {data?.map((r) => (
-        <div
-          key={r.id}
-          className="grid grid-cols-3 px-4 py-3 hover:bg-white/10 transition-colors text-sm sm:text-base"
-        >
-          {/* Email + botón copiar */}
-          <div className="flex items-center gap-2">
-            <p className="truncate">{r.email}</p>
+            {/* Lista */}
+            <div className="divide-y divide-white/10">
+              {data?.map((r) => (
+                <div
+                  key={r.id}
+                  className="grid grid-cols-4 px-4 py-3 hover:bg-white/10 transition-colors text-sm sm:text-base"
+                >
+                  {/* Email + botón copiar */}
+                  <div className="flex items-center gap-2">
+                    <p className="truncate">{r.email}</p>
 
-            <Copy
-              className="w-4 h-4 cursor-pointer opacity-70 hover:opacity-100 transition"
-              onClick={() => navigator.clipboard.writeText(r.email)}
-            />
+                    <Copy
+                      className="w-4 h-4 cursor-pointer opacity-70 hover:opacity-100 transition"
+                      onClick={() => navigator.clipboard.writeText(r.email)}
+                    />
+                  </div>
+                  <p className="truncate">{r.name || "—"}</p>
+                  <p className="truncate">{r.phone || "—"}</p>
+                  <p className="truncate capitalize">{r.type || "—"}</p>
+                </div>
+              ))}
+            </div>
           </div>
-
-          <p className="truncate">{r.phone || "—"}</p>
-          <p className="truncate capitalize">{r.type || "—"}</p>
         </div>
-      ))}
-    </div>
-  </div>
-</div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mt-6">
+          <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">
+            Reservas para el Tótem ({reservas.length})
+          </h2>
+
+          {loadingReservas ? (
+            <p className="text-gray-400">🔄 Cargando reservas...</p>
+          ) : reservas.length === 0 ? (
+            <p className="text-gray-400">No hay reservas registradas.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-white">
+                <thead className="bg-white/10 uppercase text-xs">
+                  <tr>
+                    <th className="px-4 py-2">Nombre</th>
+                    <th className="px-4 py-2">Correo</th>
+                    <th className="px-4 py-2">Fecha solicitud</th>
+                    <th className="px-4 py-2">Fecha reserva</th>
+                    <th className="px-4 py-2 text-center">Transporte</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-white/10">
+                  {reservas.map((r) => (
+                    <tr key={r.id} className="hover:bg-white/5">
+                      <td className="px-4 py-2">{r.nombre}</td>
+                      <td className="px-4 py-2">
+                        <span className="">{r.correo}</span>
+                      </td>
+                      <td className="px-4 py-2">
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2">
+                       {r.fecha_reserva.split("-").reverse().join("/")}
+
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        {r.transporte ? "✅ Sí" : "❌ No"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
         {/* Admins List */}
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 sm:p-6 mt-2">
@@ -1197,23 +1279,23 @@ const SuperAdmin = () => {
             📋 Proceso para crear administradores y eventos:
           </h3>
           <ul className="text-yellow-100 text-xs sm:text-sm space-y-1 sm:space-y-2">
-            <li className="break-words">
+            <li className="wrap-break-word">
               • <strong>Opción 1:</strong> Crear administrador completo (con
               email, identificador y evento opcional)
             </li>
-            <li className="break-words">
+            <li className="wrap-break-word">
               • <strong>Opción 2:</strong> Crear solo administrador (email +
               identificador) y luego asignar evento
             </li>
-            <li className="break-words">
+            <li className="wrap-break-word">
               • <strong>Acceso:</strong> El admin debe ir a /admin/
               {`{identificador}`} e iniciar sesión
             </li>
-            <li className="break-words">
+            <li className="wrap-break-word">
               • <strong>Configuración:</strong> Si tiene evento, usar
               "Configurar Assets" para subir imágenes
             </li>
-            <li className="break-words">
+            <li className="wrap-break-word">
               • <strong>Flexibilidad:</strong> Los admins pueden existir sin
               evento y asignárselo después
             </li>
