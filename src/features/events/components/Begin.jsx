@@ -215,7 +215,7 @@ const Begin = ({ onCreate }) => {
       /> */}
       <div className="relative inset-0 bg-white" />
 
-      <header className="relative z-20 w-full flex flex-col items-center justify-center justify-start mt-20 md:mt-0  ">
+      <header className="relative z-20 w-full flex flex-col items-center  justify-start mt-20 md:mt-0  ">
         <img
           src="/logoEventouch2.png"
           alt="Eventouch Logo"
@@ -241,7 +241,7 @@ const Begin = ({ onCreate }) => {
             <button
               type="button"
               onClick={handleAttendClick}
-              className="w-full cursor-pointer sm:w-1/2 py-3 text-sm rounded-full text-white 
+              className="w-full cursor-pointer sm:w-1/2 py-3  rounded-full text-white 
                          bg-[#753E89] hover:bg-[#f7eef9] hover:text-[#753E89] transition-colors shadow-sm text-xl"
             >
               Asiste a tu evento
