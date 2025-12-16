@@ -213,19 +213,19 @@ const Begin = ({ onCreate }) => {
         alt="Fondo"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       /> */}
-      <div className="absolute inset-0 bg-white" />
+      <div className="relative inset-0 bg-white" />
 
-      <header className="relative z-20 w-full flex items-center justify-center">
+      <header className="relative z-20 w-full flex flex-col items-center justify-center justify-start mt-20 ">
         <img
-          src="/Eventouch_Logo.png"
+          src="/logoEventouch2.png"
           alt="Eventouch Logo"
-          className="w-68 md:w-170 h-auto"
+          className="w-48 sm:w-56 md:w-64 lg:w-62 h-auto pointer-events-none p-[-20px]"
         />
       </header>
 
       <div className="flex-1" />
 
-      <div className="absolute z-10 bottom-0 left-0 right-0 flex justify-center">
+      <div className="absolute z-10 bottom-0  left-0 right-0 flex justify-center">
         <div className="w-full  bg-white/40 rounded-t-4xl p-8 shadow-lg flex flex-col  items-center py-50">
           <div className="w-full md:w-1/2 flex flex-col  gap-4 items-center justify-center">
             <button
@@ -395,11 +395,11 @@ const Begin = ({ onCreate }) => {
       )}
 
       {/* Indicador si ya está en modo Totem */}
-      {isTotemMode && (
+      {/* {isTotemMode && (
         <div className="fixed top-4 right-4 bg-orange-500 text-white px-3 py-2 rounded-full text-sm font-semibold shadow-lg z-50">
           🔒 MODO TOTEM ACTIVO
         </div>
-      )}
+      )} */}
     </div>
   );
 };
