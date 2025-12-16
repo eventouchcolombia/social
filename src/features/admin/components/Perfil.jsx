@@ -7,6 +7,7 @@ import {
 } from "../../../utils/eventAssets";
 import { X, User } from "lucide-react";
 import ReservaTotemForm from "../../../totem/FormTotem";
+import ReserveTotem from "../../../totem/ReserveTotem";
 
 const Perfil = ({ onClose, userEmail }) => {
   const [newEvent, setNewEvent] = useState({ eventSlug: "" });
@@ -16,6 +17,7 @@ const Perfil = ({ onClose, userEmail }) => {
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [showEventsList, setShowEventsList] = useState(false);
   const [showReservaForm, setShowReservaForm] = useState(false);
+  const [activeReserve, setActiveReserve] = useState(false);
 
   const navigate = useNavigate();
 
@@ -358,20 +360,47 @@ const Perfil = ({ onClose, userEmail }) => {
         <label className="block text-sm font-semibold text-gray-700 mt-8">
           ¿Necesitas un tótem para tu evento?
         </label>
-        <button
-          onClick={() => setShowReservaForm(true)}
-          className="bg-[#753E89] w-36 cursor-pointer text-white rounded-lg px-4 py-2 mt-2 text-sm font-semibold hover:bg-[#8a4ea0] transition"
-        >
-          Solicítalo aquí
-        </button>
-        {showReservaForm && (
-          <div className="mt-4">
+
+        <div className="flex gap-3 mt-2">
+          <button
+            onClick={() => {
+              setActiveReserve(false);
+              setShowReservaForm(true);
+            }}
+            className={`w-36 cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              !activeReserve
+                ? "bg-[#753E89] text-white"
+                : "bg-gray-100 text-black hover:bg-gray-200"
+            }`}
+          >
+            Solicítalo aquí
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveReserve(true);
+              setShowReservaForm(false);
+            }}
+            className={`w-36 cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              activeReserve
+                ? "bg-[#753E89] text-white"
+                : "bg-gray-100 text-black hover:bg-gray-200"
+            }`}
+          >
+            Mis reservas
+          </button>
+        </div>
+
+        <div className="mt-4">
+          {showReservaForm && !activeReserve && (
             <ReservaTotemForm
               userEmail={userEmail}
               onClose={() => setShowReservaForm(false)}
             />
-          </div>
-        )}
+          )}
+
+          {activeReserve && <ReserveTotem />}
+        </div>
       </div>
     </div>
   );
