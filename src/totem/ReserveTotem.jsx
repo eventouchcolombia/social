@@ -3,7 +3,6 @@ import { supabase } from "../config/supabaseClient";
 import { Calendar, Truck, X, AlertTriangle } from "lucide-react";
 
 const ReserveTotem = () => {
-  const [authUser, setAuthUser] = useState(null);
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +19,7 @@ const ReserveTotem = () => {
         return;
       }
 
-      setAuthUser(user);
+      
 
       const { data: reservasData } = await supabase
         .from("reservatotem")
@@ -86,9 +85,8 @@ const ReserveTotem = () => {
     <>
       <div className="space-y-2">
         <h3 className="text-sm font-semibold">
-          {authUser?.user_metadata?.full_name},
-          <br />
-          <span className="text-[#753E89]">estas son tus reservas:</span>
+     
+         
         </h3>
 
         <ul className="space-y-3">
@@ -121,7 +119,7 @@ const ReserveTotem = () => {
         </ul>
       </div>
 
-      {/* 🟥 MODAL CONFIRMACIÓN */}
+      {/*  MODAL CONFIRMACIÓN */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-xl p-6 w-80 text-center relative">
