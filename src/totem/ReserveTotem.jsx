@@ -95,7 +95,7 @@ const ReserveTotem = () => {
           {reservas.map((reserva) => (
             <li
               key={reserva.id}
-              className="relative p-4 rounded-xl border border-[#e5d4ef] bg-gray-200 shadow-2xl"
+              className="relative p-4 rounded-xl border border-[#e5d4ef] bg-gray-100 shadow-xl"
             >
               {/* ❌ Botón cancelar */}
               <button
