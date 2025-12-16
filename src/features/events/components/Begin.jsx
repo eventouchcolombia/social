@@ -215,7 +215,7 @@ const Begin = ({ onCreate }) => {
       /> */}
       <div className="relative inset-0 bg-white" />
 
-      <header className="relative z-20 w-full flex flex-col items-center justify-center justify-start mt-20 ">
+      <header className="relative z-20 w-full flex flex-col items-center justify-center justify-start mt-20 md:mt-0  ">
         <img
           src="/logoEventouch2.png"
           alt="Eventouch Logo"
