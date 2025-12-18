@@ -7,7 +7,7 @@ import {
   Calendar,
   Truck,
 } from "lucide-react";
-import Terms from "../features/terms/Terms";
+import Terms from "./termsTotem/Terms";
 
 const ReservaTotemForm = ({ onClose }) => {
   const [fecha, setFecha] = useState("");
